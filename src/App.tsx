@@ -7,6 +7,7 @@ import { FinanceProvider } from "@/contexts/FinanceContext";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Gastos from "@/pages/Gastos";
+import Vendas from "@/pages/Vendas";
 import Investimentos from "@/pages/Investimentos";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/gastos" element={<Gastos />} />
+              <Route path="/vendas" element={<Vendas />} />
               <Route path="/investimentos" element={<Investimentos />} />
             </Route>
             <Route path="*" element={<NotFound />} />

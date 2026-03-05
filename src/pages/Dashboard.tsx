@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, getCurrentMonth, getMonthLabel } from '@/lib/format';
-import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
@@ -17,7 +17,7 @@ const CHART_COLORS = [
 ];
 
 export default function Dashboard() {
-  const { transactions, updateTransaction, deleteTransaction } = useFinance();
+  const { transactions, sales, updateTransaction, deleteTransaction } = useFinance();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
   const currentMonth = getCurrentMonth();
 
@@ -29,6 +29,11 @@ export default function Dashboard() {
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const expense = useMemo(() => monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const balance = income - expense;
+
+  const monthlyRevenue = useMemo(
+    () => sales.filter(s => s.date.startsWith(currentMonth)).reduce((sum, s) => sum + s.totalValue, 0),
+    [sales, currentMonth]
+  );
 
   const categoryData = useMemo(() => {
     const map = new Map<string, number>();
@@ -115,7 +120,14 @@ export default function Dashboard() {
           <p className="text-xs text-muted-foreground">Saídas</p>
           <p className="text-lg font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
         </div>
-        <div className="glass rounded-2xl p-4 space-y-2 col-span-2">
+        <div className="glass rounded-2xl p-4 space-y-2">
+          <div className="p-2.5 rounded-xl bg-primary/10 w-fit">
+            <ShoppingBag size={20} className="text-primary" />
+          </div>
+          <p className="text-xs text-muted-foreground">Faturamento</p>
+          <p className="text-lg font-bold text-primary tabular-nums">{formatCurrency(monthlyRevenue)}</p>
+        </div>
+        <div className="glass rounded-2xl p-4 space-y-2">
           <div className="p-2.5 rounded-xl bg-expense/10 w-fit">
             <TrendingDown size={20} className="text-expense" />
           </div>
