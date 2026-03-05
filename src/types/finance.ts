@@ -27,6 +27,14 @@ export interface Transaction {
   recurrenceGroupId?: string;
 }
 
+export interface Sale {
+  id: string;
+  product: string;
+  quantity: number;
+  totalValue: number;
+  date: string; // ISO date string
+}
+
 export interface InvestmentSimulation {
   initialAmount: number;
   monthlyContribution: number;

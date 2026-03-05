@@ -1,9 +1,10 @@
-import { LayoutDashboard, Receipt, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Receipt, ShoppingBag, TrendingUp } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/gastos', icon: Receipt, label: 'Gastos' },
+  { path: '/vendas', icon: ShoppingBag, label: 'Vendas' },
   { path: '/investimentos', icon: TrendingUp, label: 'Investimentos' },
 ];
 
