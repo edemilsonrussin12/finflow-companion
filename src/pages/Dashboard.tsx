@@ -50,49 +50,11 @@ export default function Dashboard() {
         <h1 className="text-xl font-bold">{getMonthLabel(currentMonth)}</h1>
       </div>
 
-      {/* Balance card */}
-      <div className="glass rounded-2xl p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <Wallet size={18} className="text-primary" />
-          <span className="text-sm text-muted-foreground">Saldo do mês</span>
-        </div>
-        <p className={`text-3xl font-bold tabular-nums ${balance >= 0 ? 'text-income' : 'text-expense'}`}>
-          {formatCurrency(balance)}
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2 bg-income/10 rounded-xl p-3">
-            <ArrowUpRight size={16} className="text-income" />
-            <div>
-              <p className="text-[10px] text-muted-foreground">Entradas</p>
-              <p className="text-sm font-semibold text-income">{formatCurrency(income)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 bg-expense/10 rounded-xl p-3">
-            <ArrowDownLeft size={16} className="text-expense" />
-            <div>
-              <p className="text-[10px] text-muted-foreground">Saídas</p>
-              <p className="text-sm font-semibold text-expense">{formatCurrency(expense)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Top category */}
-      <div className="glass rounded-2xl p-4 flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-expense/10">
-          <TrendingDown size={18} className="text-expense" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Maior gasto</p>
-          <p className="text-sm font-semibold">{topCategory}</p>
-        </div>
-      </div>
-
-      {/* Pie chart */}
+      {/* Pie chart — top */}
       {categoryData.length > 0 && (
-        <div className="glass rounded-2xl p-4">
+        <div className="glass rounded-2xl p-5">
           <p className="text-sm font-medium mb-3">Despesas por categoria</p>
-          <div className="h-48">
+          <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -100,7 +62,7 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
-                  outerRadius={80}
+                  outerRadius={85}
                   paddingAngle={3}
                   dataKey="value"
                 >
@@ -125,6 +87,42 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Balance card */}
+      <div className="glass rounded-2xl p-6 space-y-2">
+        <div className="flex items-center gap-2 mb-1">
+          <Wallet size={20} className="text-primary" />
+          <span className="text-sm text-muted-foreground">Saldo do mês</span>
+        </div>
+        <p className={`text-4xl font-extrabold tabular-nums ${balance >= 0 ? 'text-income' : 'text-expense'}`}>
+          {formatCurrency(balance)}
+        </p>
+      </div>
+
+      {/* Income / Expense / Top category cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="glass rounded-2xl p-4 space-y-2">
+          <div className="p-2.5 rounded-xl bg-income/10 w-fit">
+            <ArrowUpRight size={20} className="text-income" />
+          </div>
+          <p className="text-xs text-muted-foreground">Entradas</p>
+          <p className="text-lg font-bold text-income tabular-nums">{formatCurrency(income)}</p>
+        </div>
+        <div className="glass rounded-2xl p-4 space-y-2">
+          <div className="p-2.5 rounded-xl bg-expense/10 w-fit">
+            <ArrowDownLeft size={20} className="text-expense" />
+          </div>
+          <p className="text-xs text-muted-foreground">Saídas</p>
+          <p className="text-lg font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
+        </div>
+        <div className="glass rounded-2xl p-4 space-y-2 col-span-2">
+          <div className="p-2.5 rounded-xl bg-expense/10 w-fit">
+            <TrendingDown size={20} className="text-expense" />
+          </div>
+          <p className="text-xs text-muted-foreground">Maior gasto</p>
+          <p className="text-base font-bold">{topCategory}</p>
+        </div>
+      </div>
 
       {/* Recent transactions */}
       <div>
