@@ -73,7 +73,13 @@
 
 @layer utilities {
   .glass {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    @apply bg-card/95 border border-border/50;
+  }
+
+  @supports (backdrop-filter: blur(12px)) {
+    .glass {
+      @apply bg-card/80 backdrop-blur-xl;
+    }
   }
 
   .gradient-income {
