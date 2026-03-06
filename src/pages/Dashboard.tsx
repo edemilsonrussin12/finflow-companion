@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, getCurrentMonth, getMonthLabel } from '@/lib/format';
-import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
@@ -18,6 +19,7 @@ const CHART_COLORS = [
 
 export default function Dashboard() {
   const { transactions, sales, updateTransaction, deleteTransaction } = useFinance();
+  const { user, logout } = useAuth();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
   const currentMonth = getCurrentMonth();
 
@@ -50,27 +52,28 @@ export default function Dashboard() {
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
-      <div>
-        <p className="text-sm text-muted-foreground">FinControl</p>
-        <h1 className="text-xl font-bold">{getMonthLabel(currentMonth)}</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">FinControl</p>
+          <h1 className="text-xl font-bold">{getMonthLabel(currentMonth)}</h1>
+        </div>
+        <button
+          onClick={logout}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:bg-accent transition-colors"
+          title={user?.email ?? 'Sair'}
+        >
+          <LogOut size={16} />
+          <span className="hidden sm:inline">Sair</span>
+        </button>
       </div>
 
-      {/* Pie chart — top */}
       {categoryData.length > 0 && (
         <div className="glass rounded-2xl p-5">
           <p className="text-sm font-medium mb-3">Despesas por categoria</p>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={85}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
+                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value">
                   {categoryData.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
@@ -93,7 +96,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Balance card */}
       <div className="glass rounded-2xl p-6 space-y-2">
         <div className="flex items-center gap-2 mb-1">
           <Wallet size={20} className="text-primary" />
@@ -104,39 +106,29 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Income / Expense / Top category cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-income/10 w-fit">
-            <ArrowUpRight size={20} className="text-income" />
-          </div>
+          <div className="p-2.5 rounded-xl bg-income/10 w-fit"><ArrowUpRight size={20} className="text-income" /></div>
           <p className="text-xs text-muted-foreground">Entradas</p>
           <p className="text-lg font-bold text-income tabular-nums">{formatCurrency(income)}</p>
         </div>
         <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-expense/10 w-fit">
-            <ArrowDownLeft size={20} className="text-expense" />
-          </div>
+          <div className="p-2.5 rounded-xl bg-expense/10 w-fit"><ArrowDownLeft size={20} className="text-expense" /></div>
           <p className="text-xs text-muted-foreground">Saídas</p>
           <p className="text-lg font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
         </div>
         <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-primary/10 w-fit">
-            <ShoppingBag size={20} className="text-primary" />
-          </div>
+          <div className="p-2.5 rounded-xl bg-primary/10 w-fit"><ShoppingBag size={20} className="text-primary" /></div>
           <p className="text-xs text-muted-foreground">Faturamento</p>
           <p className="text-lg font-bold text-primary tabular-nums">{formatCurrency(monthlyRevenue)}</p>
         </div>
         <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-expense/10 w-fit">
-            <TrendingDown size={20} className="text-expense" />
-          </div>
+          <div className="p-2.5 rounded-xl bg-expense/10 w-fit"><TrendingDown size={20} className="text-expense" /></div>
           <p className="text-xs text-muted-foreground">Maior gasto</p>
           <p className="text-base font-bold">{topCategory}</p>
         </div>
       </div>
 
-      {/* Recent transactions */}
       <div>
         <p className="text-sm font-medium mb-3">Transações recentes</p>
         <div className="space-y-2">

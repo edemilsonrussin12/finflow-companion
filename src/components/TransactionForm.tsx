@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   onSubmit: (t: Omit<Transaction, 'id'>) => void;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
+  const { toast } = useToast();
   const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense');
   const [amount, setAmount] = useState(initial?.amount?.toString() ?? '');
   const [date, setDate] = useState(initial?.date ?? new Date().toISOString().split('T')[0]);
@@ -27,8 +29,18 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(amount);
-    if (!val || val <= 0) return;
-    if (!description.trim()) return;
+    if (!val || val <= 0) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Informe um valor maior que zero' });
+      return;
+    }
+    if (!description.trim()) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Informe uma descrição' });
+      return;
+    }
+    if (!date) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Informe a data' });
+      return;
+    }
 
     onSubmit({
       type,
@@ -45,17 +57,13 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-md glass rounded-t-2xl sm:rounded-2xl p-6 animate-scale-in max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold">{initial ? 'Editar' : 'Nova'} Transação</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-accent">
-            <X size={20} />
-          </button>
-        </div>
+    <Sheet open onOpenChange={open => { if (!open) onClose(); }}>
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[90dvh] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{initial ? 'Editar' : 'Nova'} Transação</SheetTitle>
+        </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Type toggle */}
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -83,55 +91,24 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
 
           <div>
             <Label htmlFor="amount">Valor (R$)</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder="0,00"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              required
-              className="mt-1"
-            />
+            <Input id="amount" type="number" step="0.01" min="0.01" placeholder="0,00" value={amount} onChange={e => setAmount(e.target.value)} required className="mt-1" />
           </div>
 
           <div>
             <Label htmlFor="description">Descrição</Label>
-            <Input
-              id="description"
-              placeholder="Ex: Supermercado"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              required
-              maxLength={100}
-              className="mt-1"
-            />
+            <Input id="description" placeholder="Ex: Supermercado" value={description} onChange={e => setDescription(e.target.value)} required maxLength={100} className="mt-1" />
           </div>
 
           <div>
             <Label htmlFor="date">Data</Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              required
-              className="mt-1"
-            />
+            <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} required className="mt-1" />
           </div>
 
           <div>
             <Label>Categoria</Label>
             <Select value={category} onValueChange={v => setCategory(v as Category)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
 
@@ -144,9 +121,7 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
             <div>
               <Label>Frequência</Label>
               <Select value={recurrenceFrequency} onValueChange={v => setRecurrenceFrequency(v as RecurrenceFrequency)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="weekly">Semanal</SelectItem>
                   <SelectItem value="monthly">Mensal</SelectItem>
@@ -160,7 +135,7 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
             {initial ? 'Salvar' : 'Adicionar'}
           </Button>
         </form>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

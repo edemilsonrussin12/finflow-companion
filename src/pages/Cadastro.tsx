@@ -4,20 +4,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogIn } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export default function Login() {
-  const { login, isAuthenticated } = useAuth();
+export default function Cadastro() {
+  const { signup, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
 
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = login(email, password);
+    const result = signup(email, password, confirm);
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Erro', description: result.error });
     }
@@ -28,10 +29,10 @@ export default function Login() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <div className="mx-auto w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">
-            <LogIn size={24} className="text-primary-foreground" />
+            <UserPlus size={24} className="text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold">FinControl</h1>
-          <p className="text-sm text-muted-foreground">Entre na sua conta</p>
+          <h1 className="text-2xl font-bold">Criar conta</h1>
+          <p className="text-sm text-muted-foreground">Preencha os dados abaixo</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -41,15 +42,18 @@ export default function Login() {
           </div>
           <div>
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" placeholder="••••••" value={password} onChange={e => setPassword(e.target.value)} className="mt-1" required />
+            <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} className="mt-1" required />
           </div>
-          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold">Entrar</Button>
+          <div>
+            <Label htmlFor="confirm">Confirmar senha</Label>
+            <Input id="confirm" type="password" placeholder="Repita a senha" value={confirm} onChange={e => setConfirm(e.target.value)} className="mt-1" required />
+          </div>
+          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold">Criar conta</Button>
         </form>
 
-        <div className="text-center space-y-2 text-sm">
-          <Link to="/cadastro" className="text-primary hover:underline block">Criar conta</Link>
-          <Link to="/reset-senha" className="text-muted-foreground hover:underline block">Esqueci minha senha</Link>
-        </div>
+        <p className="text-center text-sm text-muted-foreground">
+          Já tem conta? <Link to="/login" className="text-primary hover:underline">Entrar</Link>
+        </p>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
 import FloatingActionButton from '@/components/FloatingActionButton';
@@ -11,8 +11,13 @@ export default function AppLayout() {
   const location = useLocation();
   const showFab = location.pathname !== '/investimentos';
 
+  // Close form on route change to prevent stale overlays
+  useEffect(() => {
+    setShowForm(false);
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background overflow-x-hidden">
       <Outlet />
       {showFab && <FloatingActionButton onClick={() => setShowForm(true)} />}
       <BottomNav />
