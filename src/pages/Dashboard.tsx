@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useGoals } from '@/contexts/GoalsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
-import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut, Target } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
@@ -20,6 +22,7 @@ const CHART_COLORS = [
 
 export default function Dashboard() {
   const { transactions, sales, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const { goals } = useGoals();
   const { user, logout } = useAuth();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
 
@@ -49,6 +52,16 @@ export default function Dashboard() {
 
   const topCategory = categoryData[0]?.name ?? '—';
   const recentTx = useMemo(() => [...monthTx].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5), [monthTx]);
+
+  const activeGoals = goals.filter(g => g.status === 'active');
+  const closestGoal = useMemo(() => {
+    if (activeGoals.length === 0) return null;
+    return activeGoals.reduce((best, g) => {
+      const pct = g.currentAmount / g.targetAmount;
+      const bestPct = best.currentAmount / best.targetAmount;
+      return pct > bestPct ? g : best;
+    });
+  }, [activeGoals]);
 
   const hasData = monthTx.length > 0 || monthlyRevenue > 0;
 
@@ -145,6 +158,29 @@ export default function Dashboard() {
           <p className="text-base font-bold">{topCategory}</p>
         </div>
       </div>
+
+      {activeGoals.length > 0 && (
+        <div className="glass rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <Target size={18} className="text-primary" />
+            <p className="text-sm font-medium">Metas financeiras</p>
+            <span className="ml-auto text-xs text-muted-foreground">{activeGoals.length} ativa{activeGoals.length > 1 ? 's' : ''}</span>
+          </div>
+          {closestGoal && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="font-medium">{closestGoal.title}</span>
+                <span className="text-muted-foreground">{Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))}%</span>
+              </div>
+              <Progress value={Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{formatCurrency(closestGoal.currentAmount)}</span>
+                <span>{formatCurrency(closestGoal.targetAmount)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <p className="text-sm font-medium mb-3">Transações recentes</p>
