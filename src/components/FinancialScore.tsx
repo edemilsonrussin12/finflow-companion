@@ -1,6 +1,8 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Award, AlertTriangle, TrendingUp, PiggyBank, Wallet } from 'lucide-react';
+import { Award, AlertTriangle, TrendingUp, PiggyBank, Wallet, ArrowRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { Transaction } from '@/types/finance';
 
 interface FinancialScoreProps {
@@ -11,6 +13,7 @@ interface FinancialScoreProps {
   prevPatrimonio: number;
   allTransactions?: Transaction[];
   selectedMonth?: string;
+  onOpenInvestmentForm?: () => void;
 }
 
 interface ScoreBreakdown {
@@ -73,6 +76,8 @@ interface Recommendation {
   title: string;
   message: string;
   type: 'warning' | 'danger' | 'success';
+  actionLabel: string;
+  actionType: 'navigate-expenses' | 'open-investment' | 'navigate-investments';
 }
 
 function getRecommendations(income: number, expense: number, investment: number, score: number): Recommendation[] {
@@ -85,6 +90,8 @@ function getRecommendations(income: number, expense: number, investment: number,
       title: 'Alerta de Gastos',
       message: 'Seus gastos estão consumindo a maior parte da sua renda. Reduzi-los vai melhorar seu score de saúde financeira.',
       type: 'warning',
+      actionLabel: 'Revisar Gastos',
+      actionType: 'navigate-expenses',
     });
   }
 
@@ -94,6 +101,8 @@ function getRecommendations(income: number, expense: number, investment: number,
       title: 'Investimentos Baixos',
       message: 'Sua taxa de investimento está baixa. Tente investir ao menos 10% da sua renda para aumentar seu patrimônio.',
       type: 'warning',
+      actionLabel: 'Adicionar Investimento',
+      actionType: 'open-investment',
     });
   }
 
@@ -103,6 +112,8 @@ function getRecommendations(income: number, expense: number, investment: number,
       title: 'Saldo Negativo',
       message: 'Você está gastando mais do que ganha. Ajustar seus gastos é essencial.',
       type: 'danger',
+      actionLabel: 'Revisar Gastos',
+      actionType: 'navigate-expenses',
     });
   }
 
@@ -112,6 +123,8 @@ function getRecommendations(income: number, expense: number, investment: number,
       title: 'Bom Investidor',
       message: 'Ótimo trabalho! Você está investindo uma proporção saudável da sua renda.',
       type: 'success',
+      actionLabel: 'Ver Investimentos',
+      actionType: 'navigate-investments',
     });
   }
 
@@ -121,6 +134,8 @@ function getRecommendations(income: number, expense: number, investment: number,
       title: 'Disciplina Financeira',
       message: 'Excelente disciplina financeira. Continue mantendo seus hábitos para seguir crescendo seu patrimônio.',
       type: 'success',
+      actionLabel: 'Ver Investimentos',
+      actionType: 'navigate-investments',
     });
   }
 
@@ -140,7 +155,6 @@ const recColorMap = {
   success: 'text-income bg-income/10',
 };
 
-/** Calculate scores for last 6 months for the evolution chart */
 function buildEvolutionData(allTransactions: Transaction[], selectedMonth: string) {
   const months: { key: string; label: string }[] = [];
   const [sy, sm] = selectedMonth.split('-').map(Number);
@@ -152,16 +166,12 @@ function buildEvolutionData(allTransactions: Transaction[], selectedMonth: strin
     months.push({ key, label });
   }
 
-  // Accumulate patrimony up to each month
-  const sortedMonths = months.map(m => m.key).sort();
-
   return months.map((m, idx) => {
     const monthTx = allTransactions.filter(t => t.date.startsWith(m.key));
     const inc = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
     const exp = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
     const inv = monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
 
-    // Simple patrimony: cumulative up to this month vs previous
     const upToThisMonth = allTransactions.filter(t => t.date.slice(0, 7) <= m.key);
     const pat = upToThisMonth.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
               - upToThisMonth.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
@@ -179,7 +189,8 @@ function buildEvolutionData(allTransactions: Transaction[], selectedMonth: strin
   });
 }
 
-export default function FinancialScore({ income, expense, investment, patrimonio, prevPatrimonio, allTransactions, selectedMonth }: FinancialScoreProps) {
+export default function FinancialScore({ income, expense, investment, patrimonio, prevPatrimonio, allTransactions, selectedMonth, onOpenInvestmentForm }: FinancialScoreProps) {
+  const navigate = useNavigate();
   const breakdown = useMemo(() => calculateScore(income, expense, investment, patrimonio, prevPatrimonio), [income, expense, investment, patrimonio, prevPatrimonio]);
   const label = getScoreLabel(breakdown.total);
   const insightMessage = getInsightMessage(breakdown.total);
@@ -191,7 +202,6 @@ export default function FinancialScore({ income, expense, investment, patrimonio
     return buildEvolutionData(allTransactions, selectedMonth);
   }, [allTransactions, selectedMonth]);
 
-  // Animated score
   const [animatedScore, setAnimatedScore] = useState(0);
   useEffect(() => {
     let frame: number;
@@ -214,6 +224,24 @@ export default function FinancialScore({ income, expense, investment, patrimonio
   const strokeDashoffset = circumference - (animatedScore / 100) * circumference;
 
   const hasEvolution = evolutionData.some(d => d.score > 0);
+
+  const handleAction = (actionType: Recommendation['actionType']) => {
+    switch (actionType) {
+      case 'navigate-expenses':
+        navigate('/gastos');
+        break;
+      case 'navigate-investments':
+        navigate('/investimentos');
+        break;
+      case 'open-investment':
+        if (onOpenInvestmentForm) {
+          onOpenInvestmentForm();
+        } else {
+          navigate('/investimentos');
+        }
+        break;
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -266,7 +294,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
         </div>
       </div>
 
-      {/* Financial Insights - Recommendation Cards */}
+      {/* Financial Insights - Recommendation Cards with Action Buttons */}
       {recommendations.length > 0 && (
         <div className="glass rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
@@ -283,9 +311,18 @@ export default function FinancialScore({ income, expense, investment, patrimonio
                   <div className={`p-2 rounded-lg shrink-0 ${bgColor}`}>
                     <Icon size={14} className={textColor} />
                   </div>
-                  <div className="space-y-0.5">
+                  <div className="flex-1 space-y-1.5">
                     <p className="text-xs font-semibold text-foreground">{rec.title}</p>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">{rec.message}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1 mt-1"
+                      onClick={() => handleAction(rec.actionType)}
+                    >
+                      {rec.actionLabel}
+                      <ArrowRight size={12} />
+                    </Button>
                   </div>
                 </div>
               );

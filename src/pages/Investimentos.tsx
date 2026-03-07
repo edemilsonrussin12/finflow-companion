@@ -11,10 +11,11 @@ import { Calculator, TrendingUp, Banknote, Percent, Briefcase } from 'lucide-rea
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
 import WealthProjection from '@/components/WealthProjection';
+import WealthSimulator from '@/components/WealthSimulator';
 import type { Transaction } from '@/types/finance';
 
 export default function Investimentos() {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const { transactions, sales, addTransaction, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -44,6 +45,13 @@ export default function Investimentos() {
     () => monthInvestments.reduce((s, t) => s + t.amount, 0),
     [monthInvestments]
   );
+
+  const currentPatrimony = useMemo(() => {
+    const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const allSalesRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
+    return allIncome + allSalesRevenue - allExpense;
+  }, [transactions, sales]);
 
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +116,10 @@ export default function Investimentos() {
         )}
       </div>
 
-      {/* Simulator */}
+      {/* Wealth Growth Simulator */}
+      <WealthSimulator currentPatrimony={currentPatrimony} />
+
+      {/* Investment Calculator */}
       <form onSubmit={handleCalculate} className="glass rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Calculator size={18} className="text-primary" />
