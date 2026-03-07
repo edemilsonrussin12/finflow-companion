@@ -1,6 +1,6 @@
 import { Transaction, Sale } from '@/types/finance';
 import { formatCurrency } from '@/lib/format';
-import { Goal } from '@/types/goals';
+import { FinancialGoal } from '@/types/goals';
 
 function escapeCSV(val: string): string {
   if (val.includes(',') || val.includes('"') || val.includes('\n')) {
