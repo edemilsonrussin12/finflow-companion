@@ -4,24 +4,30 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Cadastro() {
-  const { signup, isAuthenticated } = useAuth();
+  const { signup, isAuthenticated, loading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
+  if (loading) return null;
   if (isAuthenticated) return <Navigate to="/" replace />;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = signup(email, password, confirm);
+    setSubmitting(true);
+    const result = await signup(email, password, confirm);
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Erro', description: result.error });
+    } else {
+      toast({ title: 'Conta criada!', description: 'Verifique seu email para confirmar o cadastro.' });
     }
+    setSubmitting(false);
   };
 
   return (
@@ -48,7 +54,9 @@ export default function Cadastro() {
             <Label htmlFor="confirm">Confirmar senha</Label>
             <Input id="confirm" type="password" placeholder="Repita a senha" value={confirm} onChange={e => setConfirm(e.target.value)} className="mt-1" required />
           </div>
-          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold">Criar conta</Button>
+          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold" disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar conta'}
+          </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">

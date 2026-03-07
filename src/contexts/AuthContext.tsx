@@ -1,65 +1,72 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-
-interface AuthUser {
-  email: string;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
-  user: AuthUser | null;
+  user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  signup: (email: string, password: string, confirmPassword: string) => { success: boolean; error?: string };
-  logout: () => void;
-  resetPassword: (email: string) => { success: boolean; error?: string };
+  loading: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, confirmPassword: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    try {
-      const stored = localStorage.getItem('auth_user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('auth_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('auth_user');
-    }
-  }, [user]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-  const login = useCallback((email: string, password: string) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = useCallback(async (email: string, password: string) => {
     if (!email.trim() || !password.trim()) return { success: false, error: 'Preencha todos os campos' };
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { success: false, error: 'Email inválido' };
-    if (password.length < 6) return { success: false, error: 'Senha deve ter pelo menos 6 caracteres' };
-    setUser({ email: email.trim() });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) return { success: false, error: error.message };
     return { success: true };
   }, []);
 
-  const signup = useCallback((email: string, password: string, confirmPassword: string) => {
+  const signup = useCallback(async (email: string, password: string, confirmPassword: string) => {
     if (!email.trim() || !password.trim() || !confirmPassword.trim()) return { success: false, error: 'Preencha todos os campos' };
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { success: false, error: 'Email inválido' };
     if (password.length < 6) return { success: false, error: 'Senha deve ter pelo menos 6 caracteres' };
     if (password !== confirmPassword) return { success: false, error: 'As senhas não coincidem' };
-    setUser({ email: email.trim() });
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) return { success: false, error: error.message };
     return { success: true };
   }, []);
 
-  const logout = useCallback(() => setUser(null), []);
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
 
-  const resetPassword = useCallback((email: string) => {
+  const resetPassword = useCallback(async (email: string) => {
     if (!email.trim()) return { success: false, error: 'Informe seu email' };
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { success: false, error: 'Email inválido' };
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) return { success: false, error: error.message };
     return { success: true };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, resetPassword }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, signup, logout, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

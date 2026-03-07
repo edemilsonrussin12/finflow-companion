@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, CheckCircle } from 'lucide-react';
+import { KeyRound, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ResetSenha() {
@@ -12,15 +12,18 @@ export default function ResetSenha() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = resetPassword(email);
+    setSubmitting(true);
+    const result = await resetPassword(email);
     if (result.success) {
       setSent(true);
     } else {
       toast({ variant: 'destructive', title: 'Erro', description: result.error });
     }
+    setSubmitting(false);
   };
 
   return (
@@ -42,7 +45,9 @@ export default function ResetSenha() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" required />
             </div>
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold">Enviar redefinição</Button>
+            <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold" disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enviar redefinição'}
+            </Button>
           </form>
         )}
 

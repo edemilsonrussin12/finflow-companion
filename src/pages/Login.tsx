@@ -4,23 +4,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogIn } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
-  const { login, isAuthenticated } = useAuth();
+  const { isAuthenticated, loading, login } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
+  if (loading) return null;
   if (isAuthenticated) return <Navigate to="/" replace />;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = login(email, password);
+    setSubmitting(true);
+    const result = await login(email, password);
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Erro', description: result.error });
     }
+    setSubmitting(false);
   };
 
   return (
@@ -43,7 +47,9 @@ export default function Login() {
             <Label htmlFor="password">Senha</Label>
             <Input id="password" type="password" placeholder="••••••" value={password} onChange={e => setPassword(e.target.value)} className="mt-1" required />
           </div>
-          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold">Entrar</Button>
+          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold" disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Entrar'}
+          </Button>
         </form>
 
         <div className="text-center space-y-2 text-sm">
