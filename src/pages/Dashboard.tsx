@@ -17,6 +17,8 @@ import TransactionForm from '@/components/TransactionForm';
 import FinancialScore from '@/components/FinancialScore';
 import SpendingAnomalyRadar from '@/components/SpendingAnomalyRadar';
 import WealthProjection from '@/components/WealthProjection';
+import MoneyDistribution from '@/components/MoneyDistribution';
+import OnboardingFlow from '@/components/OnboardingFlow';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)',
