@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatCurrency, getCurrentMonth, getMonthLabel } from '@/lib/format';
+import { formatCurrency, getMonthLabel } from '@/lib/format';
 import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
 
@@ -18,14 +19,13 @@ const CHART_COLORS = [
 ];
 
 export default function Dashboard() {
-  const { transactions, sales, updateTransaction, deleteTransaction } = useFinance();
+  const { transactions, sales, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const { user, logout } = useAuth();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
-  const currentMonth = getCurrentMonth();
 
   const monthTx = useMemo(
-    () => transactions.filter(t => t.date.startsWith(currentMonth)),
-    [transactions, currentMonth]
+    () => transactions.filter(t => t.date.startsWith(selectedMonth)),
+    [transactions, selectedMonth]
   );
 
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
@@ -33,8 +33,8 @@ export default function Dashboard() {
   const balance = income - expense;
 
   const monthlyRevenue = useMemo(
-    () => sales.filter(s => s.date.startsWith(currentMonth)).reduce((sum, s) => sum + s.totalValue, 0),
-    [sales, currentMonth]
+    () => sales.filter(s => s.date.startsWith(selectedMonth)).reduce((sum, s) => sum + s.totalValue, 0),
+    [sales, selectedMonth]
   );
 
   const categoryData = useMemo(() => {
@@ -50,12 +50,23 @@ export default function Dashboard() {
   const topCategory = categoryData[0]?.name ?? '—';
   const recentTx = useMemo(() => [...monthTx].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5), [monthTx]);
 
+  const hasData = monthTx.length > 0 || monthlyRevenue > 0;
+
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">FinControl</p>
-          <h1 className="text-xl font-bold">{getMonthLabel(currentMonth)}</h1>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="text-xl font-bold border-none p-0 h-auto shadow-none focus:ring-0 w-auto gap-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableMonths.map(m => (
+                <SelectItem key={m} value={m}>{getMonthLabel(m)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <button
           onClick={logout}
@@ -66,6 +77,12 @@ export default function Dashboard() {
           <span className="hidden sm:inline">Sair</span>
         </button>
       </div>
+
+      {!hasData && (
+        <div className="glass rounded-2xl p-8 text-center">
+          <p className="text-muted-foreground text-sm">Nenhum dado para {getMonthLabel(selectedMonth)}</p>
+        </div>
+      )}
 
       {categoryData.length > 0 && (
         <div className="glass rounded-2xl p-5">
@@ -133,7 +150,7 @@ export default function Dashboard() {
         <p className="text-sm font-medium mb-3">Transações recentes</p>
         <div className="space-y-2">
           {recentTx.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma transação ainda</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma transação neste mês</p>
           )}
           {recentTx.map(t => (
             <TransactionItem key={t.id} transaction={t} onEdit={setEditingTx} onDelete={deleteTransaction} />

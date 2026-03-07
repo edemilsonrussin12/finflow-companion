@@ -1,19 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { formatCurrency, formatDateShort, getCurrentMonth, getMonthLabel } from '@/lib/format';
+import { formatCurrency, formatDateShort, getMonthLabel } from '@/lib/format';
 import { Sale } from '@/types/finance';
 import { Package, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SaleForm from '@/components/SaleForm';
 
 export default function Vendas() {
-  const { sales, deleteSale, updateSale } = useFinance();
+  const { sales, deleteSale, updateSale, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const currentMonth = getCurrentMonth();
 
   const monthSales = useMemo(
-    () => sales.filter(s => s.date.startsWith(currentMonth)),
-    [sales, currentMonth]
+    () => sales.filter(s => s.date.startsWith(selectedMonth)),
+    [sales, selectedMonth]
   );
 
   const revenue = useMemo(
@@ -36,7 +36,16 @@ export default function Vendas() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Vendas</p>
-          <h1 className="text-xl font-bold">{getMonthLabel(currentMonth)}</h1>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="text-xl font-bold border-none p-0 h-auto shadow-none focus:ring-0 w-auto gap-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableMonths.map(m => (
+                <SelectItem key={m} value={m}>{getMonthLabel(m)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <button
           onClick={() => { setEditingSale(null); setShowForm(true); }}
