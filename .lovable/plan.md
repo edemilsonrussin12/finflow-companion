@@ -1,128 +1,67 @@
 
 
-## Migration Plan: localStorage → Supabase Auth + Database
+## Plano de Estabilidade e Autenticação (Mock)
 
-### Overview
-Replace the mock auth and localStorage persistence with real Supabase authentication and database storage, keeping all existing UI intact.
+### 1. Corrigir build error em Login.tsx
+- Arquivo tem uma `}` extra na linha 10 causando o erro TS1128. Reescrever o arquivo corretamente.
 
-### Step 1: Enable Lovable Cloud
-Connect the project to Lovable Cloud (Supabase) to get the backend infrastructure. This provides the Supabase client, auth, and database.
+### 2. Corrigir problema de overlay/tela escurecendo
 
-### Step 2: Database Schema (Migrations)
+**TransactionForm.tsx e SaleForm.tsx** usam overlays manuais (`fixed inset-0 z-50`) em vez dos componentes Radix (Dialog/Sheet) que gerenciam cleanup automaticamente.
 
-**profiles table** — auto-created on signup via trigger:
-```sql
-create table public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  email text,
-  display_name text,
-  avatar_url text,
-  created_at timestamptz default now()
-);
-alter table public.profiles enable row level security;
-create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
+- Converter `TransactionForm` e `SaleForm` para usar o componente `Sheet` (bottom sheet) ou `Dialog`, que automaticamente remove overlay e restaura `overflow` do body ao fechar.
+- Adicionar um efeito de cleanup global em `AppLayout` que, ao trocar de rota, fecha qualquer estado de formulário aberto.
+- Em `index.css`, substituir `backdrop-blur-xl` no utilitário `.glass` por uma alternativa mais segura para Android (opacidade sólida como fallback via `@supports`).
+- Usar `100dvh` em vez de `100vh` para altura em containers mobile.
 
--- Auto-create profile on signup
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email);
-  return new;
-end;
-$$;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
+### 3. Páginas de autenticação (mock com localStorage)
+
+Criar um `AuthContext` simples que:
+- Armazena estado `isAuthenticated` e `user` (email) em `localStorage`
+- Fornece `login(email, password)`, `signup(email, password)`, `logout()`, `resetPassword(email)`
+- Login/signup apenas validam campos e salvam no localStorage (sem backend)
+
+**Páginas:**
+- **`src/pages/Login.tsx`** — campos email/senha, botão Entrar, links para Cadastro e Esqueci senha
+- **`src/pages/Cadastro.tsx`** — email, senha, confirmar senha, validação de match, botão Criar conta
+- **`src/pages/ResetSenha.tsx`** — campo email, botão enviar, mensagem de confirmação
+
+**Estilo:** mesmo design dark/glass do app, mobile-first, consistente com o resto.
+
+### 4. Rotas e proteção
+
+- Criar componente `ProtectedRoute` que verifica `isAuthenticated` do `AuthContext` e redireciona para `/login`
+- Atualizar `App.tsx`:
+  - Rotas públicas: `/login`, `/cadastro`, `/reset-senha`
+  - Rotas protegidas: `/`, `/gastos`, `/vendas`, `/investimentos`
+  - Redirecionar `/login` → `/` se já autenticado
+- Adicionar botão de logout no Dashboard (header)
+
+### 5. Consistência financeira e UX mobile
+
+- Verificar que `formatCurrency` já usa `pt-BR` com `BRL` (já está correto)
+- Garantir `max-w-full overflow-x-hidden` no container principal
+- Nos gráficos Recharts, usar `ResponsiveContainer width="100%"` (já feito) e limitar `outerRadius` proporcionalmente
+- Adicionar validação visual (toast de erro) quando campos obrigatórios estão vazios no `TransactionForm` e `SaleForm`
+
+### Estrutura de arquivos
+
+```text
+src/
+├── contexts/
+│   ├── FinanceContext.tsx  (sem alteração)
+│   └── AuthContext.tsx     (novo - mock auth)
+├── components/
+│   ├── AppLayout.tsx       (editar - cleanup de rota)
+│   ├── ProtectedRoute.tsx  (novo)
+│   ├── TransactionForm.tsx (editar - usar Dialog/Sheet)
+│   └── SaleForm.tsx        (editar - usar Dialog/Sheet)
+├── pages/
+│   ├── Login.tsx           (reescrever)
+│   ├── Cadastro.tsx        (novo)
+│   ├── ResetSenha.tsx      (novo)
+│   └── Dashboard.tsx       (editar - botão logout)
+├── App.tsx                 (editar - rotas)
+└── index.css               (editar - dvh, fallback backdrop)
 ```
-
-**transactions table**:
-```sql
-create table public.transactions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade not null,
-  type text not null check (type in ('income', 'expense')),
-  amount numeric not null check (amount > 0),
-  date date not null,
-  category text not null,
-  description text not null,
-  is_recurring boolean default false,
-  recurrence_frequency text check (recurrence_frequency in ('weekly', 'monthly', 'yearly')),
-  recurrence_paused boolean default false,
-  recurrence_group_id text,
-  created_at timestamptz default now()
-);
-alter table public.transactions enable row level security;
-create policy "Users CRUD own transactions" on public.transactions for all using (auth.uid() = user_id);
-```
-
-**sales table**:
-```sql
-create table public.sales (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade not null,
-  product text not null,
-  quantity integer not null check (quantity > 0),
-  total_value numeric not null check (total_value > 0),
-  date date not null,
-  created_at timestamptz default now()
-);
-alter table public.sales enable row level security;
-create policy "Users CRUD own sales" on public.sales for all using (auth.uid() = user_id);
-```
-
-### Step 3: Replace AuthContext
-Rewrite `src/contexts/AuthContext.tsx` to use Supabase Auth:
-- `supabase.auth.signUp()`, `signInWithPassword()`, `signOut()`, `resetPasswordForEmail()`
-- `onAuthStateChange` listener for session state
-- Expose `user`, `isAuthenticated`, `loading` state
-- Keep same interface shape so consumer components need minimal changes
-
-### Step 4: Create `/reset-password` page
-New page at `src/pages/ResetPassword.tsx` that:
-- Detects `type=recovery` in URL hash
-- Shows new password form
-- Calls `supabase.auth.updateUser({ password })`
-- Add route in App.tsx
-
-### Step 5: Update Auth Pages
-- **Login.tsx**: Replace `login()` call with `supabase.auth.signInWithPassword()`
-- **Cadastro.tsx**: Replace `signup()` call with `supabase.auth.signUp()`
-- **ResetSenha.tsx**: Replace mock with `supabase.auth.resetPasswordForEmail()`
-- All pages keep their current UI, just swap the auth calls
-
-### Step 6: Replace FinanceContext
-Rewrite `src/contexts/FinanceContext.tsx`:
-- Remove localStorage, use Supabase queries
-- Fetch transactions/sales with `supabase.from('transactions').select()` filtered by user
-- CRUD operations use `insert`, `update`, `delete` on Supabase
-- Use React Query or `useEffect` for data fetching with loading states
-- Map between snake_case DB columns and camelCase TypeScript types
-- Keep the same context interface (`transactions`, `addTransaction`, etc.)
-
-### Step 7: Update ProtectedRoute
-- Add loading state handling (show spinner while auth session loads)
-- Keep redirect to `/login` when not authenticated
-
-### Step 8: Update App.tsx
-- Add `/reset-password` as public route
-- Wrap with Supabase client provider (from `src/integrations/supabase`)
-
-### Files Changed
-- `src/contexts/AuthContext.tsx` — full rewrite (Supabase auth)
-- `src/contexts/FinanceContext.tsx` — full rewrite (Supabase DB)
-- `src/pages/Login.tsx` — swap auth calls
-- `src/pages/Cadastro.tsx` — swap auth calls
-- `src/pages/ResetSenha.tsx` — swap to real password reset
-- `src/pages/ResetPassword.tsx` — new (set new password)
-- `src/components/ProtectedRoute.tsx` — add loading state
-- `src/App.tsx` — add reset-password route
-- `src/integrations/supabase/` — auto-generated client (from Lovable Cloud)
-
-### Files NOT Changed
-All UI components (`Dashboard.tsx`, `Gastos.tsx`, `Vendas.tsx`, `Investimentos.tsx`, `TransactionForm.tsx`, `SaleForm.tsx`, `TransactionItem.tsx`, `BottomNav.tsx`, `AppLayout.tsx`, `FloatingActionButton.tsx`) remain untouched — they consume the same context interface.
-
-### Prerequisites
-Lovable Cloud must be enabled on the project before implementation begins.
 
