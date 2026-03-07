@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
 import FloatingActionButton from '@/components/FloatingActionButton';
+import InstallPWA from '@/components/InstallPWA';
 import TransactionForm from '@/components/TransactionForm';
 import { useFinance } from '@/contexts/FinanceContext';
 
@@ -18,6 +19,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-background overflow-x-hidden">
+      <InstallPWA />
       <Outlet />
       {showFab && <FloatingActionButton onClick={() => setShowForm(true)} />}
       <BottomNav />
