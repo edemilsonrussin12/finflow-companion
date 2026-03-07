@@ -29,8 +29,9 @@ export default function Patrimonio() {
       const monthTx = transactions.filter(t => t.date.startsWith(month));
       const income = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
       const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const invest = monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
       const salesRevenue = sales.filter(s => s.date.startsWith(month)).reduce((s, v) => s + v.totalValue, 0);
-      const monthBalance = income + salesRevenue - expense;
+      const monthBalance = income + salesRevenue - expense - invest;
       accumulated += monthBalance;
 
       return {

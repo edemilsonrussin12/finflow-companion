@@ -1,13 +1,21 @@
 import { useState, useMemo } from 'react';
 import { calculateInvestment } from '@/lib/investment';
-import { formatCurrency } from '@/lib/format';
+import { useFinance } from '@/contexts/FinanceContext';
+import { formatCurrency, getMonthLabel } from '@/lib/format';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, TrendingUp, Banknote, Percent } from 'lucide-react';
+import { Calculator, TrendingUp, Banknote, Percent, Briefcase } from 'lucide-react';
+import TransactionItem from '@/components/TransactionItem';
+import TransactionForm from '@/components/TransactionForm';
+import type { Transaction } from '@/types/finance';
 
 export default function Investimentos() {
+  const { transactions, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+
   const [initialAmount, setInitialAmount] = useState('1000');
   const [monthlyContribution, setMonthlyContribution] = useState('500');
   const [monthlyRate, setMonthlyRate] = useState('1');
@@ -24,6 +32,17 @@ export default function Investimentos() {
     return calculateInvestment({ initialAmount: ia, monthlyContribution: mc, monthlyRate: mr, months: m });
   }, [calculated, initialAmount, monthlyContribution, monthlyRate, months]);
 
+  const monthInvestments = useMemo(
+    () => transactions.filter(t => t.type === 'investment' && t.date.startsWith(selectedMonth))
+      .sort((a, b) => b.date.localeCompare(a.date)),
+    [transactions, selectedMonth]
+  );
+
+  const totalInvested = useMemo(
+    () => monthInvestments.reduce((s, t) => s + t.amount, 0),
+    [monthInvestments]
+  );
+
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault();
     setCalculated(true);
@@ -31,11 +50,52 @@ export default function Investimentos() {
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
-      <div>
-        <p className="text-sm text-muted-foreground">Simulador</p>
-        <h1 className="text-xl font-bold">Investimentos</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">FinControl</p>
+          <h1 className="text-xl font-bold">Investimentos</h1>
+        </div>
+        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <SelectTrigger className="w-auto gap-2 border-border/50">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {availableMonths.map(m => (
+              <SelectItem key={m} value={m}>{getMonthLabel(m)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
+      {/* My Investments section */}
+      <div className="glass rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Briefcase size={18} className="text-primary" />
+            <p className="text-sm font-medium">Meus Investimentos</p>
+          </div>
+          <p className="text-sm font-bold text-primary tabular-nums">{formatCurrency(totalInvested)}</p>
+        </div>
+
+        {monthInvestments.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Nenhum investimento em {getMonthLabel(selectedMonth)}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {monthInvestments.map(t => (
+              <TransactionItem
+                key={t.id}
+                transaction={t}
+                onEdit={setEditingTx}
+                onDelete={deleteTransaction}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Simulator */}
       <form onSubmit={handleCalculate} className="glass rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Calculator size={18} className="text-primary" />
@@ -70,7 +130,6 @@ export default function Investimentos() {
 
       {result && (
         <>
-          {/* Results cards */}
           <div className="grid grid-cols-3 gap-3">
             <div className="glass rounded-xl p-3 text-center">
               <TrendingUp size={16} className="mx-auto text-primary mb-1" />
@@ -89,7 +148,6 @@ export default function Investimentos() {
             </div>
           </div>
 
-          {/* Growth chart */}
           <div className="glass rounded-2xl p-4">
             <p className="text-sm font-medium mb-3">Crescimento do investimento</p>
             <div className="h-52">
@@ -120,6 +178,14 @@ export default function Investimentos() {
             </div>
           </div>
         </>
+      )}
+
+      {editingTx && (
+        <TransactionForm
+          initial={editingTx}
+          onSubmit={t => updateTransaction({ ...t, id: editingTx.id })}
+          onClose={() => setEditingTx(null)}
+        />
       )}
     </div>
   );
