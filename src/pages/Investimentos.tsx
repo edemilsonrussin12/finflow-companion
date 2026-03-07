@@ -13,8 +13,9 @@ import TransactionForm from '@/components/TransactionForm';
 import type { Transaction } from '@/types/finance';
 
 export default function Investimentos() {
-  const { transactions, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const [initialAmount, setInitialAmount] = useState('1000');
   const [monthlyContribution, setMonthlyContribution] = useState('500');
@@ -78,9 +79,20 @@ export default function Investimentos() {
         </div>
 
         {monthInvestments.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhum investimento em {getMonthLabel(selectedMonth)}
-          </p>
+          <div className="text-center py-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Nenhum investimento em {getMonthLabel(selectedMonth)}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowForm(true)}
+              className="text-primary border-primary/30 hover:bg-primary/10"
+            >
+              <TrendingUp size={14} className="mr-1.5" />
+              Adicionar Investimento
+            </Button>
+          </div>
         ) : (
           <div className="space-y-2">
             {monthInvestments.map(t => (
@@ -185,6 +197,14 @@ export default function Investimentos() {
           initial={editingTx}
           onSubmit={t => updateTransaction({ ...t, id: editingTx.id })}
           onClose={() => setEditingTx(null)}
+        />
+      )}
+
+      {showForm && (
+        <TransactionForm
+          initialType="investment"
+          onSubmit={addTransaction}
+          onClose={() => setShowForm(false)}
         />
       )}
     </div>
