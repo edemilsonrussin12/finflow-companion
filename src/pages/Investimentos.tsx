@@ -10,6 +10,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Calculator, TrendingUp, Banknote, Percent, Briefcase } from 'lucide-react';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
+import WealthProjection from '@/components/WealthProjection';
 import type { Transaction } from '@/types/finance';
 
 export default function Investimentos() {
@@ -191,6 +192,9 @@ export default function Investimentos() {
           </div>
         </>
       )}
+
+      {/* Wealth Projection */}
+      <WealthProjection transactions={transactions} />
 
       {editingTx && (
         <TransactionForm
