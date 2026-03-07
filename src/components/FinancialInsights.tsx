@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { formatCurrency } from '@/lib/format';
+import { getCategoryById } from '@/lib/categories';
 import { Lightbulb, TrendingUp, TrendingDown, PiggyBank, Target, ShoppingBag } from 'lucide-react';
 
 interface Insight {
@@ -17,14 +18,12 @@ export default function FinancialInsights() {
   const insights = useMemo<Insight[]>(() => {
     const result: Insight[] = [];
 
-    // Current month data
     const monthTx = transactions.filter(t => t.date.startsWith(selectedMonth));
     const income = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
     const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
     const revenue = sales.filter(s => s.date.startsWith(selectedMonth)).reduce((s, v) => s + v.totalValue, 0);
     const totalIncome = income + revenue;
 
-    // Previous month
     const [y, m] = selectedMonth.split('-').map(Number);
     const prevDate = new Date(y, m - 2, 1);
     const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
@@ -37,7 +36,6 @@ export default function FinancialInsights() {
     const hasCurrent = monthTx.length > 0 || revenue > 0;
     const hasPrev = prevTx.length > 0 || prevRevenue > 0;
 
-    // 1. Savings insight
     if (totalIncome > 0) {
       const saved = totalIncome - expense;
       const savingsRate = (saved / totalIncome) * 100;
@@ -56,7 +54,6 @@ export default function FinancialInsights() {
       }
     }
 
-    // 2. Expense comparison with previous month
     if (hasCurrent && hasPrev && prevExpense > 0) {
       const diff = expense - prevExpense;
       const pct = ((diff / prevExpense) * 100).toFixed(0);
@@ -75,7 +72,6 @@ export default function FinancialInsights() {
       }
     }
 
-    // 3. Income comparison
     if (hasCurrent && hasPrev && prevTotalIncome > 0) {
       const diff = totalIncome - prevTotalIncome;
       const pct = ((diff / prevTotalIncome) * 100).toFixed(0);
@@ -94,11 +90,13 @@ export default function FinancialInsights() {
       }
     }
 
-    // 4. Top category insight
+    // Top expense category - using parent category names
     if (expense > 0) {
       const catMap = new Map<string, number>();
       monthTx.filter(t => t.type === 'expense').forEach(t => {
-        catMap.set(t.category, (catMap.get(t.category) ?? 0) + t.amount);
+        const cat = getCategoryById(t.category);
+        const displayName = cat?.name ?? t.category;
+        catMap.set(displayName, (catMap.get(displayName) ?? 0) + t.amount);
       });
       const sorted = Array.from(catMap.entries()).sort((a, b) => b[1] - a[1]);
       if (sorted.length > 0) {
@@ -112,7 +110,6 @@ export default function FinancialInsights() {
       }
     }
 
-    // 5. Goal progress insight
     const activeGoals = goals.filter(g => g.status === 'active');
     if (activeGoals.length > 0) {
       const closest = activeGoals.reduce((best, g) => {

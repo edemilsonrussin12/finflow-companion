@@ -3,7 +3,8 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
-import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut, Target, LineChart } from 'lucide-react';
+import { getCategoryById } from '@/lib/categories';
+import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, TrendingUp, ShoppingBag, LogOut, Target, LineChart } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,17 +35,21 @@ export default function Dashboard() {
 
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const expense = useMemo(() => monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [monthTx]);
-  const balance = income - expense;
+  const investment = useMemo(() => monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0), [monthTx]);
+  const balance = income - expense - investment;
 
   const monthlyRevenue = useMemo(
     () => sales.filter(s => s.date.startsWith(selectedMonth)).reduce((sum, s) => sum + s.totalValue, 0),
     [sales, selectedMonth]
   );
 
+  // Group expenses by PARENT category for charts
   const categoryData = useMemo(() => {
     const map = new Map<string, number>();
     monthTx.filter(t => t.type === 'expense').forEach(t => {
-      map.set(t.category, (map.get(t.category) ?? 0) + t.amount);
+      const cat = getCategoryById(t.category);
+      const displayName = cat?.name ?? t.category;
+      map.set(displayName, (map.get(displayName) ?? 0) + t.amount);
     });
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
@@ -64,19 +69,13 @@ export default function Dashboard() {
     });
   }, [activeGoals]);
 
-  // Net worth calculation
   const netWorthData = useMemo(() => {
     const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
     const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const allInvestment = transactions.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
     const allSalesRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
     const netWorth = allIncome + allSalesRevenue - allExpense;
 
-    // Previous month net worth
-    const prevMonth = (() => {
-      const [y, m] = selectedMonth.split('-').map(Number);
-      const d = new Date(y, m - 2, 1);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    })();
     const prevIncome = transactions.filter(t => t.type === 'income' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
       - transactions.filter(t => t.type === 'income' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
     const prevExpense = transactions.filter(t => t.type === 'expense' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
@@ -87,7 +86,7 @@ export default function Dashboard() {
     const growth = netWorth - prevNetWorth;
     const pct = prevNetWorth !== 0 ? (growth / Math.abs(prevNetWorth)) * 100 : (netWorth !== 0 ? 100 : 0);
 
-    return { netWorth, growth, pct };
+    return { netWorth, growth, pct, investment: allInvestment };
   }, [transactions, sales, selectedMonth]);
 
   const hasData = monthTx.length > 0 || monthlyRevenue > 0;
@@ -166,23 +165,23 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3">
         <div className="glass rounded-2xl p-4 space-y-2">
           <div className="p-2.5 rounded-xl bg-income/10 w-fit"><ArrowUpRight size={20} className="text-income" /></div>
-          <p className="text-xs text-muted-foreground">Entradas</p>
+          <p className="text-xs text-muted-foreground">Receitas</p>
           <p className="text-lg font-bold text-income tabular-nums">{formatCurrency(income)}</p>
         </div>
         <div className="glass rounded-2xl p-4 space-y-2">
           <div className="p-2.5 rounded-xl bg-expense/10 w-fit"><ArrowDownLeft size={20} className="text-expense" /></div>
-          <p className="text-xs text-muted-foreground">Saídas</p>
+          <p className="text-xs text-muted-foreground">Despesas</p>
           <p className="text-lg font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
+        </div>
+        <div className="glass rounded-2xl p-4 space-y-2">
+          <div className="p-2.5 rounded-xl bg-primary/10 w-fit"><TrendingUp size={20} className="text-primary" /></div>
+          <p className="text-xs text-muted-foreground">Investimentos</p>
+          <p className="text-lg font-bold text-primary tabular-nums">{formatCurrency(investment)}</p>
         </div>
         <div className="glass rounded-2xl p-4 space-y-2">
           <div className="p-2.5 rounded-xl bg-primary/10 w-fit"><ShoppingBag size={20} className="text-primary" /></div>
           <p className="text-xs text-muted-foreground">Faturamento</p>
           <p className="text-lg font-bold text-primary tabular-nums">{formatCurrency(monthlyRevenue)}</p>
-        </div>
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-expense/10 w-fit"><TrendingDown size={20} className="text-expense" /></div>
-          <p className="text-xs text-muted-foreground">Maior gasto</p>
-          <p className="text-base font-bold">{topCategory}</p>
         </div>
       </div>
 

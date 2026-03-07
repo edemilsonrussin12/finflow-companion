@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
+import { getCategoryById, getCategoryDisplayLabel } from '@/lib/categories';
 import { exportTransactionsCSV, exportSalesCSV, exportReportCSV, exportReportExcel } from '@/lib/export';
 import {
   FileText, Download, ArrowUpRight, ArrowDownLeft, Wallet,
-  PiggyBank, ShoppingBag, Target,
+  PiggyBank, ShoppingBag, Target, TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,15 +27,19 @@ export default function Relatorios() {
 
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const expense = useMemo(() => monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [monthTx]);
+  const investment = useMemo(() => monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const revenue = useMemo(() => monthSales.reduce((s, v) => s + v.totalValue, 0), [monthSales]);
   const totalIncome = income + revenue;
-  const balance = totalIncome - expense;
-  const savingsRate = totalIncome > 0 ? ((totalIncome - expense) / totalIncome) * 100 : 0;
+  const balance = totalIncome - expense - investment;
+  const savingsRate = totalIncome > 0 ? ((totalIncome - expense - investment) / totalIncome) * 100 : 0;
 
+  // Group by parent category for charts
   const categoryData = useMemo(() => {
     const map = new Map<string, number>();
     monthTx.filter(t => t.type === 'expense').forEach(t => {
-      map.set(t.category, (map.get(t.category) ?? 0) + t.amount);
+      const cat = getCategoryById(t.category);
+      const displayName = cat?.name ?? t.category;
+      map.set(displayName, (map.get(displayName) ?? 0) + t.amount);
     });
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
@@ -100,6 +105,13 @@ export default function Relatorios() {
                   <span className="text-xs text-muted-foreground">Despesas</span>
                 </div>
                 <p className="text-sm font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <TrendingUp size={14} className="text-primary" />
+                  <span className="text-xs text-muted-foreground">Investimentos</span>
+                </div>
+                <p className="text-sm font-bold text-primary tabular-nums">{formatCurrency(investment)}</p>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5">
