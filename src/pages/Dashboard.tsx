@@ -159,6 +159,8 @@ export default function Dashboard() {
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+      <OnboardingFlow />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -190,10 +192,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ───── SECTION 1: Financial Summary ───── */}
       {hasData && (
         <>
-          {/* Main balance card */}
+          {/* ───── 1: Financial Summary ───── */}
           <div className="glass rounded-2xl p-5 space-y-1">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -207,7 +208,6 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Metric cards grid */}
           <div className="grid grid-cols-2 gap-3">
             <div className="glass rounded-2xl p-4 space-y-1.5">
               <div className="flex items-center justify-between">
@@ -256,15 +256,19 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Financial Score */}
+          {/* ───── 2: Financial Score ───── */}
           {income > 0 && (
             <FinancialScore income={income} expense={expense} investment={investment} />
           )}
 
-          {/* Spending Anomaly Radar */}
+          {/* ───── 3: Money Distribution ───── */}
+          {income > 0 && (
+            <MoneyDistribution income={income} expense={expense} investment={investment} />
+          )}
+
+          {/* ───── 4: Financial Insights (Anomaly Radar + Status) ───── */}
           <SpendingAnomalyRadar currentMonthTx={monthTx} previousMonthTx={prevMonthTx} />
 
-          {/* Financial status indicator */}
           {financialStatus && (
             <div className={`glass rounded-2xl p-4 flex items-start gap-3 ${
               financialStatus.type === 'positive' ? 'border-income/20' :
@@ -280,105 +284,103 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground leading-relaxed">{financialStatus.message}</p>
             </div>
           )}
-        </>
-      )}
 
-      {/* ───── SECTION 2: Charts ───── */}
-      {categoryData.length > 0 && (
-        <div className="glass rounded-2xl p-5">
-          <p className="text-sm font-medium mb-3">Despesas por categoria</p>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={3} dataKey="value">
-                  {categoryData.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{ background: 'hsl(220, 18%, 12%)', border: 'none', borderRadius: '8px', color: 'hsl(210, 20%, 95%)' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {categoryData.map((d, i) => (
-              <span key={d.name} className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                {d.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ───── SECTION 3: Insights ───── */}
-      {hasData && (
-        <div className="glass rounded-2xl p-5 space-y-3">
-          <p className="text-sm font-medium">Resumo rápido</p>
-          <div className="space-y-2.5">
-            {topCategory && (
-              <div className="flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-expense/10 shrink-0"><ShoppingBag size={14} className="text-expense" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Maior gasto</p>
-                  <p className="text-sm font-medium">{topCategory.name} <span className="text-muted-foreground font-normal">({formatCurrency(topCategory.value)})</span></p>
-                </div>
+          {/* ───── 5: Charts ───── */}
+          {categoryData.length > 0 && (
+            <div className="glass rounded-2xl p-5">
+              <p className="text-sm font-medium mb-3">Despesas por categoria</p>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={3} dataKey="value">
+                      {categoryData.map((_, i) => (
+                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            )}
-            {investment > 0 && (
-              <div className="flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-primary/10 shrink-0"><TrendingUp size={14} className="text-primary" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Investimento do mês</p>
-                  <p className="text-sm font-medium">{formatCurrency(investment)}</p>
-                </div>
-              </div>
-            )}
-            {closestGoal && (
-              <div className="flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-primary/10 shrink-0"><Target size={14} className="text-primary" /></div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">Meta mais próxima</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">{closestGoal.title}</p>
-                    <span className="text-xs text-muted-foreground">({Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))}%)</span>
-                  </div>
-                  <Progress value={Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))} className="h-1.5 mt-1.5" />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Goals section */}
-      {activeGoals.length > 0 && (
-        <div className="glass rounded-2xl p-5 space-y-3">
-          <div className="flex items-center gap-2">
-            <Target size={18} className="text-primary" />
-            <p className="text-sm font-medium">Metas financeiras</p>
-            <span className="ml-auto text-xs text-muted-foreground">{activeGoals.length} ativa{activeGoals.length > 1 ? 's' : ''}</span>
-          </div>
-          {closestGoal && (
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs">
-                <span className="font-medium">{closestGoal.title}</span>
-                <span className="text-muted-foreground">{Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))}%</span>
-              </div>
-              <Progress value={Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))} className="h-2" />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{formatCurrency(closestGoal.currentAmount)}</span>
-                <span>{formatCurrency(closestGoal.targetAmount)}</span>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {categoryData.map((d, i) => (
+                  <span key={d.name} className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span className="w-2 h-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    {d.name}
+                  </span>
+                ))}
               </div>
             </div>
           )}
-        </div>
-      )}
 
-      {/* Future Wealth Projection */}
-      <WealthProjection transactions={transactions} />
+          {/* ───── 6: Quick Insights ───── */}
+          <div className="glass rounded-2xl p-5 space-y-3">
+            <p className="text-sm font-medium">Resumo rápido</p>
+            <div className="space-y-2.5">
+              {topCategory && (
+                <div className="flex items-start gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-expense/10 shrink-0"><ShoppingBag size={14} className="text-expense" /></div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Maior gasto</p>
+                    <p className="text-sm font-medium">{topCategory.name} <span className="text-muted-foreground font-normal">({formatCurrency(topCategory.value)})</span></p>
+                  </div>
+                </div>
+              )}
+              {investment > 0 && (
+                <div className="flex items-start gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-primary/10 shrink-0"><TrendingUp size={14} className="text-primary" /></div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Investimento do mês</p>
+                    <p className="text-sm font-medium">{formatCurrency(investment)}</p>
+                  </div>
+                </div>
+              )}
+              {closestGoal && (
+                <div className="flex items-start gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-primary/10 shrink-0"><Target size={14} className="text-primary" /></div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">Meta mais próxima</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{closestGoal.title}</p>
+                      <span className="text-xs text-muted-foreground">({Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))}%)</span>
+                    </div>
+                    <Progress value={Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))} className="h-1.5 mt-1.5" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ───── 7: Goals Progress ───── */}
+          {activeGoals.length > 0 && (
+            <div className="glass rounded-2xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <Target size={18} className="text-primary" />
+                <p className="text-sm font-medium">Metas financeiras</p>
+                <span className="ml-auto text-xs text-muted-foreground">{activeGoals.length} ativa{activeGoals.length > 1 ? 's' : ''}</span>
+              </div>
+              {closestGoal && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-medium">{closestGoal.title}</span>
+                    <span className="text-muted-foreground">{Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))}%</span>
+                  </div>
+                  <Progress value={Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{formatCurrency(closestGoal.currentAmount)}</span>
+                    <span>{formatCurrency(closestGoal.targetAmount)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ───── 8: Wealth Projection ───── */}
+          <WealthProjection transactions={transactions} />
+        </>
+      )}
 
       {/* Recent transactions */}
       <div>
