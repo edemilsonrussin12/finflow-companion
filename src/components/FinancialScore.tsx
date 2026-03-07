@@ -68,14 +68,77 @@ function getInsightMessage(score: number): string {
   return 'Seus hábitos financeiros precisam de melhoria.';
 }
 
-function getDetailedInsights(income: number, expense: number, investment: number): string[] {
-  const insights: string[] = [];
-  if (income <= 0) return insights;
-  if (expense / income > 0.80) insights.push('Seus gastos estão altos. Reduzi-los vai melhorar seu score.');
-  if (investment / income < 0.05) insights.push('Sua taxa de investimento está baixa. Tente investir ao menos 10% da sua renda.');
-  if (income - expense < 0) insights.push('Você está gastando mais do que ganha.');
-  return insights;
+interface Recommendation {
+  icon: 'warning' | 'danger' | 'success' | 'trophy';
+  title: string;
+  message: string;
+  type: 'warning' | 'danger' | 'success';
 }
+
+function getRecommendations(income: number, expense: number, investment: number, score: number): Recommendation[] {
+  const recs: Recommendation[] = [];
+  if (income <= 0) return recs;
+
+  if (expense / income > 0.80) {
+    recs.push({
+      icon: 'warning',
+      title: 'Alerta de Gastos',
+      message: 'Seus gastos estão consumindo a maior parte da sua renda. Reduzi-los vai melhorar seu score de saúde financeira.',
+      type: 'warning',
+    });
+  }
+
+  if (investment / income < 0.05) {
+    recs.push({
+      icon: 'warning',
+      title: 'Investimentos Baixos',
+      message: 'Sua taxa de investimento está baixa. Tente investir ao menos 10% da sua renda para aumentar seu patrimônio.',
+      type: 'warning',
+    });
+  }
+
+  if (income - expense < 0) {
+    recs.push({
+      icon: 'danger',
+      title: 'Saldo Negativo',
+      message: 'Você está gastando mais do que ganha. Ajustar seus gastos é essencial.',
+      type: 'danger',
+    });
+  }
+
+  if (investment / income >= 0.10) {
+    recs.push({
+      icon: 'success',
+      title: 'Bom Investidor',
+      message: 'Ótimo trabalho! Você está investindo uma proporção saudável da sua renda.',
+      type: 'success',
+    });
+  }
+
+  if (score > 80) {
+    recs.push({
+      icon: 'trophy',
+      title: 'Disciplina Financeira',
+      message: 'Excelente disciplina financeira. Continue mantendo seus hábitos para seguir crescendo seu patrimônio.',
+      type: 'success',
+    });
+  }
+
+  return recs;
+}
+
+const recIconMap = {
+  warning: AlertTriangle,
+  danger: AlertTriangle,
+  success: TrendingUp,
+  trophy: Award,
+};
+
+const recColorMap = {
+  warning: 'text-[hsl(var(--score-attention))] bg-[hsl(var(--score-attention))]/10',
+  danger: 'text-expense bg-expense/10',
+  success: 'text-income bg-income/10',
+};
 
 /** Calculate scores for last 6 months for the evolution chart */
 function buildEvolutionData(allTransactions: Transaction[], selectedMonth: string) {
