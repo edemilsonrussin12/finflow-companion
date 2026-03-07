@@ -4,13 +4,16 @@ import { useGoals } from '@/contexts/GoalsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
 import { getCategoryById } from '@/lib/categories';
-import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, TrendingUp, ShoppingBag, LogOut, Target, LineChart } from 'lucide-react';
+import {
+  ArrowUpRight, ArrowDownLeft, Wallet, TrendingUp, TrendingDown,
+  ShoppingBag, LogOut, Target, LineChart, PiggyBank, AlertTriangle,
+  CheckCircle2, ChevronUp, ChevronDown, Minus
+} from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
-import FinancialInsights from '@/components/FinancialInsights';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)',
@@ -22,28 +25,88 @@ const CHART_COLORS = [
   'hsl(60, 70%, 50%)',
 ];
 
+function ComparisonBadge({ current, previous, format = 'pct' }: { current: number; previous: number; format?: 'pct' | 'currency' }) {
+  if (previous === 0 && current === 0) return null;
+  const diff = current - previous;
+  if (diff === 0) return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground px-1.5 py-0.5 rounded-md bg-muted">
+      <Minus size={10} /> 0%
+    </span>
+  );
+  const isUp = diff > 0;
+  const pct = previous !== 0 ? Math.abs((diff / previous) * 100) : 100;
+
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md ${isUp ? 'text-income bg-income/10' : 'text-expense bg-expense/10'}`}>
+      {isUp ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+      {format === 'currency' ? `${isUp ? '+' : '-'}${formatCurrency(Math.abs(diff))}` : `${isUp ? '+' : '-'}${pct.toFixed(0)}%`}
+    </span>
+  );
+}
+
+function ExpenseComparisonBadge({ current, previous }: { current: number; previous: number }) {
+  if (previous === 0 && current === 0) return null;
+  const diff = current - previous;
+  if (diff === 0) return (
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground px-1.5 py-0.5 rounded-md bg-muted">
+      <Minus size={10} /> 0%
+    </span>
+  );
+  const isUp = diff > 0;
+  const pct = previous !== 0 ? Math.abs((diff / previous) * 100) : 100;
+  // For expenses, UP is bad (red), DOWN is good (green)
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md ${isUp ? 'text-expense bg-expense/10' : 'text-income bg-income/10'}`}>
+      {isUp ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+      {`${isUp ? '+' : '-'}${pct.toFixed(0)}%`}
+    </span>
+  );
+}
+
 export default function Dashboard() {
   const { transactions, sales, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const { goals } = useGoals();
   const { user, logout } = useAuth();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
 
-  const monthTx = useMemo(
-    () => transactions.filter(t => t.date.startsWith(selectedMonth)),
-    [transactions, selectedMonth]
-  );
-
+  // Current month data
+  const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const expense = useMemo(() => monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const investment = useMemo(() => monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0), [monthTx]);
-  const balance = income - expense - investment;
+  const saldoLivre = income - expense - investment;
+  const monthlyRevenue = useMemo(() => sales.filter(s => s.date.startsWith(selectedMonth)).reduce((sum, s) => sum + s.totalValue, 0), [sales, selectedMonth]);
 
-  const monthlyRevenue = useMemo(
-    () => sales.filter(s => s.date.startsWith(selectedMonth)).reduce((sum, s) => sum + s.totalValue, 0),
-    [sales, selectedMonth]
-  );
+  // Previous month data
+  const prevMonth = useMemo(() => {
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }, [selectedMonth]);
 
-  // Group expenses by PARENT category for charts
+  const prevMonthTx = useMemo(() => transactions.filter(t => t.date.startsWith(prevMonth)), [transactions, prevMonth]);
+  const prevIncome = useMemo(() => prevMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [prevMonthTx]);
+  const prevExpense = useMemo(() => prevMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [prevMonthTx]);
+  const prevInvestment = useMemo(() => prevMonthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0), [prevMonthTx]);
+
+  // Patrimônio total = all-time saldo livre + all-time investments
+  const patrimonio = useMemo(() => {
+    const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const allSalesRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
+    // Patrimônio = total income + sales - expenses (investments are assets, not losses)
+    return allIncome + allSalesRevenue - allExpense;
+  }, [transactions, sales]);
+
+  const prevPatrimonio = useMemo(() => {
+    // Patrimônio up to end of previous month
+    const beforeCurrentIncome = transactions.filter(t => t.type === 'income' && !t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
+    const beforeCurrentExpense = transactions.filter(t => t.type === 'expense' && !t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
+    const beforeCurrentSales = sales.filter(s => !s.date.startsWith(selectedMonth)).reduce((s, v) => s + v.totalValue, 0);
+    return beforeCurrentIncome + beforeCurrentSales - beforeCurrentExpense;
+  }, [transactions, sales, selectedMonth]);
+
+  // Category data for chart
   const categoryData = useMemo(() => {
     const map = new Map<string, number>();
     monthTx.filter(t => t.type === 'expense').forEach(t => {
@@ -51,14 +114,13 @@ export default function Dashboard() {
       const displayName = cat?.name ?? t.category;
       map.set(displayName, (map.get(displayName) ?? 0) + t.amount);
     });
-    return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [monthTx]);
 
-  const topCategory = categoryData[0]?.name ?? '—';
+  const topCategory = categoryData[0];
   const recentTx = useMemo(() => [...monthTx].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5), [monthTx]);
 
+  // Goals
   const activeGoals = goals.filter(g => g.status === 'active');
   const closestGoal = useMemo(() => {
     if (activeGoals.length === 0) return null;
@@ -69,32 +131,30 @@ export default function Dashboard() {
     });
   }, [activeGoals]);
 
-  const netWorthData = useMemo(() => {
-    const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const allInvestment = transactions.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
-    const allSalesRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
-    const netWorth = allIncome + allSalesRevenue - allExpense - allInvestment;
-
-    const prevIncome = transactions.filter(t => t.type === 'income' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
-      - transactions.filter(t => t.type === 'income' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
-    const prevExpense = transactions.filter(t => t.type === 'expense' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
-      - transactions.filter(t => t.type === 'expense' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
-    const prevInvestment = transactions.filter(t => t.type === 'investment' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
-      - transactions.filter(t => t.type === 'investment' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
-    const prevSales = sales.filter(s => s.date < selectedMonth + '-32').reduce((s, v) => s + v.totalValue, 0)
-      - sales.filter(s => s.date.startsWith(selectedMonth)).reduce((s, v) => s + v.totalValue, 0);
-    const prevNetWorth = prevIncome + prevSales - prevExpense - prevInvestment;
-    const growth = netWorth - prevNetWorth;
-    const pct = prevNetWorth !== 0 ? (growth / Math.abs(prevNetWorth)) * 100 : (netWorth !== 0 ? 100 : 0);
-
-    return { netWorth, growth, pct, investment: allInvestment };
-  }, [transactions, sales, selectedMonth]);
+  // Financial status
+  const financialStatus = useMemo(() => {
+    if (monthTx.length === 0 && monthlyRevenue === 0) return null;
+    const totalReceitas = income + monthlyRevenue;
+    if (expense > totalReceitas) {
+      return { type: 'warning' as const, message: 'Gastos acima da receita neste mês. Revise suas despesas.' };
+    }
+    if (saldoLivre > 0 && investment > prevInvestment) {
+      return { type: 'positive' as const, message: 'Situação financeira positiva neste mês. Investimentos em alta!' };
+    }
+    if (saldoLivre > 0) {
+      return { type: 'positive' as const, message: 'Mês com saldo positivo. Continue assim!' };
+    }
+    if (saldoLivre === 0) {
+      return { type: 'neutral' as const, message: 'Receitas e despesas equilibradas neste mês.' };
+    }
+    return { type: 'warning' as const, message: 'Saldo livre negativo. Avalie cortes de despesas.' };
+  }, [monthTx, monthlyRevenue, income, expense, saldoLivre, investment, prevInvestment]);
 
   const hasData = monthTx.length > 0 || monthlyRevenue > 0;
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
+    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">FinControl</p>
@@ -125,13 +185,99 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* ───── SECTION 1: Financial Summary ───── */}
+      {hasData && (
+        <>
+          {/* Main balance card */}
+          <div className="glass rounded-2xl p-5 space-y-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Wallet size={18} className="text-primary" />
+                <span className="text-xs text-muted-foreground">Saldo livre do mês</span>
+              </div>
+              <ComparisonBadge current={saldoLivre} previous={prevIncome - prevExpense - prevInvestment} format="currency" />
+            </div>
+            <p className={`text-3xl font-extrabold tabular-nums ${saldoLivre >= 0 ? 'text-income' : 'text-expense'}`}>
+              {formatCurrency(saldoLivre)}
+            </p>
+          </div>
+
+          {/* Metric cards grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="glass rounded-2xl p-4 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-xl bg-income/10 w-fit"><ArrowUpRight size={16} className="text-income" /></div>
+                <ComparisonBadge current={income} previous={prevIncome} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Receitas</p>
+              <p className="text-base font-bold text-income tabular-nums">{formatCurrency(income)}</p>
+            </div>
+            <div className="glass rounded-2xl p-4 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-xl bg-expense/10 w-fit"><ArrowDownLeft size={16} className="text-expense" /></div>
+                <ExpenseComparisonBadge current={expense} previous={prevExpense} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Despesas</p>
+              <p className="text-base font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
+            </div>
+            <div className="glass rounded-2xl p-4 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-xl bg-primary/10 w-fit"><TrendingUp size={16} className="text-primary" /></div>
+                <ComparisonBadge current={investment} previous={prevInvestment} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Investimentos</p>
+              <p className="text-base font-bold text-primary tabular-nums">{formatCurrency(investment)}</p>
+            </div>
+            <div className="glass rounded-2xl p-4 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-xl bg-primary/10 w-fit"><ShoppingBag size={16} className="text-primary" /></div>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Faturamento</p>
+              <p className="text-base font-bold text-primary tabular-nums">{formatCurrency(monthlyRevenue)}</p>
+            </div>
+          </div>
+
+          {/* Patrimônio */}
+          <div className="glass rounded-2xl p-5 space-y-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LineChart size={18} className="text-primary" />
+                <span className="text-xs text-muted-foreground">Patrimônio total</span>
+              </div>
+              <ComparisonBadge current={patrimonio} previous={prevPatrimonio} format="currency" />
+            </div>
+            <p className={`text-2xl font-extrabold tabular-nums ${patrimonio >= 0 ? 'text-income' : 'text-expense'}`}>
+              {formatCurrency(patrimonio)}
+            </p>
+          </div>
+
+          {/* Financial status indicator */}
+          {financialStatus && (
+            <div className={`glass rounded-2xl p-4 flex items-start gap-3 ${
+              financialStatus.type === 'positive' ? 'border-income/20' :
+              financialStatus.type === 'warning' ? 'border-expense/20' : 'border-border/50'
+            }`}>
+              {financialStatus.type === 'positive' ? (
+                <CheckCircle2 size={18} className="text-income shrink-0 mt-0.5" />
+              ) : financialStatus.type === 'warning' ? (
+                <AlertTriangle size={18} className="text-expense shrink-0 mt-0.5" />
+              ) : (
+                <PiggyBank size={18} className="text-muted-foreground shrink-0 mt-0.5" />
+              )}
+              <p className="text-xs text-muted-foreground leading-relaxed">{financialStatus.message}</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ───── SECTION 2: Charts ───── */}
       {categoryData.length > 0 && (
         <div className="glass rounded-2xl p-5">
           <p className="text-sm font-medium mb-3">Despesas por categoria</p>
-          <div className="h-52">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value">
+                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={3} dataKey="value">
                   {categoryData.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
@@ -154,59 +300,47 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="glass rounded-2xl p-6 space-y-2">
-        <div className="flex items-center gap-2 mb-1">
-          <Wallet size={20} className="text-primary" />
-          <span className="text-sm text-muted-foreground">Saldo do mês</span>
+      {/* ───── SECTION 3: Insights ───── */}
+      {hasData && (
+        <div className="glass rounded-2xl p-5 space-y-3">
+          <p className="text-sm font-medium">Resumo rápido</p>
+          <div className="space-y-2.5">
+            {topCategory && (
+              <div className="flex items-start gap-2.5">
+                <div className="p-1.5 rounded-lg bg-expense/10 shrink-0"><ShoppingBag size={14} className="text-expense" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Maior gasto</p>
+                  <p className="text-sm font-medium">{topCategory.name} <span className="text-muted-foreground font-normal">({formatCurrency(topCategory.value)})</span></p>
+                </div>
+              </div>
+            )}
+            {investment > 0 && (
+              <div className="flex items-start gap-2.5">
+                <div className="p-1.5 rounded-lg bg-primary/10 shrink-0"><TrendingUp size={14} className="text-primary" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Investimento do mês</p>
+                  <p className="text-sm font-medium">{formatCurrency(investment)}</p>
+                </div>
+              </div>
+            )}
+            {closestGoal && (
+              <div className="flex items-start gap-2.5">
+                <div className="p-1.5 rounded-lg bg-primary/10 shrink-0"><Target size={14} className="text-primary" /></div>
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground">Meta mais próxima</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{closestGoal.title}</p>
+                    <span className="text-xs text-muted-foreground">({Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))}%)</span>
+                  </div>
+                  <Progress value={Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))} className="h-1.5 mt-1.5" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <p className={`text-4xl font-extrabold tabular-nums ${balance >= 0 ? 'text-income' : 'text-expense'}`}>
-          {formatCurrency(balance)}
-        </p>
-      </div>
+      )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-income/10 w-fit"><ArrowUpRight size={20} className="text-income" /></div>
-          <p className="text-xs text-muted-foreground">Receitas</p>
-          <p className="text-lg font-bold text-income tabular-nums">{formatCurrency(income)}</p>
-        </div>
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-expense/10 w-fit"><ArrowDownLeft size={20} className="text-expense" /></div>
-          <p className="text-xs text-muted-foreground">Despesas</p>
-          <p className="text-lg font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
-        </div>
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-primary/10 w-fit"><TrendingUp size={20} className="text-primary" /></div>
-          <p className="text-xs text-muted-foreground">Investimentos</p>
-          <p className="text-lg font-bold text-primary tabular-nums">{formatCurrency(investment)}</p>
-        </div>
-        <div className="glass rounded-2xl p-4 space-y-2">
-          <div className="p-2.5 rounded-xl bg-primary/10 w-fit"><ShoppingBag size={20} className="text-primary" /></div>
-          <p className="text-xs text-muted-foreground">Faturamento</p>
-          <p className="text-lg font-bold text-primary tabular-nums">{formatCurrency(monthlyRevenue)}</p>
-        </div>
-      </div>
-
-      {/* Net worth widget */}
-      <div className="glass rounded-2xl p-5 space-y-2">
-        <div className="flex items-center gap-2">
-          <LineChart size={18} className="text-primary" />
-          <p className="text-sm font-medium">Patrimônio</p>
-        </div>
-        <p className={`text-2xl font-extrabold tabular-nums ${netWorthData.netWorth >= 0 ? 'text-income' : 'text-expense'}`}>
-          {formatCurrency(netWorthData.netWorth)}
-        </p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className={netWorthData.growth >= 0 ? 'text-income' : 'text-expense'}>
-            {netWorthData.growth >= 0 ? '+' : ''}{formatCurrency(netWorthData.growth)}
-          </span>
-          <span className={netWorthData.pct >= 0 ? 'text-income' : 'text-expense'}>
-            ({netWorthData.pct >= 0 ? '+' : ''}{netWorthData.pct.toFixed(1)}%)
-          </span>
-          <span>este mês</span>
-        </div>
-      </div>
-
+      {/* Goals section */}
       {activeGoals.length > 0 && (
         <div className="glass rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
@@ -230,8 +364,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <FinancialInsights />
-
+      {/* Recent transactions */}
       <div>
         <p className="text-sm font-medium mb-3">Transações recentes</p>
         <div className="space-y-2">
