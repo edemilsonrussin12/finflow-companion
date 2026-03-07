@@ -199,6 +199,14 @@ export default function Investimentos() {
           onClose={() => setEditingTx(null)}
         />
       )}
+
+      {showForm && (
+        <TransactionForm
+          initialType="investment"
+          onSubmit={addTransaction}
+          onClose={() => setShowForm(false)}
+        />
+      )}
     </div>
   );
 }
