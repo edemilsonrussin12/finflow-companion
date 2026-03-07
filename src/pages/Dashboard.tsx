@@ -14,6 +14,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
+import FinancialScore from '@/components/FinancialScore';
+import SpendingAnomalyRadar from '@/components/SpendingAnomalyRadar';
+import WealthProjection from '@/components/WealthProjection';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)',
@@ -251,6 +254,14 @@ export default function Dashboard() {
             </p>
           </div>
 
+          {/* Financial Score */}
+          {income > 0 && (
+            <FinancialScore income={income} expense={expense} investment={investment} />
+          )}
+
+          {/* Spending Anomaly Radar */}
+          <SpendingAnomalyRadar currentMonthTx={monthTx} previousMonthTx={prevMonthTx} />
+
           {/* Financial status indicator */}
           {financialStatus && (
             <div className={`glass rounded-2xl p-4 flex items-start gap-3 ${
@@ -363,6 +374,9 @@ export default function Dashboard() {
           )}
         </div>
       )}
+
+      {/* Future Wealth Projection */}
+      <WealthProjection transactions={transactions} />
 
       {/* Recent transactions */}
       <div>
