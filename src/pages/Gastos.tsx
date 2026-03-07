@@ -3,6 +3,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { Transaction, TransactionType } from '@/types/finance';
 import { getMonthLabel } from '@/lib/format';
 import { getMainCategories } from '@/lib/categories';
+import { ArrowDownLeft } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
@@ -84,10 +85,14 @@ export default function Gastos() {
 
       {/* Transactions list */}
       <div className="space-y-2">
-        {filtered.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-12">
-            Nenhuma transação encontrada
-          </p>
+      {filtered.length === 0 && (
+          <div className="glass rounded-2xl p-8 text-center space-y-3 animate-fade-in">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-expense/10 flex items-center justify-center">
+              <ArrowDownLeft size={24} className="text-expense" />
+            </div>
+            <p className="text-sm font-semibold text-foreground">Nenhuma transação encontrada</p>
+            <p className="text-xs text-muted-foreground">Adicione receitas ou despesas com o botão + abaixo.</p>
+          </div>
         )}
         {filtered.map(t => (
           <TransactionItem

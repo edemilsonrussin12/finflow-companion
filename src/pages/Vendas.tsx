@@ -72,7 +72,19 @@ export default function Vendas() {
         <p className="text-sm font-medium mb-3">Vendas do mês</p>
         <div className="space-y-2">
           {sorted.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma venda registrada</p>
+            <div className="glass rounded-2xl p-8 text-center space-y-3 animate-fade-in">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Package size={24} className="text-primary" />
+              </div>
+              <p className="text-sm font-semibold text-foreground">Nenhuma venda registrada</p>
+              <p className="text-xs text-muted-foreground">Registre sua primeira venda para acompanhar seu faturamento.</p>
+              <button
+                onClick={() => { setEditingSale(null); setShowForm(true); }}
+                className="text-primary text-sm font-medium hover:underline"
+              >
+                Registrar primeira venda
+              </button>
+            </div>
           )}
           {sorted.map(s => (
             <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-card/50 hover:bg-card transition-colors group">

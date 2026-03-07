@@ -19,6 +19,11 @@ import SpendingAnomalyRadar from '@/components/SpendingAnomalyRadar';
 import WealthProjection from '@/components/WealthProjection';
 import MoneyDistribution from '@/components/MoneyDistribution';
 import OnboardingFlow from '@/components/OnboardingFlow';
+import FinancialTimeline from '@/components/FinancialTimeline';
+import SmartNotifications from '@/components/SmartNotifications';
+import CourseRecommendation from '@/components/CourseRecommendation';
+import EmptyState from '@/components/EmptyState';
+import { useNavigate } from 'react-router-dom';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)',
@@ -59,7 +64,6 @@ function ExpenseComparisonBadge({ current, previous }: { current: number; previo
   );
   const isUp = diff > 0;
   const pct = previous !== 0 ? Math.abs((diff / previous) * 100) : 100;
-  // For expenses, UP is bad (red), DOWN is good (green)
   return (
     <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md ${isUp ? 'text-expense bg-expense/10' : 'text-income bg-income/10'}`}>
       {isUp ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
@@ -72,6 +76,7 @@ export default function Dashboard() {
   const { transactions, sales, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const { goals } = useGoals();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
 
   // Current month data
@@ -94,24 +99,20 @@ export default function Dashboard() {
   const prevExpense = useMemo(() => prevMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [prevMonthTx]);
   const prevInvestment = useMemo(() => prevMonthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0), [prevMonthTx]);
 
-  // Patrimônio total = all-time saldo livre + all-time investments
   const patrimonio = useMemo(() => {
     const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
     const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
     const allSalesRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
-    // Patrimônio = total income + sales - expenses (investments are assets, not losses)
     return allIncome + allSalesRevenue - allExpense;
   }, [transactions, sales]);
 
   const prevPatrimonio = useMemo(() => {
-    // Patrimônio up to end of previous month
     const beforeCurrentIncome = transactions.filter(t => t.type === 'income' && !t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
     const beforeCurrentExpense = transactions.filter(t => t.type === 'expense' && !t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
     const beforeCurrentSales = sales.filter(s => !s.date.startsWith(selectedMonth)).reduce((s, v) => s + v.totalValue, 0);
     return beforeCurrentIncome + beforeCurrentSales - beforeCurrentExpense;
   }, [transactions, sales, selectedMonth]);
 
-  // Category data for chart
   const categoryData = useMemo(() => {
     const map = new Map<string, number>();
     monthTx.filter(t => t.type === 'expense').forEach(t => {
@@ -125,7 +126,6 @@ export default function Dashboard() {
   const topCategory = categoryData[0];
   const recentTx = useMemo(() => [...monthTx].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5), [monthTx]);
 
-  // Goals
   const activeGoals = goals.filter(g => g.status === 'active');
   const closestGoal = useMemo(() => {
     if (activeGoals.length === 0) return null;
@@ -136,7 +136,6 @@ export default function Dashboard() {
     });
   }, [activeGoals]);
 
-  // Financial status
   const financialStatus = useMemo(() => {
     if (monthTx.length === 0 && monthlyRevenue === 0) return null;
     const totalReceitas = income + monthlyRevenue;
@@ -156,6 +155,7 @@ export default function Dashboard() {
   }, [monthTx, monthlyRevenue, income, expense, saldoLivre, investment, prevInvestment]);
 
   const hasData = monthTx.length > 0 || monthlyRevenue > 0;
+  const investmentRatio = income > 0 ? investment / income : 0;
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
@@ -186,10 +186,15 @@ export default function Dashboard() {
         </button>
       </div>
 
+      {/* Smart Notifications */}
+      <SmartNotifications transactions={transactions} investment={investment} prevInvestment={prevInvestment} />
+
       {!hasData && (
-        <div className="glass rounded-2xl p-8 text-center">
-          <p className="text-muted-foreground text-sm">Nenhum dado para {getMonthLabel(selectedMonth)}</p>
-        </div>
+        <EmptyState
+          icon={Wallet}
+          title="Comece sua jornada financeira"
+          message="Adicione sua primeira receita ou despesa tocando no botão + abaixo para começar a acompanhar suas finanças."
+        />
       )}
 
       {hasData && (
@@ -259,6 +264,16 @@ export default function Dashboard() {
           {/* ───── 2: Financial Score ───── */}
           {income > 0 && (
             <FinancialScore income={income} expense={expense} investment={investment} patrimonio={patrimonio} prevPatrimonio={prevPatrimonio} allTransactions={transactions} selectedMonth={selectedMonth} />
+          )}
+
+          {/* ───── Course Recommendation ───── */}
+          {income > 0 && (
+            <CourseRecommendation score={income > 0 ? Math.max(0, Math.min(100, 
+              (expense / income < 0.70 ? 30 : expense / income <= 0.90 ? 20 : 10) +
+              (investment / income >= 0.10 ? 30 : investment / income >= 0.05 ? 20 : 10) +
+              (income - expense > 0 ? 20 : income - expense === 0 ? 10 : 0) +
+              (patrimonio > prevPatrimonio ? 20 : patrimonio === prevPatrimonio ? 10 : 0)
+            )) : 0} investmentRatio={investmentRatio} />
           )}
 
           {/* ───── 3: Money Distribution ───── */}
@@ -376,6 +391,9 @@ export default function Dashboard() {
               )}
             </div>
           )}
+
+          {/* ───── Financial Evolution Timeline ───── */}
+          <FinancialTimeline transactions={transactions} goals={goals} />
 
           {/* ───── 8: Wealth Projection ───── */}
           <WealthProjection transactions={transactions} />
