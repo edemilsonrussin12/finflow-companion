@@ -159,6 +159,29 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {activeGoals.length > 0 && (
+        <div className="glass rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <Target size={18} className="text-primary" />
+            <p className="text-sm font-medium">Metas financeiras</p>
+            <span className="ml-auto text-xs text-muted-foreground">{activeGoals.length} ativa{activeGoals.length > 1 ? 's' : ''}</span>
+          </div>
+          {closestGoal && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="font-medium">{closestGoal.title}</span>
+                <span className="text-muted-foreground">{Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))}%</span>
+              </div>
+              <Progress value={Math.min(100, Math.round((closestGoal.currentAmount / closestGoal.targetAmount) * 100))} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{formatCurrency(closestGoal.currentAmount)}</span>
+                <span>{formatCurrency(closestGoal.targetAmount)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div>
         <p className="text-sm font-medium mb-3">Transações recentes</p>
         <div className="space-y-2">
