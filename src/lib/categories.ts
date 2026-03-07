@@ -26,17 +26,24 @@ const EXPENSE_CATEGORIES: CategoryDefinition[] = [
   // Housing
   { id: 'housing', name: 'Moradia', type: 'expense', emoji: '🏠' },
   { id: 'housing-rent', name: 'Aluguel', type: 'expense', parentId: 'housing', emoji: '🏠' },
+  { id: 'housing-condo', name: 'Condomínio', type: 'expense', parentId: 'housing', emoji: '🏢' },
+  { id: 'housing-energy', name: 'Energia', type: 'expense', parentId: 'housing', emoji: '⚡' },
+  { id: 'housing-water', name: 'Água', type: 'expense', parentId: 'housing', emoji: '💧' },
+  { id: 'housing-internet', name: 'Internet', type: 'expense', parentId: 'housing', emoji: '🌐' },
   { id: 'housing-maintenance', name: 'Manutenção', type: 'expense', parentId: 'housing', emoji: '🔧' },
   // Food
   { id: 'food', name: 'Alimentação', type: 'expense', emoji: '🍔' },
   { id: 'food-groceries', name: 'Supermercado', type: 'expense', parentId: 'food', emoji: '🛒' },
   { id: 'food-restaurants', name: 'Restaurantes', type: 'expense', parentId: 'food', emoji: '🍽️' },
   { id: 'food-delivery', name: 'Delivery', type: 'expense', parentId: 'food', emoji: '📦' },
+  { id: 'food-snacks', name: 'Lanches', type: 'expense', parentId: 'food', emoji: '🥪' },
   // Transport
   { id: 'transport', name: 'Transporte', type: 'expense', emoji: '🚗' },
   { id: 'transport-fuel', name: 'Combustível', type: 'expense', parentId: 'transport', emoji: '⛽' },
   { id: 'transport-public', name: 'Transporte Público', type: 'expense', parentId: 'transport', emoji: '🚌' },
-  { id: 'transport-ride', name: 'Apps de Corrida', type: 'expense', parentId: 'transport', emoji: '🚕' },
+  { id: 'transport-ride', name: 'Uber / Taxi', type: 'expense', parentId: 'transport', emoji: '🚕' },
+  { id: 'transport-maintenance', name: 'Manutenção', type: 'expense', parentId: 'transport', emoji: '🔧' },
+  { id: 'transport-parking', name: 'Estacionamento', type: 'expense', parentId: 'transport', emoji: '🅿️' },
   // Health
   { id: 'health', name: 'Saúde', type: 'expense', emoji: '💊' },
   { id: 'health-pharmacy', name: 'Farmácia', type: 'expense', parentId: 'health', emoji: '💊' },
@@ -100,7 +107,7 @@ export function getParentCategory(categoryId: string): CategoryDefinition | unde
 export function getCategoryDisplayLabel(categoryId: string, subCategoryId?: string | null): string {
   const main = getCategoryById(categoryId);
   if (!main) return categoryId; // fallback for legacy
-  if (subCategoryId) {
+  if (subCategoryId && subCategoryId !== '_general') {
     const sub = getCategoryById(subCategoryId);
     if (sub) return `${main.name} → ${sub.name}`;
   }
@@ -109,7 +116,7 @@ export function getCategoryDisplayLabel(categoryId: string, subCategoryId?: stri
 
 /** Get emoji for a category */
 export function getCategoryEmoji(categoryId: string, subCategoryId?: string | null): string {
-  if (subCategoryId) {
+  if (subCategoryId && subCategoryId !== '_general') {
     const sub = getCategoryById(subCategoryId);
     if (sub?.emoji) return sub.emoji;
   }

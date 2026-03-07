@@ -32,7 +32,6 @@ function mapTx(row: any): Transaction {
   if (!existing) {
     const migrated = migrateLegacyCategory(categoryId);
     categoryId = migrated.category;
-    // Only override type if the DB type is not already set to a valid value
     if (txType !== 'income' && txType !== 'expense' && txType !== 'investment') {
       txType = migrated.type;
     }
@@ -80,6 +79,21 @@ function isDateDueByNow(dateStr: string): boolean {
   return d <= currentEnd;
 }
 
+/** Generate last 12 months + any months from data */
+function buildAvailableMonths(transactions: Transaction[], sales: Sale[]): string[] {
+  const months = new Set<string>();
+  const now = new Date();
+  // Always include last 12 months
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  // Also include any month that has data
+  transactions.forEach(t => months.add(t.date.slice(0, 7)));
+  sales.forEach(s => months.add(s.date.slice(0, 7)));
+  return Array.from(months).sort().reverse();
+}
+
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -87,13 +101,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
 
-  const availableMonths = React.useMemo(() => {
-    const months = new Set<string>();
-    months.add(getCurrentMonth());
-    transactions.forEach(t => months.add(t.date.slice(0, 7)));
-    sales.forEach(s => months.add(s.date.slice(0, 7)));
-    return Array.from(months).sort().reverse();
-  }, [transactions, sales]);
+  const availableMonths = React.useMemo(
+    () => buildAvailableMonths(transactions, sales),
+    [transactions, sales]
+  );
 
   const generateRecurringEntries = useCallback(async (existingTx: Transaction[]) => {
     if (!user) return [];

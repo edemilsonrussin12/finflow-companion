@@ -40,6 +40,7 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
   const [subCategory, setSubCategory] = useState<string>(initial?.subCategory ?? '');
 
   const subCategories = useMemo(() => getSubCategories(category), [category]);
+  const hasSubCategories = subCategories.length > 0;
 
   // Reset category when type changes (only if not editing)
   const handleTypeChange = (newType: TransactionType) => {
@@ -71,12 +72,15 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
       return;
     }
 
+    // Store _general as null
+    const finalSubCategory = subCategory && subCategory !== '_general' ? subCategory : null;
+
     onSubmit({
       type,
       amount: val,
       date,
       category,
-      subCategory: subCategory || null,
+      subCategory: finalSubCategory,
       description: description.trim(),
       isRecurring,
       recurrenceFrequency: isRecurring ? recurrenceFrequency : undefined,
@@ -163,14 +167,14 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
             </Select>
           </div>
 
-          {/* Subcategory (only if available) */}
-          {subCategories.length > 0 && (
+          {/* Subcategory (always shown when parent has subs, with "Geral" option) */}
+          {hasSubCategories && (
             <div>
-              <Label>Subcategoria <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-              <Select value={subCategory || '_none'} onValueChange={v => setSubCategory(v === '_none' ? '' : v)}>
+              <Label>Subcategoria</Label>
+              <Select value={subCategory || '_general'} onValueChange={v => setSubCategory(v === '_general' ? '' : v)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nenhuma</SelectItem>
+                  <SelectItem value="_general">📁 Geral</SelectItem>
                   {subCategories.map(c => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.emoji} {c.name}
