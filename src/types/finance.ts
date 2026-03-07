@@ -1,7 +1,8 @@
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'investment';
 
 export type RecurrenceFrequency = 'weekly' | 'monthly' | 'yearly';
 
+// Legacy categories kept for backward compatibility during migration
 export const CATEGORIES = [
   'Alimentação',
   'Transporte',
@@ -19,7 +20,8 @@ export interface Transaction {
   type: TransactionType;
   amount: number;
   date: string; // ISO date string
-  category: Category;
+  category: string; // category ID from new system
+  subCategory?: string | null; // subcategory ID
   description: string;
   isRecurring: boolean;
   recurrenceFrequency?: RecurrenceFrequency;

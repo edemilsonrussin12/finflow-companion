@@ -1,6 +1,7 @@
 import { Transaction } from '@/types/finance';
 import { formatCurrency, formatDateShort } from '@/lib/format';
-import { ArrowDownLeft, ArrowUpRight, Repeat, Pause, Pencil, Trash2 } from 'lucide-react';
+import { getCategoryDisplayLabel, getCategoryEmoji } from '@/lib/categories';
+import { ArrowDownLeft, ArrowUpRight, TrendingUp, Repeat, Pause, Pencil, Trash2 } from 'lucide-react';
 
 interface Props {
   transaction: Transaction;
@@ -9,27 +10,20 @@ interface Props {
   onToggleRecurrence?: (t: Transaction) => void;
 }
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  'Alimentação': '🍔',
-  'Transporte': '🚗',
-  'Moradia': '🏠',
-  'Lazer': '🎮',
-  'Saúde': '💊',
-  'Educação': '📚',
-  'Outros': '📦',
-};
-
 export default function TransactionItem({ transaction, onEdit, onDelete, onToggleRecurrence }: Props) {
-  const { type, amount, description, date, category, isRecurring, recurrencePaused } = transaction;
+  const { type, amount, description, date, category, subCategory, isRecurring, recurrencePaused } = transaction;
+
+  const emoji = getCategoryEmoji(category, subCategory);
+  const categoryLabel = getCategoryDisplayLabel(category, subCategory);
+
+  const TypeIcon = type === 'income' ? ArrowUpRight : type === 'investment' ? TrendingUp : ArrowDownLeft;
+  const colorClass = type === 'income' ? 'text-income' : type === 'investment' ? 'text-primary' : 'text-expense';
+  const bgClass = type === 'income' ? 'bg-income/10' : type === 'investment' ? 'bg-primary/10' : 'bg-expense/10';
 
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-card/50 hover:bg-card transition-colors animate-fade-in group">
-      <div className={`p-2 rounded-lg ${type === 'income' ? 'bg-income/10' : 'bg-expense/10'}`}>
-        {type === 'income' ? (
-          <ArrowUpRight size={18} className="text-income" />
-        ) : (
-          <ArrowDownLeft size={18} className="text-expense" />
-        )}
+      <div className={`p-2 rounded-lg ${bgClass}`}>
+        <TypeIcon size={18} className={colorClass} />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -42,15 +36,15 @@ export default function TransactionItem({ transaction, onEdit, onDelete, onToggl
           )}
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{CATEGORY_EMOJI[category]} {category}</span>
+          <span>{emoji} {categoryLabel}</span>
           <span>•</span>
           <span>{formatDateShort(date)}</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <span className={`text-sm font-semibold tabular-nums ${type === 'income' ? 'text-income' : 'text-expense'}`}>
-          {type === 'income' ? '+' : '-'}{formatCurrency(amount)}
+        <span className={`text-sm font-semibold tabular-nums ${colorClass}`}>
+          {type === 'expense' ? '-' : '+'}{formatCurrency(amount)}
         </span>
 
         <div className="hidden group-hover:flex items-center gap-1">
