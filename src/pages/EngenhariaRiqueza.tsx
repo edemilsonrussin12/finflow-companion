@@ -28,11 +28,11 @@ const modules: Module[] = [
     description: 'Aprenda os princípios básicos para construir uma mentalidade de abundância e controle financeiro.',
     status: 'free',
     lessons: [
-      { title: 'O que é mentalidade financeira', description: 'Entenda como sua mente influencia suas decisões financeiras.', pdfUrl: '/content/modules/modulo1-aula1.pdf' },
-      { title: 'Crenças limitantes sobre dinheiro', description: 'Identifique e supere crenças que impedem seu crescimento.', pdfUrl: '/content/modules/modulo1-aula2.pdf' },
-      { title: 'Como reprogramar sua relação com finanças', description: 'Técnicas práticas para mudar hábitos financeiros.', pdfUrl: '/content/modules/modulo1-aula3.pdf' },
-      { title: 'Hábitos de pessoas financeiramente bem-sucedidas', description: 'Descubra o que diferencia quem prospera financeiramente.', pdfUrl: '/content/modules/modulo1-aula4.pdf' },
-      { title: 'Exercício prático: seu mapa financeiro', description: 'Crie um mapa visual da sua situação financeira atual.', pdfUrl: '/content/modules/modulo1-aula5.pdf' },
+      { title: 'Introdução à Engenharia da Riqueza', description: 'Conheça os fundamentos e a metodologia do curso.', pdfUrl: '/courses/module1/engenharia-da-riqueza-modulo1.pdf' },
+      { title: 'Por que a maioria das pessoas não constrói riqueza', description: 'Entenda os erros mais comuns que impedem o crescimento financeiro.', pdfUrl: '/courses/module1/engenharia-da-riqueza-modulo1.pdf' },
+      { title: 'Mentalidade de construção de patrimônio', description: 'Desenvolva a mentalidade necessária para acumular riqueza.', pdfUrl: '/courses/module1/engenharia-da-riqueza-modulo1.pdf' },
+      { title: 'Princípios fundamentais de organização financeira', description: 'Aprenda os pilares da organização financeira eficiente.', pdfUrl: '/courses/module1/engenharia-da-riqueza-modulo1.pdf' },
+      { title: 'Aplicação prática do método', description: 'Coloque em prática tudo que aprendeu neste módulo.', pdfUrl: '/courses/module1/engenharia-da-riqueza-modulo1.pdf' },
     ],
   },
   {
@@ -188,7 +188,7 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack }: {
                       onClick={() => setViewingPdf({ url: lesson.pdfUrl, title: lesson.title })}
                     >
                       <FileText size={12} />
-                      Abrir conteúdo
+                      Abrir Aula
                     </Button>
                     <Button
                       variant={completed ? 'ghost' : 'default'}
