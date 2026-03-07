@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Transaction, TransactionType, Category, CATEGORIES, RecurrenceFrequency } from '@/types/finance';
+import { useState, useMemo } from 'react';
+import { Transaction, TransactionType, RecurrenceFrequency } from '@/types/finance';
+import { getMainCategories, getSubCategories, type CategoryDefinition } from '@/lib/categories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,19 +13,47 @@ interface Props {
   onSubmit: (t: Omit<Transaction, 'id'>) => void;
   onClose: () => void;
   initial?: Transaction;
+  initialType?: TransactionType;
 }
 
-export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
+const TYPE_LABELS: Record<TransactionType, string> = {
+  income: 'Receita',
+  expense: 'Despesa',
+  investment: 'Investimento',
+};
+
+export default function TransactionForm({ onSubmit, onClose, initial, initialType }: Props) {
   const { toast } = useToast();
-  const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense');
+  const [type, setType] = useState<TransactionType>(initial?.type ?? initialType ?? 'expense');
   const [amount, setAmount] = useState(initial?.amount?.toString() ?? '');
   const [date, setDate] = useState(initial?.date ?? new Date().toISOString().split('T')[0]);
-  const [category, setCategory] = useState<Category>(initial?.category ?? 'Outros');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [isRecurring, setIsRecurring] = useState(initial?.isRecurring ?? false);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>(
     initial?.recurrenceFrequency ?? 'monthly'
   );
+
+  // Category state
+  const mainCategories = useMemo(() => getMainCategories(type), [type]);
+  const defaultCategory = initial?.category ?? mainCategories[0]?.id ?? '';
+  const [category, setCategory] = useState(defaultCategory);
+  const [subCategory, setSubCategory] = useState<string>(initial?.subCategory ?? '');
+
+  const subCategories = useMemo(() => getSubCategories(category), [category]);
+
+  // Reset category when type changes (only if not editing)
+  const handleTypeChange = (newType: TransactionType) => {
+    setType(newType);
+    const cats = getMainCategories(newType);
+    if (cats.length > 0) setCategory(cats[0].id);
+    setSubCategory('');
+  };
+
+  // Reset subcategory when category changes
+  const handleCategoryChange = (catId: string) => {
+    setCategory(catId);
+    setSubCategory('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +76,7 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
       amount: val,
       date,
       category,
+      subCategory: subCategory || null,
       description: description.trim(),
       isRecurring,
       recurrenceFrequency: isRecurring ? recurrenceFrequency : undefined,
@@ -56,36 +86,50 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
     onClose();
   };
 
+  const title = initial ? 'Editar Transação' : `Nova ${TYPE_LABELS[type]}`;
+
   return (
     <Sheet open onOpenChange={open => { if (!open) onClose(); }}>
       <SheetContent side="bottom" className="rounded-t-2xl max-h-[90dvh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{initial ? 'Editar' : 'Nova'} Transação</SheetTitle>
+          <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-2">
+          {/* Type selector */}
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
-              onClick={() => setType('income')}
+              onClick={() => handleTypeChange('income')}
               className={`py-2.5 rounded-lg font-medium text-sm transition-all ${
                 type === 'income'
                   ? 'gradient-income text-income-foreground'
                   : 'bg-secondary text-secondary-foreground'
               }`}
             >
-              Entrada
+              Receita
             </button>
             <button
               type="button"
-              onClick={() => setType('expense')}
+              onClick={() => handleTypeChange('expense')}
               className={`py-2.5 rounded-lg font-medium text-sm transition-all ${
                 type === 'expense'
                   ? 'gradient-expense text-expense-foreground'
                   : 'bg-secondary text-secondary-foreground'
               }`}
             >
-              Saída
+              Despesa
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange('investment')}
+              className={`py-2.5 rounded-lg font-medium text-sm transition-all ${
+                type === 'investment'
+                  ? 'gradient-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground'
+              }`}
+            >
+              Investimento
             </button>
           </div>
 
@@ -104,13 +148,38 @@ export default function TransactionForm({ onSubmit, onClose, initial }: Props) {
             <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} required className="mt-1" />
           </div>
 
+          {/* Category */}
           <div>
             <Label>Categoria</Label>
-            <Select value={category} onValueChange={v => setCategory(v as Category)}>
+            <Select value={category} onValueChange={handleCategoryChange}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {mainCategories.map(c => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.emoji} {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
+
+          {/* Subcategory (only if available) */}
+          {subCategories.length > 0 && (
+            <div>
+              <Label>Subcategoria <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+              <Select value={subCategory || '_none'} onValueChange={v => setSubCategory(v === '_none' ? '' : v)}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Nenhuma</SelectItem>
+                  {subCategories.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.emoji} {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex items-center justify-between py-2">
             <Label htmlFor="recurring">Recorrente</Label>

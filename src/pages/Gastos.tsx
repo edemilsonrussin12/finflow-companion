@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { Transaction, TransactionType, Category, CATEGORIES } from '@/types/finance';
+import { Transaction, TransactionType } from '@/types/finance';
 import { getMonthLabel } from '@/lib/format';
+import { getMainCategories } from '@/lib/categories';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
@@ -11,6 +12,18 @@ export default function Gastos() {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  // Get categories for the selected type filter
+  const filterCategories = useMemo(() => {
+    if (filterType === 'all') {
+      return [
+        ...getMainCategories('income'),
+        ...getMainCategories('expense'),
+        ...getMainCategories('investment'),
+      ];
+    }
+    return getMainCategories(filterType as TransactionType);
+  }, [filterType]);
 
   const filtered = useMemo(() => {
     return transactions
@@ -44,14 +57,15 @@ export default function Gastos() {
           </SelectContent>
         </Select>
 
-        <Select value={filterType} onValueChange={setFilterType}>
+        <Select value={filterType} onValueChange={v => { setFilterType(v); setFilterCategory('all'); }}>
           <SelectTrigger className="text-xs h-9">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="income">Entradas</SelectItem>
-            <SelectItem value="expense">Saídas</SelectItem>
+            <SelectItem value="income">Receitas</SelectItem>
+            <SelectItem value="expense">Despesas</SelectItem>
+            <SelectItem value="investment">Investimentos</SelectItem>
           </SelectContent>
         </Select>
 
@@ -61,8 +75,8 @@ export default function Gastos() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            {CATEGORIES.map(c => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
+            {filterCategories.map(c => (
+              <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>

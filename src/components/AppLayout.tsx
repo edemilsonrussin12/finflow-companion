@@ -5,28 +5,29 @@ import FloatingActionButton from '@/components/FloatingActionButton';
 import InstallPWA from '@/components/InstallPWA';
 import TransactionForm from '@/components/TransactionForm';
 import { useFinance } from '@/contexts/FinanceContext';
+import type { TransactionType } from '@/types/finance';
 
 export default function AppLayout() {
-  const [showForm, setShowForm] = useState(false);
+  const [formType, setFormType] = useState<TransactionType | null>(null);
   const { addTransaction } = useFinance();
   const location = useLocation();
   const showFab = location.pathname !== '/investimentos';
 
-  // Close form on route change to prevent stale overlays
   useEffect(() => {
-    setShowForm(false);
+    setFormType(null);
   }, [location.pathname]);
 
   return (
     <div className="min-h-[100dvh] bg-background overflow-x-hidden">
       <InstallPWA />
       <Outlet />
-      {showFab && <FloatingActionButton onClick={() => setShowForm(true)} />}
+      {showFab && <FloatingActionButton onClick={(type) => setFormType(type)} />}
       <BottomNav />
-      {showForm && (
+      {formType && (
         <TransactionForm
+          initialType={formType}
           onSubmit={addTransaction}
-          onClose={() => setShowForm(false)}
+          onClose={() => setFormType(null)}
         />
       )}
     </div>
