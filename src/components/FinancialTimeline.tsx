@@ -97,9 +97,10 @@ export default function FinancialTimeline({ transactions, goals }: FinancialTime
               <div className={`pb-4 ${!m.completed ? 'opacity-50' : ''}`}>
                 <p className="text-xs font-semibold text-foreground">{m.title}</p>
                 <p className="text-[11px] text-muted-foreground">{m.message}</p>
-                {m.completed && m.date && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(m.date)}</p>
-                )}
+                {m.completed && m.date && (() => {
+                  try { return <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(m.date.split('T')[0])}</p>; }
+                  catch { return null; }
+                })()}
               </div>
             </div>
           );
