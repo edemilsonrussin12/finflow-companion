@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useGoals } from '@/contexts/GoalsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
-import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut, Target } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
@@ -20,6 +22,7 @@ const CHART_COLORS = [
 
 export default function Dashboard() {
   const { transactions, sales, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const { goals } = useGoals();
   const { user, logout } = useAuth();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
 
@@ -49,6 +52,16 @@ export default function Dashboard() {
 
   const topCategory = categoryData[0]?.name ?? '—';
   const recentTx = useMemo(() => [...monthTx].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5), [monthTx]);
+
+  const activeGoals = goals.filter(g => g.status === 'active');
+  const closestGoal = useMemo(() => {
+    if (activeGoals.length === 0) return null;
+    return activeGoals.reduce((best, g) => {
+      const pct = g.currentAmount / g.targetAmount;
+      const bestPct = best.currentAmount / best.targetAmount;
+      return pct > bestPct ? g : best;
+    });
+  }, [activeGoals]);
 
   const hasData = monthTx.length > 0 || monthlyRevenue > 0;
 
