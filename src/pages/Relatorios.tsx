@@ -6,11 +6,11 @@ import { getCategoryById, getCategoryDisplayLabel } from '@/lib/categories';
 import { exportTransactionsCSV, exportSalesCSV, exportReportCSV, exportReportExcel } from '@/lib/export';
 import {
   FileText, Download, ArrowUpRight, ArrowDownLeft, Wallet,
-  PiggyBank, ShoppingBag, Target, TrendingUp,
+  PiggyBank, ShoppingBag, Target, TrendingUp, BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Progress } from '@/components/ui/progress';
 
 const CHART_COLORS = [
@@ -45,6 +45,23 @@ export default function Relatorios() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [monthTx]);
+
+  // 6-month comparison data
+  const comparisonData = useMemo(() => {
+    const now = new Date();
+    const months: { month: string; label: string; Receitas: number; Despesas: number; Saldo: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(d);
+      const mTx = transactions.filter(t => t.date.startsWith(key));
+      const mSales = sales.filter(s => s.date.startsWith(key));
+      const inc = mTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0) + mSales.reduce((s, v) => s + v.totalValue, 0);
+      const exp = mTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      months.push({ month: key, label: label.charAt(0).toUpperCase() + label.slice(1), Receitas: inc, Despesas: exp, Saldo: inc - exp });
+    }
+    return months;
+  }, [transactions, sales]);
 
   const topCategory = categoryData[0]?.name ?? '—';
   const activeGoals = goals.filter(g => g.status === 'active');
@@ -134,6 +151,30 @@ export default function Relatorios() {
                 <span className="text-xs text-muted-foreground">Maior categoria de gasto:</span>
                 <span className="text-xs font-medium">{topCategory}</span>
               </div>
+            </div>
+          </div>
+
+          {/* 6-month comparison chart */}
+          <div className="glass rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 size={18} className="text-primary" />
+              <p className="text-sm font-medium">Comparativo dos últimos 6 meses</p>
+            </div>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={comparisonData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
+                  <XAxis dataKey="label" tick={{ fill: 'hsl(210, 20%, 60%)', fontSize: 11 }} />
+                  <YAxis tick={{ fill: 'hsl(210, 20%, 60%)', fontSize: 10 }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{ background: 'hsl(220, 18%, 12%)', border: 'none', borderRadius: '8px', color: 'hsl(210, 20%, 95%)' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="Receitas" fill="hsl(153, 60%, 50%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Despesas" fill="hsl(0, 70%, 55%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
