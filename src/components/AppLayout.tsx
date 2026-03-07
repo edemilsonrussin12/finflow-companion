@@ -26,7 +26,7 @@ export default function AppLayout() {
       {formType && (
         <TransactionForm
           initialType={formType}
-          onSubmit={addTransaction}
+          onSubmit={t => addTransaction({ ...t, type: formType })}
           onClose={() => setFormType(null)}
         />
       )}

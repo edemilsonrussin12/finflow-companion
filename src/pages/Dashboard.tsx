@@ -74,15 +74,17 @@ export default function Dashboard() {
     const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
     const allInvestment = transactions.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
     const allSalesRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
-    const netWorth = allIncome + allSalesRevenue - allExpense;
+    const netWorth = allIncome + allSalesRevenue - allExpense - allInvestment;
 
     const prevIncome = transactions.filter(t => t.type === 'income' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
       - transactions.filter(t => t.type === 'income' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
     const prevExpense = transactions.filter(t => t.type === 'expense' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
       - transactions.filter(t => t.type === 'expense' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
+    const prevInvestment = transactions.filter(t => t.type === 'investment' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
+      - transactions.filter(t => t.type === 'investment' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
     const prevSales = sales.filter(s => s.date < selectedMonth + '-32').reduce((s, v) => s + v.totalValue, 0)
       - sales.filter(s => s.date.startsWith(selectedMonth)).reduce((s, v) => s + v.totalValue, 0);
-    const prevNetWorth = prevIncome + prevSales - prevExpense;
+    const prevNetWorth = prevIncome + prevSales - prevExpense - prevInvestment;
     const growth = netWorth - prevNetWorth;
     const pct = prevNetWorth !== 0 ? (growth / Math.abs(prevNetWorth)) * 100 : (netWorth !== 0 ? 100 : 0);
 

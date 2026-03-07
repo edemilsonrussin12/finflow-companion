@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { Transaction, Sale } from '@/types/finance';
+import { Transaction, Sale, TransactionType } from '@/types/finance';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCurrentMonth } from '@/lib/format';
@@ -22,17 +22,28 @@ interface FinanceContextType {
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
+function normalizeTransactionType(type: unknown): TransactionType | null {
+  const raw = String(type ?? '').trim().toLowerCase();
+
+  if (raw === 'income' || raw === 'receita' || raw === 'receitas') return 'income';
+  if (raw === 'expense' || raw === 'despesa' || raw === 'despesas') return 'expense';
+  if (raw === 'investment' || raw === 'investimento' || raw === 'investimentos') return 'investment';
+
+  return null;
+}
+
 /** Map DB row → app type, handling legacy category migration */
 function mapTx(row: any): Transaction {
   let categoryId = row.category;
-  let txType = row.type;
+  const normalizedType = normalizeTransactionType(row.type);
+  let txType: TransactionType = normalizedType ?? 'expense';
 
   // Migrate legacy category names to new IDs
   const existing = getCategoryById(categoryId);
   if (!existing) {
     const migrated = migrateLegacyCategory(categoryId);
     categoryId = migrated.category;
-    if (txType !== 'income' && txType !== 'expense' && txType !== 'investment') {
+    if (!normalizedType) {
       txType = migrated.type;
     }
   }
@@ -134,7 +145,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         }
         const { data, error } = await supabase.from('transactions').insert({
           user_id: user.id,
-          type: latest.type,
+          type: normalizeTransactionType(latest.type) ?? 'expense',
           amount: latest.amount,
           date: nextDate,
           category: latest.category,
@@ -183,7 +194,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     const groupId = t.isRecurring ? (t.recurrenceGroupId ?? crypto.randomUUID()) : null;
     const { data, error } = await supabase.from('transactions').insert({
       user_id: user.id,
-      type: t.type,
+      type: normalizeTransactionType(t.type) ?? 'expense',
       amount: t.amount,
       date: t.date,
       category: t.category,
@@ -201,7 +212,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   const updateTransaction = useCallback(async (t: Transaction) => {
     const { data, error } = await supabase.from('transactions').update({
-      type: t.type,
+      type: normalizeTransactionType(t.type) ?? 'expense',
       amount: t.amount,
       date: t.date,
       category: t.category,
