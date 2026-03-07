@@ -4,14 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { BookOpen, Lock, CheckCircle2, Sparkles, ArrowLeft } from 'lucide-react';
+import { BookOpen, Lock, CheckCircle2, Sparkles, ArrowLeft, FileText } from 'lucide-react';
+import PdfViewer from '@/components/PdfViewer';
+
+interface Lesson {
+  title: string;
+  description: string;
+  pdfUrl: string;
+}
 
 interface Module {
   id: number;
   title: string;
   description: string;
   status: 'free' | 'premium';
-  lessons: string[];
+  lessons: Lesson[];
 }
 
 const modules: Module[] = [
@@ -21,11 +28,11 @@ const modules: Module[] = [
     description: 'Aprenda os princípios básicos para construir uma mentalidade de abundância e controle financeiro.',
     status: 'free',
     lessons: [
-      'O que é mentalidade financeira',
-      'Crenças limitantes sobre dinheiro',
-      'Como reprogramar sua relação com finanças',
-      'Hábitos de pessoas financeiramente bem-sucedidas',
-      'Exercício prático: seu mapa financeiro',
+      { title: 'O que é mentalidade financeira', description: 'Entenda como sua mente influencia suas decisões financeiras.', pdfUrl: '/content/modules/modulo1-aula1.pdf' },
+      { title: 'Crenças limitantes sobre dinheiro', description: 'Identifique e supere crenças que impedem seu crescimento.', pdfUrl: '/content/modules/modulo1-aula2.pdf' },
+      { title: 'Como reprogramar sua relação com finanças', description: 'Técnicas práticas para mudar hábitos financeiros.', pdfUrl: '/content/modules/modulo1-aula3.pdf' },
+      { title: 'Hábitos de pessoas financeiramente bem-sucedidas', description: 'Descubra o que diferencia quem prospera financeiramente.', pdfUrl: '/content/modules/modulo1-aula4.pdf' },
+      { title: 'Exercício prático: seu mapa financeiro', description: 'Crie um mapa visual da sua situação financeira atual.', pdfUrl: '/content/modules/modulo1-aula5.pdf' },
     ],
   },
   {
@@ -34,10 +41,10 @@ const modules: Module[] = [
     description: 'Domine técnicas avançadas de orçamento e controle de gastos para maximizar seus resultados.',
     status: 'premium',
     lessons: [
-      'Método 50-30-20 avançado',
-      'Automação financeira',
-      'Como eliminar gastos invisíveis',
-      'Criando um sistema de controle eficiente',
+      { title: 'Método 50-30-20 avançado', description: 'Aplique o método de orçamento mais eficiente do mercado.', pdfUrl: '/content/modules/modulo2-aula1.pdf' },
+      { title: 'Automação financeira', description: 'Automatize suas finanças para economizar tempo e dinheiro.', pdfUrl: '/content/modules/modulo2-aula2.pdf' },
+      { title: 'Como eliminar gastos invisíveis', description: 'Encontre e elimine despesas que passam despercebidas.', pdfUrl: '/content/modules/modulo2-aula3.pdf' },
+      { title: 'Criando um sistema de controle eficiente', description: 'Monte seu sistema pessoal de gestão financeira.', pdfUrl: '/content/modules/modulo2-aula4.pdf' },
     ],
   },
   {
@@ -46,10 +53,10 @@ const modules: Module[] = [
     description: 'Dê os primeiros passos no mundo dos investimentos com segurança e estratégia.',
     status: 'premium',
     lessons: [
-      'Renda fixa vs renda variável',
-      'Como montar sua reserva de emergência',
-      'Tesouro Direto na prática',
-      'Diversificação para iniciantes',
+      { title: 'Renda fixa vs renda variável', description: 'Entenda as diferenças e quando usar cada tipo.', pdfUrl: '/content/modules/modulo3-aula1.pdf' },
+      { title: 'Como montar sua reserva de emergência', description: 'Proteja-se contra imprevistos financeiros.', pdfUrl: '/content/modules/modulo3-aula2.pdf' },
+      { title: 'Tesouro Direto na prática', description: 'Aprenda a investir no Tesouro Direto passo a passo.', pdfUrl: '/content/modules/modulo3-aula3.pdf' },
+      { title: 'Diversificação para iniciantes', description: 'Como distribuir seus investimentos com inteligência.', pdfUrl: '/content/modules/modulo3-aula4.pdf' },
     ],
   },
   {
@@ -58,10 +65,10 @@ const modules: Module[] = [
     description: 'Estratégias para acelerar a construção do seu patrimônio ao longo do tempo.',
     status: 'premium',
     lessons: [
-      'O poder dos juros compostos',
-      'Ativos vs passivos',
-      'Estratégias de acumulação',
-      'Planejamento patrimonial',
+      { title: 'O poder dos juros compostos', description: 'Veja como o tempo multiplica seu dinheiro.', pdfUrl: '/content/modules/modulo4-aula1.pdf' },
+      { title: 'Ativos vs passivos', description: 'Aprenda a diferenciar o que gera e o que consome riqueza.', pdfUrl: '/content/modules/modulo4-aula2.pdf' },
+      { title: 'Estratégias de acumulação', description: 'Métodos comprovados para acumular patrimônio.', pdfUrl: '/content/modules/modulo4-aula3.pdf' },
+      { title: 'Planejamento patrimonial', description: 'Organize e proteja seu patrimônio a longo prazo.', pdfUrl: '/content/modules/modulo4-aula4.pdf' },
     ],
   },
   {
@@ -70,15 +77,15 @@ const modules: Module[] = [
     description: 'O caminho completo para alcançar sua liberdade financeira.',
     status: 'premium',
     lessons: [
-      'Calculando seu número de independência',
-      'Fontes de renda passiva',
-      'Estratégias FIRE',
-      'Vivendo de renda: o plano definitivo',
+      { title: 'Calculando seu número de independência', description: 'Descubra quanto você precisa para viver de renda.', pdfUrl: '/content/modules/modulo5-aula1.pdf' },
+      { title: 'Fontes de renda passiva', description: 'Explore diferentes fontes de renda que trabalham por você.', pdfUrl: '/content/modules/modulo5-aula2.pdf' },
+      { title: 'Estratégias FIRE', description: 'Conheça o movimento de independência financeira antecipada.', pdfUrl: '/content/modules/modulo5-aula3.pdf' },
+      { title: 'Vivendo de renda: o plano definitivo', description: 'Monte seu plano para viver de renda com segurança.', pdfUrl: '/content/modules/modulo5-aula4.pdf' },
     ],
   },
 ];
 
-type LessonProgress = Record<string, boolean[]>; // moduleId -> lesson completion array
+type LessonProgress = Record<string, boolean[]>;
 
 function loadLessonProgress(): LessonProgress {
   const saved = localStorage.getItem('engenharia_lessons');
@@ -104,7 +111,6 @@ function getModuleLessonPercent(progress: LessonProgress, mod: Module): number {
 
 function isModuleUnlocked(progress: LessonProgress, mod: Module, allModules: Module[]): boolean {
   if (mod.status === 'free') return true;
-  // Find the previous module
   const idx = allModules.findIndex(m => m.id === mod.id);
   if (idx <= 0) return true;
   const prevMod = allModules[idx - 1];
@@ -120,68 +126,93 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack }: {
   const lessonStates = progress[mod.id] || [];
   const percent = getModuleLessonPercent(progress, mod);
   const allComplete = isModuleComplete(progress, mod);
+  const [viewingPdf, setViewingPdf] = useState<{ url: string; title: string } | null>(null);
 
   return (
-    <div className="pb-24 px-4 pt-6 max-w-lg mx-auto space-y-6">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span className="text-sm">Voltar aos módulos</span>
-      </button>
-
-      <div>
-        <Badge variant="secondary" className="mb-3">Módulo {mod.id}</Badge>
-        <h1 className="text-xl font-bold text-foreground">{mod.title}</h1>
-        <p className="text-sm text-muted-foreground mt-2">{mod.description}</p>
-      </div>
-
-      {/* Module progress */}
-      <div className="glass rounded-xl p-4 space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Progresso do módulo</span>
-          <span className="font-semibold text-foreground">{percent}%</span>
-        </div>
-        <Progress value={percent} className="h-2" />
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Conteúdo do Módulo</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {mod.lessons.map((lesson, i) => {
-            const completed = lessonStates[i] === true;
-            return (
-              <div key={i} className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${completed ? 'bg-primary/10' : 'bg-secondary/50'}`}>
-                <span className={`flex items-center justify-center h-6 w-6 rounded-full shrink-0 text-xs font-bold ${completed ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary'}`}>
-                  {completed ? <CheckCircle2 size={14} /> : i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <span className={`text-sm ${completed ? 'text-foreground line-through opacity-70' : 'text-foreground'}`}>{lesson}</span>
-                </div>
-                <Button
-                  variant={completed ? 'ghost' : 'outline'}
-                  size="sm"
-                  className="h-7 text-[11px] shrink-0"
-                  onClick={() => onToggleLesson(mod.id, i)}
-                >
-                  {completed ? 'Concluída ✓' : 'Concluir'}
-                </Button>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {allComplete && (
-        <div className="glass rounded-xl p-4 flex items-center gap-3">
-          <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-          <p className="text-sm text-foreground font-medium">Módulo concluído! O próximo módulo foi desbloqueado.</p>
-        </div>
+    <>
+      {viewingPdf && (
+        <PdfViewer
+          url={viewingPdf.url}
+          title={viewingPdf.title}
+          onClose={() => setViewingPdf(null)}
+        />
       )}
-    </div>
+
+      <div className="pb-24 px-4 pt-6 max-w-lg mx-auto space-y-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm">Voltar aos módulos</span>
+        </button>
+
+        <div>
+          <Badge variant="secondary" className="mb-3">Módulo {mod.id}</Badge>
+          <h1 className="text-xl font-bold text-foreground">{mod.title}</h1>
+          <p className="text-sm text-muted-foreground mt-2">{mod.description}</p>
+        </div>
+
+        {/* Module progress */}
+        <div className="glass rounded-xl p-4 space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Progresso do módulo</span>
+            <span className="font-semibold text-foreground">{percent}%</span>
+          </div>
+          <Progress value={percent} className="h-2" />
+        </div>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Conteúdo do Módulo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mod.lessons.map((lesson, i) => {
+              const completed = lessonStates[i] === true;
+              return (
+                <div key={i} className={`p-3 rounded-lg transition-colors space-y-2 ${completed ? 'bg-primary/10' : 'bg-secondary/50'}`}>
+                  <div className="flex items-start gap-3">
+                    <span className={`flex items-center justify-center h-6 w-6 rounded-full shrink-0 text-xs font-bold ${completed ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary'}`}>
+                      {completed ? <CheckCircle2 size={14} /> : i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-sm font-medium ${completed ? 'text-foreground line-through opacity-70' : 'text-foreground'}`}>{lesson.title}</span>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{lesson.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pl-9">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1"
+                      onClick={() => setViewingPdf({ url: lesson.pdfUrl, title: lesson.title })}
+                    >
+                      <FileText size={12} />
+                      Abrir conteúdo
+                    </Button>
+                    <Button
+                      variant={completed ? 'ghost' : 'default'}
+                      size="sm"
+                      className="h-7 text-[11px] shrink-0"
+                      onClick={() => onToggleLesson(mod.id, i)}
+                    >
+                      {completed ? 'Concluída ✓' : 'Concluir'}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {allComplete && (
+          <div className="glass rounded-xl p-4 flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+            <p className="text-sm text-foreground font-medium">Módulo concluído! O próximo módulo foi desbloqueado.</p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
