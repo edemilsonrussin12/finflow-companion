@@ -1,4 +1,4 @@
-import { LayoutDashboard, Receipt, ShoppingBag, TrendingUp, Target, LineChart, FileText } from 'lucide-react';
+import { LayoutDashboard, Receipt, ShoppingBag, TrendingUp, Target, LineChart, FileText, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
@@ -9,6 +9,7 @@ const tabs = [
   { path: '/patrimonio', icon: LineChart, label: 'Patrimônio' },
   { path: '/relatorios', icon: FileText, label: 'Relatórios' },
   { path: '/investimentos', icon: TrendingUp, label: 'Investir' },
+  { path: '/engenharia', icon: Sparkles, label: 'Riqueza' },
 ];
 
 export default function BottomNav() {
