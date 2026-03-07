@@ -1,4 +1,4 @@
-import { LayoutDashboard, Receipt, ShoppingBag, TrendingUp, Target, LineChart } from 'lucide-react';
+import { LayoutDashboard, Receipt, ShoppingBag, TrendingUp, Target, LineChart, FileText } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
@@ -7,6 +7,7 @@ const tabs = [
   { path: '/vendas', icon: ShoppingBag, label: 'Vendas' },
   { path: '/metas', icon: Target, label: 'Metas' },
   { path: '/patrimonio', icon: LineChart, label: 'Patrimônio' },
+  { path: '/relatorios', icon: FileText, label: 'Relatórios' },
   { path: '/investimentos', icon: TrendingUp, label: 'Investir' },
 ];
 
