@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { Transaction, Sale } from '@/types/finance';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { getCurrentMonth } from '@/lib/format';
 
 interface FinanceContextType {
   transactions: Transaction[];
@@ -13,6 +14,9 @@ interface FinanceContextType {
   updateSale: (s: Sale) => void;
   deleteSale: (id: string) => void;
   loading: boolean;
+  selectedMonth: string;
+  setSelectedMonth: (month: string) => void;
+  availableMonths: string[];
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -43,11 +47,113 @@ function mapSale(row: any): Sale {
   };
 }
 
+/**
+ * Given a recurring transaction, compute the next date based on frequency.
+ * Returns ISO date string (YYYY-MM-DD).
+ */
+function getNextRecurrenceDate(dateStr: string, frequency: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  switch (frequency) {
+    case 'weekly':
+      d.setDate(d.getDate() + 7);
+      break;
+    case 'monthly':
+      d.setMonth(d.getMonth() + 1);
+      break;
+    case 'yearly':
+      d.setFullYear(d.getFullYear() + 1);
+      break;
+  }
+  return d.toISOString().split('T')[0];
+}
+
+/**
+ * Check if a date falls within or before the current month.
+ */
+function isDateDueByNow(dateStr: string): boolean {
+  const now = new Date();
+  const currentEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0); // last day of current month
+  const d = new Date(dateStr + 'T12:00:00');
+  return d <= currentEnd;
+}
+
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
+
+  // Compute available months from all data
+  const availableMonths = React.useMemo(() => {
+    const months = new Set<string>();
+    months.add(getCurrentMonth());
+    transactions.forEach(t => months.add(t.date.slice(0, 7)));
+    sales.forEach(s => months.add(s.date.slice(0, 7)));
+    return Array.from(months).sort().reverse();
+  }, [transactions, sales]);
+
+  // Generate missing recurring transactions up to current month
+  const generateRecurringEntries = useCallback(async (existingTx: Transaction[]) => {
+    if (!user) return [];
+
+    // Find all recurring (non-paused) transactions grouped by recurrence_group_id
+    const recurringGroups = new Map<string, Transaction[]>();
+    for (const tx of existingTx) {
+      if (tx.isRecurring && !tx.recurrencePaused && tx.recurrenceGroupId && tx.recurrenceFrequency) {
+        const group = recurringGroups.get(tx.recurrenceGroupId) ?? [];
+        group.push(tx);
+        recurringGroups.set(tx.recurrenceGroupId, group);
+      }
+    }
+
+    const newEntries: Transaction[] = [];
+
+    for (const [groupId, groupTxs] of recurringGroups) {
+      // Find the latest date in this group
+      const sorted = groupTxs.sort((a, b) => b.date.localeCompare(a.date));
+      const latest = sorted[0];
+      const frequency = latest.recurrenceFrequency!;
+
+      let nextDate = getNextRecurrenceDate(latest.date, frequency);
+
+      // Generate entries up to current month (max 12 to prevent runaway)
+      let safety = 0;
+      while (isDateDueByNow(nextDate) && safety < 12) {
+        safety++;
+        // Check if this date already exists in the group
+        const alreadyExists = groupTxs.some(t => t.date === nextDate);
+        if (alreadyExists) {
+          nextDate = getNextRecurrenceDate(nextDate, frequency);
+          continue;
+        }
+
+        // Insert into DB
+        const { data, error } = await supabase.from('transactions').insert({
+          user_id: user.id,
+          type: latest.type,
+          amount: latest.amount,
+          date: nextDate,
+          category: latest.category,
+          description: latest.description,
+          is_recurring: true,
+          recurrence_frequency: frequency,
+          recurrence_paused: false,
+          recurrence_group_id: groupId,
+        }).select().single();
+
+        if (!error && data) {
+          const mapped = mapTx(data);
+          newEntries.push(mapped);
+          groupTxs.push(mapped); // so next iteration sees it
+        }
+
+        nextDate = getNextRecurrenceDate(nextDate, frequency);
+      }
+    }
+
+    return newEntries;
+  }, [user]);
 
   // Fetch data when user changes
   useEffect(() => {
@@ -65,16 +171,26 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         supabase.from('transactions').select('*').order('date', { ascending: false }),
         supabase.from('sales').select('*').order('date', { ascending: false }),
       ]);
-      setTransactions((txRes.data ?? []).map(mapTx));
+      const txList = (txRes.data ?? []).map(mapTx);
       setSales((salesRes.data ?? []).map(mapSale));
+
+      // Generate any missing recurring entries
+      const newEntries = await generateRecurringEntries(txList);
+      setTransactions([...newEntries, ...txList].sort((a, b) => b.date.localeCompare(a.date)));
       setLoading(false);
     };
 
     fetchAll();
-  }, [user]);
+  }, [user, generateRecurringEntries]);
 
   const addTransaction = useCallback(async (t: Omit<Transaction, 'id'>) => {
     if (!user) return;
+
+    // For recurring transactions, assign a recurrence_group_id if not present
+    const groupId = t.isRecurring
+      ? (t.recurrenceGroupId ?? crypto.randomUUID())
+      : null;
+
     const { data, error } = await supabase.from('transactions').insert({
       user_id: user.id,
       type: t.type,
@@ -85,7 +201,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       is_recurring: t.isRecurring,
       recurrence_frequency: t.recurrenceFrequency ?? null,
       recurrence_paused: t.recurrencePaused ?? false,
-      recurrence_group_id: t.recurrenceGroupId ?? null,
+      recurrence_group_id: groupId,
     }).select().single();
     if (!error && data) {
       setTransactions(prev => [mapTx(data), ...prev]);
@@ -150,7 +266,11 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <FinanceContext.Provider value={{ transactions, addTransaction, updateTransaction, deleteTransaction, sales, addSale, updateSale, deleteSale, loading }}>
+    <FinanceContext.Provider value={{
+      transactions, addTransaction, updateTransaction, deleteTransaction,
+      sales, addSale, updateSale, deleteSale,
+      loading, selectedMonth, setSelectedMonth, availableMonths,
+    }}>
       {children}
     </FinanceContext.Provider>
   );
