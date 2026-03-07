@@ -13,8 +13,9 @@ import TransactionForm from '@/components/TransactionForm';
 import type { Transaction } from '@/types/finance';
 
 export default function Investimentos() {
-  const { transactions, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const [initialAmount, setInitialAmount] = useState('1000');
   const [monthlyContribution, setMonthlyContribution] = useState('500');
