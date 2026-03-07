@@ -15,6 +15,7 @@ import Investimentos from "@/pages/Investimentos";
 import Metas from "@/pages/Metas";
 import Patrimonio from "@/pages/Patrimonio";
 import Relatorios from "@/pages/Relatorios";
+import EngenhariaRiqueza from "@/pages/EngenhariaRiqueza";
 import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
@@ -49,6 +50,7 @@ const App = () => (
                   <Route path="/metas" element={<Metas />} />
                   <Route path="/patrimonio" element={<Patrimonio />} />
                   <Route path="/relatorios" element={<Relatorios />} />
+                  <Route path="/engenharia" element={<EngenhariaRiqueza />} />
                 </Route>
               </Route>
 
