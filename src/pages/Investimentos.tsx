@@ -195,7 +195,7 @@ export default function Investimentos() {
       {editingTx && (
         <TransactionForm
           initial={editingTx}
-          onSubmit={t => updateTransaction({ ...t, id: editingTx.id })}
+          onSubmit={t => updateTransaction({ ...t, id: editingTx.id, type: 'investment' })}
           onClose={() => setEditingTx(null)}
         />
       )}
@@ -203,7 +203,7 @@ export default function Investimentos() {
       {showForm && (
         <TransactionForm
           initialType="investment"
-          onSubmit={addTransaction}
+          onSubmit={t => addTransaction({ ...t, type: 'investment' })}
           onClose={() => setShowForm(false)}
         />
       )}
