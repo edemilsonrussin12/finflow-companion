@@ -11,7 +11,7 @@ export default function AppLayout() {
   const [formType, setFormType] = useState<TransactionType | null>(null);
   const { addTransaction } = useFinance();
   const location = useLocation();
-  const showFab = location.pathname !== '/investimentos';
+  const showFab = true;
 
   useEffect(() => {
     setFormType(null);
