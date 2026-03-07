@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, X } from 'lucide-react';
+import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
@@ -15,6 +15,7 @@ const moreTabs = [
   { path: '/investimentos', icon: TrendingUp, label: 'Investimentos' },
   { path: '/vendas', icon: ShoppingBag, label: 'Vendas' },
   { path: '/engenharia', icon: Sparkles, label: 'Engenharia da Riqueza' },
+  { path: '/convites', icon: Users, label: 'Convites' },
 ];
 
 export default function BottomNav() {
