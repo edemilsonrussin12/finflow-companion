@@ -39,6 +39,11 @@
     --input: 220 14% 16%;
     --ring: 153 60% 50%;
 
+    --score-critical: 0 72% 55%;
+    --score-attention: 35 85% 55%;
+    --score-good: 50 80% 50%;
+    --score-excellent: 153 60% 50%;
+
     --radius: 0.75rem;
 
     --chart-1: 153 60% 50%;

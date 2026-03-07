@@ -258,7 +258,7 @@ export default function Dashboard() {
 
           {/* ───── 2: Financial Score ───── */}
           {income > 0 && (
-            <FinancialScore income={income} expense={expense} investment={investment} patrimonio={patrimonio} prevPatrimonio={prevPatrimonio} />
+            <FinancialScore income={income} expense={expense} investment={investment} patrimonio={patrimonio} prevPatrimonio={prevPatrimonio} allTransactions={transactions} selectedMonth={selectedMonth} />
           )}
 
           {/* ───── 3: Money Distribution ───── */}
