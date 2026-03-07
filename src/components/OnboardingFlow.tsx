@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Wallet, ArrowUpRight, ArrowDownLeft, TrendingUp, Target, BarChart3, Award } from 'lucide-react';
+import { Wallet, ArrowUpRight, ArrowDownLeft, TrendingUp, Award } from 'lucide-react';
+import { useFinance } from '@/contexts/FinanceContext';
 
 const ONBOARDING_KEY = 'fincontrol_onboarding_done';
 
@@ -80,11 +81,20 @@ export default function OnboardingFlow() {
   const [income, setIncome] = useState('');
   const [expense, setExpense] = useState('');
   const [invest, setInvest] = useState('');
+  const { transactions } = useFinance();
 
   useEffect(() => {
     const done = localStorage.getItem(ONBOARDING_KEY);
-    if (!done) setOpen(true);
-  }, []);
+    if (done) return;
+
+    // Smart check: skip if user already has financial data
+    if (transactions.length > 0) {
+      localStorage.setItem(ONBOARDING_KEY, 'true');
+      return;
+    }
+
+    setOpen(true);
+  }, [transactions]);
 
   const score = useMemo(() => {
     return calculateSimpleScore(
