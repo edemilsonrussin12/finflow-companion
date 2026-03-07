@@ -15,6 +15,7 @@ const moreTabs = [
   { path: '/investimentos', icon: TrendingUp, label: 'Investimentos' },
   { path: '/vendas', icon: ShoppingBag, label: 'Vendas' },
   { path: '/engenharia', icon: Sparkles, label: 'Engenharia da Riqueza' },
+  { path: '/convites', icon: Users, label: 'Convites' },
 ];
 
 export default function BottomNav() {
