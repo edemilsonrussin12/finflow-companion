@@ -56,7 +56,7 @@ export function exportReportCSV(
   savingsRate: number,
   topCategory: string,
   categoryData: { name: string; value: number }[],
-  goals: Goal[],
+  goals: FinancialGoal[],
 ) {
   const lines: string[] = [];
   lines.push('Relatório Financeiro');
@@ -99,7 +99,7 @@ export function exportReportExcel(
   savingsRate: number,
   topCategory: string,
   categoryData: { name: string; value: number }[],
-  goals: Goal[],
+  goals: FinancialGoal[],
   transactions: Transaction[],
 ) {
   const totalExp = categoryData.reduce((s, c) => s + c.value, 0);
