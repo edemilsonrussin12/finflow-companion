@@ -78,9 +78,20 @@ export default function Investimentos() {
         </div>
 
         {monthInvestments.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Nenhum investimento em {getMonthLabel(selectedMonth)}
-          </p>
+          <div className="text-center py-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Nenhum investimento em {getMonthLabel(selectedMonth)}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowForm(true)}
+              className="text-primary border-primary/30 hover:bg-primary/10"
+            >
+              <TrendingUp size={14} className="mr-1.5" />
+              Adicionar Investimento
+            </Button>
+          </div>
         ) : (
           <div className="space-y-2">
             {monthInvestments.map(t => (
