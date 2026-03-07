@@ -210,7 +210,7 @@ export default function Convites() {
             <Copy size={16} />
             Copiar link de convite
           </Button>
-          <Button onClick={shareWhatsApp} className="w-full justify-start gap-3 bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,40%)] text-white">
+          <Button onClick={shareWhatsApp} className="w-full justify-start gap-3 bg-income hover:bg-income/90 text-income-foreground">
             <MessageCircle size={16} />
             Compartilhar via WhatsApp
           </Button>
