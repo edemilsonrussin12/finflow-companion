@@ -154,6 +154,7 @@ export type Database = {
           recurrence_frequency: string | null
           recurrence_group_id: string | null
           recurrence_paused: boolean
+          sub_category: string | null
           type: string
           user_id: string
         }
@@ -168,6 +169,7 @@ export type Database = {
           recurrence_frequency?: string | null
           recurrence_group_id?: string | null
           recurrence_paused?: boolean
+          sub_category?: string | null
           type: string
           user_id: string
         }
@@ -182,6 +184,7 @@ export type Database = {
           recurrence_frequency?: string | null
           recurrence_group_id?: string | null
           recurrence_paused?: boolean
+          sub_category?: string | null
           type?: string
           user_id?: string
         }
