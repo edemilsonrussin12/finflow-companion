@@ -68,14 +68,77 @@ function getInsightMessage(score: number): string {
   return 'Seus hábitos financeiros precisam de melhoria.';
 }
 
-function getDetailedInsights(income: number, expense: number, investment: number): string[] {
-  const insights: string[] = [];
-  if (income <= 0) return insights;
-  if (expense / income > 0.80) insights.push('Seus gastos estão altos. Reduzi-los vai melhorar seu score.');
-  if (investment / income < 0.05) insights.push('Sua taxa de investimento está baixa. Tente investir ao menos 10% da sua renda.');
-  if (income - expense < 0) insights.push('Você está gastando mais do que ganha.');
-  return insights;
+interface Recommendation {
+  icon: 'warning' | 'danger' | 'success' | 'trophy';
+  title: string;
+  message: string;
+  type: 'warning' | 'danger' | 'success';
 }
+
+function getRecommendations(income: number, expense: number, investment: number, score: number): Recommendation[] {
+  const recs: Recommendation[] = [];
+  if (income <= 0) return recs;
+
+  if (expense / income > 0.80) {
+    recs.push({
+      icon: 'warning',
+      title: 'Alerta de Gastos',
+      message: 'Seus gastos estão consumindo a maior parte da sua renda. Reduzi-los vai melhorar seu score de saúde financeira.',
+      type: 'warning',
+    });
+  }
+
+  if (investment / income < 0.05) {
+    recs.push({
+      icon: 'warning',
+      title: 'Investimentos Baixos',
+      message: 'Sua taxa de investimento está baixa. Tente investir ao menos 10% da sua renda para aumentar seu patrimônio.',
+      type: 'warning',
+    });
+  }
+
+  if (income - expense < 0) {
+    recs.push({
+      icon: 'danger',
+      title: 'Saldo Negativo',
+      message: 'Você está gastando mais do que ganha. Ajustar seus gastos é essencial.',
+      type: 'danger',
+    });
+  }
+
+  if (investment / income >= 0.10) {
+    recs.push({
+      icon: 'success',
+      title: 'Bom Investidor',
+      message: 'Ótimo trabalho! Você está investindo uma proporção saudável da sua renda.',
+      type: 'success',
+    });
+  }
+
+  if (score > 80) {
+    recs.push({
+      icon: 'trophy',
+      title: 'Disciplina Financeira',
+      message: 'Excelente disciplina financeira. Continue mantendo seus hábitos para seguir crescendo seu patrimônio.',
+      type: 'success',
+    });
+  }
+
+  return recs;
+}
+
+const recIconMap = {
+  warning: AlertTriangle,
+  danger: AlertTriangle,
+  success: TrendingUp,
+  trophy: Award,
+};
+
+const recColorMap = {
+  warning: 'text-[hsl(var(--score-attention))] bg-[hsl(var(--score-attention))]/10',
+  danger: 'text-expense bg-expense/10',
+  success: 'text-income bg-income/10',
+};
 
 /** Calculate scores for last 6 months for the evolution chart */
 function buildEvolutionData(allTransactions: Transaction[], selectedMonth: string) {
@@ -120,7 +183,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
   const breakdown = useMemo(() => calculateScore(income, expense, investment, patrimonio, prevPatrimonio), [income, expense, investment, patrimonio, prevPatrimonio]);
   const label = getScoreLabel(breakdown.total);
   const insightMessage = getInsightMessage(breakdown.total);
-  const detailedInsights = useMemo(() => getDetailedInsights(income, expense, investment), [income, expense, investment]);
+  const recommendations = useMemo(() => getRecommendations(income, expense, investment, breakdown.total), [income, expense, investment, breakdown.total]);
   const scoreColor = getScoreColor(breakdown.total);
 
   const evolutionData = useMemo(() => {
@@ -139,7 +202,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
     const animate = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      const eased = 1 - Math.pow(1 - progress, 3);
       setAnimatedScore(Math.round(from + (to - from) * eased));
       if (progress < 1) frame = requestAnimationFrame(animate);
     };
@@ -201,19 +264,35 @@ export default function FinancialScore({ income, expense, investment, patrimonio
             <TrendingUp size={12} /> Patrimônio: <span className="font-semibold text-foreground">{breakdown.patrimonyScore}/20</span>
           </div>
         </div>
-
-        {/* Detailed insights */}
-        {detailedInsights.length > 0 && (
-          <div className="space-y-2 pt-2 border-t border-border">
-            {detailedInsights.map((insight, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                <AlertTriangle size={12} className="text-[hsl(var(--score-attention))] mt-0.5 shrink-0" />
-                <span>{insight}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Financial Insights - Recommendation Cards */}
+      {recommendations.length > 0 && (
+        <div className="glass rounded-2xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-primary" />
+            <span className="text-sm font-medium">Financial Insights</span>
+          </div>
+          <div className="space-y-2.5">
+            {recommendations.map((rec, i) => {
+              const Icon = recIconMap[rec.icon];
+              const colors = recColorMap[rec.type];
+              const [textColor, bgColor] = colors.split(' ');
+              return (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30">
+                  <div className={`p-2 rounded-lg shrink-0 ${bgColor}`}>
+                    <Icon size={14} className={textColor} />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-foreground">{rec.title}</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{rec.message}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Evolution Chart */}
       {hasEvolution && (
