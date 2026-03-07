@@ -3,7 +3,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
-import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut, Target } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Wallet, TrendingDown, ShoppingBag, LogOut, Target, LineChart } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -62,6 +62,32 @@ export default function Dashboard() {
       return pct > bestPct ? g : best;
     });
   }, [activeGoals]);
+
+  // Net worth calculation
+  const netWorthData = useMemo(() => {
+    const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const allSalesRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
+    const netWorth = allIncome + allSalesRevenue - allExpense;
+
+    // Previous month net worth
+    const prevMonth = (() => {
+      const [y, m] = selectedMonth.split('-').map(Number);
+      const d = new Date(y, m - 2, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    })();
+    const prevIncome = transactions.filter(t => t.type === 'income' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
+      - transactions.filter(t => t.type === 'income' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
+    const prevExpense = transactions.filter(t => t.type === 'expense' && t.date < selectedMonth + '-32').reduce((s, t) => s + t.amount, 0)
+      - transactions.filter(t => t.type === 'expense' && t.date.startsWith(selectedMonth)).reduce((s, t) => s + t.amount, 0);
+    const prevSales = sales.filter(s => s.date < selectedMonth + '-32').reduce((s, v) => s + v.totalValue, 0)
+      - sales.filter(s => s.date.startsWith(selectedMonth)).reduce((s, v) => s + v.totalValue, 0);
+    const prevNetWorth = prevIncome + prevSales - prevExpense;
+    const growth = netWorth - prevNetWorth;
+    const pct = prevNetWorth !== 0 ? (growth / Math.abs(prevNetWorth)) * 100 : (netWorth !== 0 ? 100 : 0);
+
+    return { netWorth, growth, pct };
+  }, [transactions, sales, selectedMonth]);
 
   const hasData = monthTx.length > 0 || monthlyRevenue > 0;
 
@@ -156,6 +182,26 @@ export default function Dashboard() {
           <div className="p-2.5 rounded-xl bg-expense/10 w-fit"><TrendingDown size={20} className="text-expense" /></div>
           <p className="text-xs text-muted-foreground">Maior gasto</p>
           <p className="text-base font-bold">{topCategory}</p>
+        </div>
+      </div>
+
+      {/* Net worth widget */}
+      <div className="glass rounded-2xl p-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <LineChart size={18} className="text-primary" />
+          <p className="text-sm font-medium">Patrimônio</p>
+        </div>
+        <p className={`text-2xl font-extrabold tabular-nums ${netWorthData.netWorth >= 0 ? 'text-income' : 'text-expense'}`}>
+          {formatCurrency(netWorthData.netWorth)}
+        </p>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className={netWorthData.growth >= 0 ? 'text-income' : 'text-expense'}>
+            {netWorthData.growth >= 0 ? '+' : ''}{formatCurrency(netWorthData.growth)}
+          </span>
+          <span className={netWorthData.pct >= 0 ? 'text-income' : 'text-expense'}>
+            ({netWorthData.pct >= 0 ? '+' : ''}{netWorthData.pct.toFixed(1)}%)
+          </span>
+          <span>este mês</span>
         </div>
       </div>
 

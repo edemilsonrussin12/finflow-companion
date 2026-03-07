@@ -13,6 +13,7 @@ import Gastos from "@/pages/Gastos";
 import Vendas from "@/pages/Vendas";
 import Investimentos from "@/pages/Investimentos";
 import Metas from "@/pages/Metas";
+import Patrimonio from "@/pages/Patrimonio";
 import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
@@ -45,6 +46,7 @@ const App = () => (
                   <Route path="/vendas" element={<Vendas />} />
                   <Route path="/investimentos" element={<Investimentos />} />
                   <Route path="/metas" element={<Metas />} />
+                  <Route path="/patrimonio" element={<Patrimonio />} />
                 </Route>
               </Route>
 
