@@ -9,6 +9,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
+import FinancialInsights from '@/components/FinancialInsights';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)',
@@ -227,6 +228,8 @@ export default function Dashboard() {
           )}
         </div>
       )}
+
+      <FinancialInsights />
 
       <div>
         <p className="text-sm font-medium mb-3">Transações recentes</p>
