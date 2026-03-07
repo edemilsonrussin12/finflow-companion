@@ -49,7 +49,7 @@ export default function Relatorios() {
   // 6-month comparison data
   const comparisonData = useMemo(() => {
     const now = new Date();
-    const months: { month: string; label: string; Receitas: number; Despesas: number; Saldo: number }[] = [];
+    const months: { month: string; label: string; Receitas: number; Despesas: number; Investimentos: number; Saldo: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -58,7 +58,8 @@ export default function Relatorios() {
       const mSales = sales.filter(s => s.date.startsWith(key));
       const inc = mTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0) + mSales.reduce((s, v) => s + v.totalValue, 0);
       const exp = mTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-      months.push({ month: key, label: label.charAt(0).toUpperCase() + label.slice(1), Receitas: inc, Despesas: exp, Saldo: inc - exp });
+      const inv = mTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
+      months.push({ month: key, label: label.charAt(0).toUpperCase() + label.slice(1), Receitas: inc, Despesas: exp, Investimentos: inv, Saldo: inc - exp - inv });
     }
     return months;
   }, [transactions, sales]);
@@ -173,6 +174,7 @@ export default function Relatorios() {
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Bar dataKey="Receitas" fill="hsl(153, 60%, 50%)" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="Despesas" fill="hsl(0, 70%, 55%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Investimentos" fill="hsl(200, 70%, 55%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
