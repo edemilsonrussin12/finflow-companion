@@ -55,9 +55,9 @@ const modules: Module[] = [
     description: 'Dê os primeiros passos no mundo dos investimentos com segurança e estratégia.',
     status: 'premium',
     lessons: [
-      { title: 'Renda fixa vs renda variável', description: 'Entenda as diferenças e quando usar cada tipo.', pdfUrl: '/content/modules/modulo3-aula1.pdf' },
-      { title: 'Como montar sua reserva de emergência', description: 'Proteja-se contra imprevistos financeiros.', pdfUrl: '/content/modules/modulo3-aula2.pdf' },
-      { title: 'Tesouro Direto na prática', description: 'Aprenda a investir no Tesouro Direto passo a passo.', pdfUrl: '/content/modules/modulo3-aula3.pdf' },
+      { title: 'Renda fixa vs renda variável', description: 'Entenda as diferenças e quando usar cada tipo.', pdfUrl: '/cursos/modulo3/aula-01-renda-fixa-vs-renda-variavel.pdf' },
+      { title: 'Como montar sua reserva de emergência', description: 'Proteja-se contra imprevistos financeiros.', pdfUrl: '/cursos/modulo3/aula-02-reserva-de-emergencia.pdf' },
+      { title: 'Tesouro Direto na prática', description: 'Aprenda a investir no Tesouro Direto passo a passo.', pdfUrl: '/cursos/modulo3/aula-03-tesouro-direto.pdf' },
       { title: 'Diversificação para iniciantes', description: 'Como distribuir seus investimentos com inteligência.', pdfUrl: '/cursos/modulo3/aula-04-diversificacao-investimentos.pdf' },
     ],
   },
