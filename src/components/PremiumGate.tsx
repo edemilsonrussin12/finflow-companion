@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import PremiumPlansDialog from '@/components/PremiumPlansDialog';
 
 interface PremiumGateProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   isPremium: boolean;
   label?: string;
   className?: string;
