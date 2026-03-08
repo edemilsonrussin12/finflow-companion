@@ -28,11 +28,12 @@ const modules: Module[] = [
     description: 'Aprenda os princípios básicos para construir uma mentalidade de abundância e controle financeiro.',
     status: 'free',
     lessons: [
-      { title: 'Introdução à Engenharia da Riqueza', description: 'Conheça os fundamentos e a metodologia do curso.', pdfUrl: '/cursos/modulo1/engenharia-da-riqueza-modulo1.pdf' },
-      { title: 'Por que a maioria das pessoas não constrói riqueza', description: 'Entenda os erros mais comuns que impedem o crescimento financeiro.', pdfUrl: '/cursos/modulo1/engenharia-da-riqueza-modulo1.pdf' },
-      { title: 'Mentalidade de construção de patrimônio', description: 'Desenvolva a mentalidade necessária para acumular riqueza.', pdfUrl: '/cursos/modulo1/engenharia-da-riqueza-modulo1.pdf' },
-      { title: 'Princípios fundamentais de organização financeira', description: 'Aprenda os pilares da organização financeira eficiente.', pdfUrl: '/cursos/modulo1/engenharia-da-riqueza-modulo1.pdf' },
-      { title: 'Aplicação prática do método', description: 'Coloque em prática tudo que aprendeu neste módulo.', pdfUrl: '/cursos/modulo1/engenharia-da-riqueza-modulo1.pdf' },
+      { title: 'Introdução à Engenharia da Riqueza', description: 'Conheça os fundamentos e a metodologia do curso.', pdfUrl: '/cursos/modulo1/aula-01-engenharia-da-riqueza.pdf' },
+      { title: 'Por que a maioria das pessoas não constrói riqueza', description: 'Entenda os erros mais comuns que impedem o crescimento financeiro.', pdfUrl: '/cursos/modulo1/aula-02-erros-financeiros.pdf' },
+      { title: 'Mentalidade de construção de patrimônio', description: 'Desenvolva a mentalidade necessária para acumular riqueza.', pdfUrl: '/cursos/modulo1/aula-03-mentalidade-patrimonio.pdf' },
+      { title: 'Princípios fundamentais de organização financeira', description: 'Aprenda os pilares da organização financeira eficiente.', pdfUrl: '/cursos/modulo1/aula-04-organizacao-financeira.pdf' },
+      { title: 'Construção de Ativos e Investimentos', description: 'Aprenda a construir ativos e investir com inteligência.', pdfUrl: '/cursos/modulo1/aula-05-ativos-investimentos.pdf' },
+      { title: 'O Método da Engenharia da Riqueza', description: 'Coloque em prática o método completo da Engenharia da Riqueza.', pdfUrl: '/cursos/modulo1/aula-06-metodo-engenharia-riqueza.pdf' },
     ],
   },
   {
