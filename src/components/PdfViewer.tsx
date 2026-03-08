@@ -16,7 +16,7 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
   const resetZoom = () => setZoom(100);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col animate-fade-in">
+    <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
         <div className="min-w-0 flex-1 mr-3">
