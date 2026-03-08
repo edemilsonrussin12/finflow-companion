@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { BookOpen, Lock, CheckCircle2, Sparkles, ArrowLeft, FileText, Trophy, Unlock } from 'lucide-react';
+import { BookOpen, Lock, CheckCircle2, Sparkles, ArrowLeft, FileText, Trophy, Unlock, Crown } from 'lucide-react';
 import PdfViewer from '@/components/PdfViewer';
+import PremiumPlansDialog from '@/components/PremiumPlansDialog';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface Lesson {
   title: string;
@@ -110,24 +111,39 @@ function getModuleLessonPercent(progress: LessonProgress, mod: Module): number {
   return Math.round((completed / mod.lessons.length) * 100);
 }
 
-function isModuleUnlocked(progress: LessonProgress, mod: Module, allModules: Module[]): boolean {
+function isModuleAccessible(progress: LessonProgress, mod: Module, allModules: Module[], isPremium: boolean): boolean {
   if (mod.status === 'free') return true;
+  if (!isPremium) return false;
+  // Premium users still need to complete previous module
   const idx = allModules.findIndex(m => m.id === mod.id);
   if (idx <= 0) return true;
   const prevMod = allModules[idx - 1];
   return isModuleComplete(progress, prevMod);
 }
 
-function ModuleDetail({ mod, progress, onToggleLesson, onBack }: {
+function getModuleLockReason(progress: LessonProgress, mod: Module, allModules: Module[], isPremium: boolean): 'none' | 'premium' | 'previous' {
+  if (mod.status === 'free') return 'none';
+  if (!isPremium) return 'premium';
+  const idx = allModules.findIndex(m => m.id === mod.id);
+  if (idx <= 0) return 'none';
+  const prevMod = allModules[idx - 1];
+  if (!isModuleComplete(progress, prevMod)) return 'previous';
+  return 'none';
+}
+
+function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShowPlans }: {
   mod: Module;
   progress: LessonProgress;
   onToggleLesson: (moduleId: number, lessonIndex: number) => void;
   onBack: () => void;
+  isPremium: boolean;
+  onShowPlans: () => void;
 }) {
   const lessonStates = progress[mod.id] || [];
   const percent = getModuleLessonPercent(progress, mod);
   const allComplete = isModuleComplete(progress, mod);
   const [viewingPdf, setViewingPdf] = useState<{ url: string; title: string } | null>(null);
+  const isModule1 = mod.id === 1;
 
   return (
     <>
@@ -154,7 +170,6 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack }: {
           <p className="text-sm text-muted-foreground mt-2">{mod.description}</p>
         </div>
 
-        {/* Module progress */}
         <div className="glass rounded-xl p-4 space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Progresso do módulo</span>
@@ -218,13 +233,28 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack }: {
                   Parabéns! Você concluiu o módulo {mod.title}. Agora você conhece os fundamentos para construir patrimônio e tomar decisões financeiras mais inteligentes.
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-sm text-primary font-medium">
-                <Unlock className="h-4 w-4" />
-                <span>Novo módulo desbloqueado</span>
-              </div>
-              <Button className="w-full" onClick={onBack}>
-                Continuar aprendendo
-              </Button>
+
+              {isModule1 && !isPremium ? (
+                <>
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    Você concluiu o primeiro módulo. Continue sua jornada e desbloqueie todos os módulos do curso.
+                  </p>
+                  <Button className="w-full gap-2" onClick={onShowPlans}>
+                    <Crown className="h-4 w-4" />
+                    Ver planos Premium
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-sm text-primary font-medium">
+                    <Unlock className="h-4 w-4" />
+                    <span>Novo módulo desbloqueado</span>
+                  </div>
+                  <Button className="w-full" onClick={onBack}>
+                    Continuar aprendendo
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -237,6 +267,7 @@ export default function EngenhariaRiqueza() {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const [lessonProgress, setLessonProgress] = useState<LessonProgress>(loadLessonProgress);
+  const { isPremium } = usePremiumStatus();
 
   const handleToggleLesson = useCallback((moduleId: number, lessonIndex: number) => {
     setLessonProgress(prev => {
@@ -258,9 +289,13 @@ export default function EngenhariaRiqueza() {
   const globalProgress = Math.round((completedModulesCount / modules.length) * 100);
 
   const handleOpenModule = (mod: Module) => {
-    const unlocked = isModuleUnlocked(lessonProgress, mod, modules);
-    if (!unlocked) {
+    const lockReason = getModuleLockReason(lessonProgress, mod, modules, isPremium);
+    if (lockReason === 'premium') {
       setShowPremiumDialog(true);
+    } else if (lockReason === 'previous') {
+      setShowPremiumDialog(false);
+      // Could show a different message, but for now just don't open
+      return;
     } else {
       setSelectedModule(mod);
     }
@@ -268,13 +303,16 @@ export default function EngenhariaRiqueza() {
 
   const getModuleIcon = (mod: Module) => {
     if (isModuleComplete(lessonProgress, mod)) return <CheckCircle2 className="h-5 w-5 text-primary" />;
-    if (!isModuleUnlocked(lessonProgress, mod, modules)) return <Lock className="h-5 w-5 text-muted-foreground" />;
+    const lockReason = getModuleLockReason(lessonProgress, mod, modules, isPremium);
+    if (lockReason !== 'none') return <Lock className="h-5 w-5 text-muted-foreground" />;
     return <BookOpen className="h-5 w-5 text-primary" />;
   };
 
   const getModuleStatus = (mod: Module) => {
     if (isModuleComplete(lessonProgress, mod)) return 'Concluído';
-    if (!isModuleUnlocked(lessonProgress, mod, modules)) return 'Bloqueado';
+    const lockReason = getModuleLockReason(lessonProgress, mod, modules, isPremium);
+    if (lockReason === 'premium') return 'Conteúdo Premium';
+    if (lockReason === 'previous') return 'Bloqueado';
     const pct = getModuleLessonPercent(lessonProgress, mod);
     if (pct > 0) return `${pct}%`;
     return 'Disponível';
@@ -282,12 +320,17 @@ export default function EngenhariaRiqueza() {
 
   if (selectedModule) {
     return (
-      <ModuleDetail
-        mod={selectedModule}
-        progress={lessonProgress}
-        onToggleLesson={handleToggleLesson}
-        onBack={() => setSelectedModule(null)}
-      />
+      <>
+        <ModuleDetail
+          mod={selectedModule}
+          progress={lessonProgress}
+          onToggleLesson={handleToggleLesson}
+          onBack={() => setSelectedModule(null)}
+          isPremium={isPremium}
+          onShowPlans={() => setShowPremiumDialog(true)}
+        />
+        <PremiumPlansDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog} />
+      </>
     );
   }
 
@@ -301,7 +344,6 @@ export default function EngenhariaRiqueza() {
         <p className="text-sm text-muted-foreground mt-1">Sua jornada rumo à independência financeira</p>
       </div>
 
-      {/* Global Progress */}
       <Card>
         <CardContent className="pt-5 pb-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -312,20 +354,22 @@ export default function EngenhariaRiqueza() {
           <p className="text-xs text-muted-foreground">
             {completedModulesCount === modules.length
               ? '🎉 Parabéns! Você completou todos os módulos!'
-              : `Complete as aulas de cada módulo para desbloquear o próximo.`}
+              : 'Complete as aulas de cada módulo para desbloquear o próximo.'}
           </p>
         </CardContent>
       </Card>
 
-      {/* Module list */}
       <div className="space-y-3">
         {modules.map((mod) => {
-          const unlocked = isModuleUnlocked(lessonProgress, mod, modules);
+          const lockReason = getModuleLockReason(lessonProgress, mod, modules, isPremium);
+          const locked = lockReason !== 'none';
           const percent = getModuleLessonPercent(lessonProgress, mod);
+          const isPremiumLocked = lockReason === 'premium';
+
           return (
             <Card
               key={mod.id}
-              className={`cursor-pointer transition-all hover:border-primary/30 ${!unlocked ? 'opacity-60' : ''}`}
+              className={`cursor-pointer transition-all hover:border-primary/30 ${locked ? 'opacity-60' : ''}`}
               onClick={() => handleOpenModule(mod)}
             >
               <CardContent className="py-4 px-4 space-y-2">
@@ -338,14 +382,25 @@ export default function EngenhariaRiqueza() {
                     <p className="text-xs text-muted-foreground mt-0.5">{mod.lessons.length} aulas</p>
                   </div>
                   <Badge
-                    variant={isModuleComplete(lessonProgress, mod) ? 'default' : !unlocked ? 'outline' : 'secondary'}
+                    variant={isModuleComplete(lessonProgress, mod) ? 'default' : locked ? 'outline' : 'secondary'}
                     className="shrink-0 text-[10px]"
                   >
                     {getModuleStatus(mod)}
                   </Badge>
                 </div>
-                {unlocked && percent > 0 && !isModuleComplete(lessonProgress, mod) && (
+                {!locked && percent > 0 && !isModuleComplete(lessonProgress, mod) && (
                   <Progress value={percent} className="h-1.5" />
+                )}
+                {isPremiumLocked && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-8 text-xs gap-1.5 border-primary/30 text-primary"
+                    onClick={(e) => { e.stopPropagation(); setShowPremiumDialog(true); }}
+                  >
+                    <Crown className="h-3.5 w-3.5" />
+                    Desbloquear acesso
+                  </Button>
                 )}
               </CardContent>
             </Card>
@@ -353,28 +408,7 @@ export default function EngenhariaRiqueza() {
         })}
       </div>
 
-      {/* Premium dialog */}
-      <Dialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-primary" />
-              Módulo Bloqueado
-            </DialogTitle>
-            <DialogDescription>
-              Complete todas as aulas do módulo anterior para desbloquear este módulo.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">
-              Complete as aulas do módulo anterior para avançar na sua jornada financeira.
-            </p>
-            <Button className="w-full" onClick={() => setShowPremiumDialog(false)}>
-              Entendi
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PremiumPlansDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog} />
     </div>
   );
 }
