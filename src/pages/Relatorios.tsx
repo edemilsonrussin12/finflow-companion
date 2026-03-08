@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
-import { getCategoryById, getCategoryDisplayLabel } from '@/lib/categories';
+import { getCategoryById } from '@/lib/categories';
 import { exportTransactionsCSV, exportSalesCSV, exportReportCSV, exportReportExcel } from '@/lib/export';
 import {
   FileText, Download, ArrowUpRight, ArrowDownLeft, Wallet,
@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Progress } from '@/components/ui/progress';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import PremiumGate from '@/components/PremiumGate';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)', 'hsl(200, 70%, 55%)', 'hsl(280, 60%, 60%)',
@@ -21,6 +23,7 @@ const CHART_COLORS = [
 export default function Relatorios() {
   const { transactions, sales, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const { goals } = useGoals();
+  const { isPremium } = usePremiumStatus();
 
   const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);
   const monthSales = useMemo(() => sales.filter(s => s.date.startsWith(selectedMonth)), [sales, selectedMonth]);
@@ -33,7 +36,6 @@ export default function Relatorios() {
   const balance = totalIncome - expense - investment;
   const savingsRate = totalIncome > 0 ? ((totalIncome - expense - investment) / totalIncome) * 100 : 0;
 
-  // Group by parent category for charts
   const categoryData = useMemo(() => {
     const map = new Map<string, number>();
     monthTx.filter(t => t.type === 'expense').forEach(t => {
@@ -46,7 +48,6 @@ export default function Relatorios() {
       .sort((a, b) => b.value - a.value);
   }, [monthTx]);
 
-  // 6-month comparison data
   const comparisonData = useMemo(() => {
     const now = new Date();
     const months: { month: string; label: string; Receitas: number; Despesas: number; Investimentos: number; Saldo: number }[] = [];
@@ -71,11 +72,9 @@ export default function Relatorios() {
   const handleExportCSV = () => {
     exportReportCSV(selectedMonth, totalIncome, expense, balance, savingsRate, topCategory, categoryData, goals);
   };
-
   const handleExportExcel = () => {
     exportReportExcel(selectedMonth, totalIncome, expense, balance, savingsRate, topCategory, categoryData, goals, monthTx);
   };
-
   const handleExportTransactions = () => exportTransactionsCSV(monthTx, selectedMonth);
   const handleExportSales = () => exportSalesCSV(monthSales, selectedMonth);
 
@@ -106,7 +105,7 @@ export default function Relatorios() {
         </div>
       ) : (
         <>
-          {/* Summary */}
+          {/* Summary — always visible (simple report) */}
           <div className="glass rounded-2xl p-5 space-y-3">
             <p className="text-sm font-medium">Resumo de {getMonthLabel(selectedMonth)}</p>
             <div className="grid grid-cols-2 gap-3">
@@ -155,95 +154,98 @@ export default function Relatorios() {
             </div>
           </div>
 
-          {/* 6-month comparison chart */}
-          <div className="glass rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart3 size={18} className="text-primary" />
-              <p className="text-sm font-medium">Comparativo dos últimos 6 meses</p>
-            </div>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={comparisonData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
-                  <XAxis dataKey="label" tick={{ fill: 'hsl(210, 20%, 60%)', fontSize: 11 }} />
-                  <YAxis tick={{ fill: 'hsl(210, 20%, 60%)', fontSize: 10 }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ background: 'hsl(220, 18%, 12%)', border: 'none', borderRadius: '8px', color: 'hsl(210, 20%, 95%)' }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="Receitas" fill="hsl(153, 60%, 50%)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Despesas" fill="hsl(0, 70%, 55%)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Investimentos" fill="hsl(200, 70%, 55%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Category chart */}
-          {categoryData.length > 0 && (
+          {/* Advanced charts — Premium only */}
+          <PremiumGate isPremium={isPremium} label="Gráficos avançados e comparativos estão disponíveis no plano Premium.">
+            {/* 6-month comparison chart */}
             <div className="glass rounded-2xl p-5">
-              <p className="text-sm font-medium mb-3">Despesas por categoria</p>
-              <div className="h-48">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 size={18} className="text-primary" />
+                <p className="text-sm font-medium">Comparativo dos últimos 6 meses</p>
+              </div>
+              <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={3} dataKey="value">
-                      {categoryData.map((_, i) => (
-                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
+                  <BarChart data={comparisonData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
+                    <XAxis dataKey="label" tick={{ fill: 'hsl(210, 20%, 60%)', fontSize: 11 }} />
+                    <YAxis tick={{ fill: 'hsl(210, 20%, 60%)', fontSize: 10 }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
                     <Tooltip
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{ background: 'hsl(220, 18%, 12%)', border: 'none', borderRadius: '8px', color: 'hsl(210, 20%, 95%)' }}
                     />
-                  </PieChart>
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="Receitas" fill="hsl(153, 60%, 50%)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Despesas" fill="hsl(0, 70%, 55%)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Investimentos" fill="hsl(200, 70%, 55%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="space-y-1.5 mt-2">
-                {categoryData.map((d, i) => {
-                  const pct = expense > 0 ? ((d.value / expense) * 100).toFixed(1) : '0';
-                  return (
-                    <div key={d.name} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                        <span className="text-muted-foreground">{d.name}</span>
+            </div>
+
+            {/* Category chart */}
+            {categoryData.length > 0 && (
+              <div className="glass rounded-2xl p-5 mt-6">
+                <p className="text-sm font-medium mb-3">Despesas por categoria</p>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={3} dataKey="value">
+                        {categoryData.map((_, i) => (
+                          <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{ background: 'hsl(220, 18%, 12%)', border: 'none', borderRadius: '8px', color: 'hsl(210, 20%, 95%)' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1.5 mt-2">
+                  {categoryData.map((d, i) => {
+                    const pct = expense > 0 ? ((d.value / expense) * 100).toFixed(1) : '0';
+                    return (
+                      <div key={d.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                          <span className="text-muted-foreground">{d.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="tabular-nums">{formatCurrency(d.value)}</span>
+                          <span className="text-muted-foreground w-10 text-right">{pct}%</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="tabular-nums">{formatCurrency(d.value)}</span>
-                        <span className="text-muted-foreground w-10 text-right">{pct}%</span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Goals progress */}
+            {activeGoals.length > 0 && (
+              <div className="glass rounded-2xl p-5 space-y-3 mt-6">
+                <div className="flex items-center gap-2">
+                  <Target size={18} className="text-primary" />
+                  <p className="text-sm font-medium">Progresso das metas</p>
+                </div>
+                {activeGoals.map(g => {
+                  const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
+                  return (
+                    <div key={g.id} className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium">{g.title}</span>
+                        <span className="text-muted-foreground">{pct}%</span>
+                      </div>
+                      <Progress value={pct} className="h-2" />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{formatCurrency(g.currentAmount)}</span>
+                        <span>{formatCurrency(g.targetAmount)}</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {/* Goals progress */}
-          {activeGoals.length > 0 && (
-            <div className="glass rounded-2xl p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <Target size={18} className="text-primary" />
-                <p className="text-sm font-medium">Progresso das metas</p>
-              </div>
-              {activeGoals.map(g => {
-                const pct = Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100));
-                return (
-                  <div key={g.id} className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-medium">{g.title}</span>
-                      <span className="text-muted-foreground">{pct}%</span>
-                    </div>
-                    <Progress value={pct} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{formatCurrency(g.currentAmount)}</span>
-                      <span>{formatCurrency(g.targetAmount)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+            )}
+          </PremiumGate>
 
           {/* Export buttons */}
           <div className="glass rounded-2xl p-5 space-y-3">

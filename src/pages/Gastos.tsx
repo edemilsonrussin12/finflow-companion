@@ -3,18 +3,29 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { Transaction, TransactionType } from '@/types/finance';
 import { getMonthLabel } from '@/lib/format';
 import { getMainCategories } from '@/lib/categories';
-import { ArrowDownLeft } from 'lucide-react';
+import { ArrowDownLeft, AlertTriangle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TransactionItem from '@/components/TransactionItem';
 import TransactionForm from '@/components/TransactionForm';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import PremiumGate from '@/components/PremiumGate';
+
+const FREE_MONTHLY_LIMIT = 50;
 
 export default function Gastos() {
   const { transactions, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const { isPremium } = usePremiumStatus();
 
-  // Get categories for the selected type filter
+  const monthTxCount = useMemo(
+    () => transactions.filter(t => t.date.startsWith(selectedMonth)).length,
+    [transactions, selectedMonth]
+  );
+
+  const reachedLimit = !isPremium && monthTxCount >= FREE_MONTHLY_LIMIT;
+
   const filterCategories = useMemo(() => {
     if (filterType === 'all') {
       return [
@@ -44,6 +55,17 @@ export default function Gastos() {
         <p className="text-sm text-muted-foreground">Gestão</p>
         <h1 className="text-xl font-bold">Gastos</h1>
       </div>
+
+      {/* Limit warning */}
+      {!isPremium && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 text-xs text-muted-foreground">
+          <AlertTriangle size={14} className="text-primary shrink-0" />
+          <span>
+            {monthTxCount}/{FREE_MONTHLY_LIMIT} registros usados neste mês.
+            {reachedLimit && ' Limite atingido — desbloqueie o Premium para registros ilimitados.'}
+          </span>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="grid grid-cols-3 gap-2">
@@ -104,6 +126,11 @@ export default function Gastos() {
           />
         ))}
       </div>
+
+      {/* Limit reached gate */}
+      {reachedLimit && (
+        <PremiumGate isPremium={false} label="Você atingiu o limite de 50 registros mensais. Desbloqueie o Premium para registros ilimitados." />
+      )}
 
       {editingTx && (
         <TransactionForm
