@@ -43,10 +43,10 @@ const modules: Module[] = [
     description: 'Domine técnicas avançadas de orçamento e controle de gastos para maximizar seus resultados.',
     status: 'premium',
     lessons: [
-      { title: 'Método 50-30-20 avançado', description: 'Aplique o método de orçamento mais eficiente do mercado.', pdfUrl: '/content/modules/modulo2-aula1.pdf' },
-      { title: 'Automação financeira', description: 'Automatize suas finanças para economizar tempo e dinheiro.', pdfUrl: '/content/modules/modulo2-aula2.pdf' },
-      { title: 'Como eliminar gastos invisíveis', description: 'Encontre e elimine despesas que passam despercebidas.', pdfUrl: '/content/modules/modulo2-aula3.pdf' },
-      { title: 'Criando um sistema de controle eficiente', description: 'Monte seu sistema pessoal de gestão financeira.', pdfUrl: '/content/modules/modulo2-aula4.pdf' },
+      { title: 'Método 50-30-20 Avançado', description: 'Aplique o método de orçamento mais eficiente do mercado.', pdfUrl: '/cursos/modulo2/aula-01-metodo-50-30-20-avancado.pdf' },
+      { title: 'Automação Financeira', description: 'Automatize suas finanças para economizar tempo e dinheiro.', pdfUrl: '/cursos/modulo2/aula-02-automacao-financeira.pdf' },
+      { title: 'Como eliminar gastos invisíveis', description: 'Encontre e elimine despesas que passam despercebidas.', pdfUrl: '/cursos/modulo2/aula-03-gastos-invisiveis.pdf' },
+      { title: 'Criando um sistema de controle financeiro eficiente', description: 'Monte seu sistema pessoal de gestão financeira.', pdfUrl: '/cursos/modulo2/aula-04-sistema-controle-financeiro.pdf' },
     ],
   },
   {
