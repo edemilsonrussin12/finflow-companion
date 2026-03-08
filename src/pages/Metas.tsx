@@ -6,15 +6,31 @@ import { Target, Plus, Pencil, Trash2, PlusCircle } from 'lucide-react';
 import GoalForm from '@/components/GoalForm';
 import ContributionForm from '@/components/ContributionForm';
 import { FinancialGoal } from '@/types/goals';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import PremiumGate from '@/components/PremiumGate';
+import { toast } from 'sonner';
+
+const FREE_GOAL_LIMIT = 1;
 
 export default function Metas() {
   const { goals, loading, addGoal, updateGoal, deleteGoal, addContribution } = useGoals();
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState<FinancialGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<FinancialGoal | null>(null);
+  const { isPremium } = usePremiumStatus();
 
   const activeGoals = goals.filter(g => g.status === 'active');
   const completedGoals = goals.filter(g => g.status === 'completed');
+
+  const canAddGoal = isPremium || goals.length < FREE_GOAL_LIMIT;
+
+  const handleNewGoal = () => {
+    if (!canAddGoal) {
+      toast.info('Limite de 1 meta no plano gratuito. Desbloqueie o Premium para metas ilimitadas.');
+      return;
+    }
+    setShowForm(true);
+  };
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
@@ -24,7 +40,7 @@ export default function Metas() {
           <h1 className="text-xl font-bold">Metas</h1>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={handleNewGoal}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-primary hover:bg-accent transition-colors"
         >
           <Plus size={16} />
@@ -38,7 +54,7 @@ export default function Metas() {
         <div className="glass rounded-2xl p-8 text-center space-y-3">
           <Target size={40} className="mx-auto text-muted-foreground" />
           <p className="text-muted-foreground text-sm">Você ainda não tem metas financeiras.</p>
-          <button onClick={() => setShowForm(true)} className="text-primary text-sm font-medium hover:underline">
+          <button onClick={handleNewGoal} className="text-primary text-sm font-medium hover:underline">
             Criar sua primeira meta
           </button>
         </div>
@@ -83,6 +99,11 @@ export default function Metas() {
             );
           })}
         </div>
+      )}
+
+      {/* Premium gate when limit reached */}
+      {!isPremium && goals.length >= FREE_GOAL_LIMIT && (
+        <PremiumGate isPremium={false} label="No plano gratuito você pode ter apenas 1 meta. Desbloqueie o Premium para metas ilimitadas." />
       )}
 
       {completedGoals.length > 0 && (
