@@ -58,7 +58,7 @@ const modules: Module[] = [
       { title: 'Renda fixa vs renda variável', description: 'Entenda as diferenças e quando usar cada tipo.', pdfUrl: '/content/modules/modulo3-aula1.pdf' },
       { title: 'Como montar sua reserva de emergência', description: 'Proteja-se contra imprevistos financeiros.', pdfUrl: '/content/modules/modulo3-aula2.pdf' },
       { title: 'Tesouro Direto na prática', description: 'Aprenda a investir no Tesouro Direto passo a passo.', pdfUrl: '/content/modules/modulo3-aula3.pdf' },
-      { title: 'Diversificação para iniciantes', description: 'Como distribuir seus investimentos com inteligência.', pdfUrl: '/content/modules/modulo3-aula4.pdf' },
+      { title: 'Diversificação para iniciantes', description: 'Como distribuir seus investimentos com inteligência.', pdfUrl: '/cursos/modulo3/aula-04-diversificacao-investimentos.pdf' },
     ],
   },
   {
