@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { BookOpen, Lock, CheckCircle2, Sparkles, ArrowLeft, FileText } from 'lucide-react';
+import { BookOpen, Lock, CheckCircle2, Sparkles, ArrowLeft, FileText, Trophy, Unlock } from 'lucide-react';
 import PdfViewer from '@/components/PdfViewer';
 
 interface Lesson {
@@ -28,12 +28,12 @@ const modules: Module[] = [
     description: 'Aprenda os princípios básicos para construir uma mentalidade de abundância e controle financeiro.',
     status: 'free',
     lessons: [
-      { title: 'Introdução à Engenharia da Riqueza', description: 'Conheça os fundamentos e a metodologia do curso.', pdfUrl: '/cursos/modulo1/aula-01-engenharia-da-riqueza.pdf' },
-      { title: 'Por que a maioria das pessoas não constrói riqueza', description: 'Entenda os erros mais comuns que impedem o crescimento financeiro.', pdfUrl: '/cursos/modulo1/aula-02-erros-financeiros.pdf' },
-      { title: 'Mentalidade de construção de patrimônio', description: 'Desenvolva a mentalidade necessária para acumular riqueza.', pdfUrl: '/cursos/modulo1/aula-03-mentalidade-patrimonio.pdf' },
-      { title: 'Princípios fundamentais de organização financeira', description: 'Aprenda os pilares da organização financeira eficiente.', pdfUrl: '/cursos/modulo1/aula-04-organizacao-financeira.pdf' },
-      { title: 'Construção de Ativos e Investimentos', description: 'Aprenda a construir ativos e investir com inteligência.', pdfUrl: '/cursos/modulo1/aula-05-ativos-investimentos.pdf' },
-      { title: 'O Método da Engenharia da Riqueza', description: 'Coloque em prática o método completo da Engenharia da Riqueza.', pdfUrl: '/cursos/modulo1/aula-06-metodo-engenharia-riqueza.pdf' },
+      { title: 'Introdução à Engenharia da Riqueza', description: 'Entenda como o dinheiro realmente funciona e os fundamentos da construção de riqueza.', pdfUrl: '/cursos/modulo1/aula-01-engenharia-da-riqueza.pdf' },
+      { title: 'Por que a maioria das pessoas não constrói riqueza', description: 'Descubra os erros financeiros mais comuns que impedem as pessoas de acumular patrimônio.', pdfUrl: '/cursos/modulo1/aula-02-erros-financeiros.pdf' },
+      { title: 'Mentalidade de construção de patrimônio', description: 'Aprenda a desenvolver a mentalidade necessária para construir riqueza ao longo do tempo.', pdfUrl: '/cursos/modulo1/aula-03-mentalidade-patrimonio.pdf' },
+      { title: 'Princípios fundamentais de organização financeira', description: 'Conheça os pilares da organização financeira e como estruturar seu dinheiro corretamente.', pdfUrl: '/cursos/modulo1/aula-04-organizacao-financeira.pdf' },
+      { title: 'Construção de Ativos e Investimentos', description: 'Aprenda como transformar renda em ativos e fazer o dinheiro trabalhar para você.', pdfUrl: '/cursos/modulo1/aula-05-ativos-investimentos.pdf' },
+      { title: 'O Método da Engenharia da Riqueza', description: 'Veja o método completo para construir riqueza de forma consistente ao longo da vida.', pdfUrl: '/cursos/modulo1/aula-06-metodo-engenharia-riqueza.pdf' },
     ],
   },
   {
@@ -207,10 +207,26 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack }: {
         </Card>
 
         {allComplete && (
-          <div className="glass rounded-xl p-4 flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-            <p className="text-sm text-foreground font-medium">Módulo concluído! O próximo módulo foi desbloqueado.</p>
-          </div>
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-6 pb-6 flex flex-col items-center text-center space-y-4">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Trophy className="h-8 w-8 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-bold text-foreground">Módulo Concluído 🎉</h2>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  Parabéns! Você concluiu o módulo {mod.title}. Agora você conhece os fundamentos para construir patrimônio e tomar decisões financeiras mais inteligentes.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-primary font-medium">
+                <Unlock className="h-4 w-4" />
+                <span>Novo módulo desbloqueado</span>
+              </div>
+              <Button className="w-full" onClick={onBack}>
+                Continuar aprendendo
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
     </>
