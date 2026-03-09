@@ -214,36 +214,36 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="glass rounded-2xl p-4 space-y-1.5">
+            <div className="card-income rounded-2xl p-5 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-xl bg-income/10 w-fit"><ArrowUpRight size={16} className="text-income" /></div>
+                <div className="p-2.5 rounded-xl bg-income/15 w-fit glow-income"><ArrowUpRight size={18} className="text-income" /></div>
                 <ComparisonBadge current={income} previous={prevIncome} />
               </div>
-              <p className="text-[11px] text-muted-foreground">Receitas</p>
-              <p className="text-base font-bold text-income tabular-nums">{formatCurrency(income)}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Receitas</p>
+              <p className="text-lg font-extrabold text-income tabular-nums">{formatCurrency(income)}</p>
             </div>
-            <div className="glass rounded-2xl p-4 space-y-1.5">
+            <div className="card-expense rounded-2xl p-5 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-xl bg-expense/10 w-fit"><ArrowDownLeft size={16} className="text-expense" /></div>
+                <div className="p-2.5 rounded-xl bg-expense/15 w-fit"><ArrowDownLeft size={18} className="text-expense" /></div>
                 <ExpenseComparisonBadge current={expense} previous={prevExpense} />
               </div>
-              <p className="text-[11px] text-muted-foreground">Despesas</p>
-              <p className="text-base font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Despesas</p>
+              <p className="text-lg font-extrabold text-expense tabular-nums">{formatCurrency(expense)}</p>
             </div>
-            <div className="glass rounded-2xl p-4 space-y-1.5">
+            <div className="card-investment rounded-2xl p-5 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-xl bg-primary/10 w-fit"><TrendingUp size={16} className="text-primary" /></div>
+                <div className="p-2.5 rounded-xl bg-emerald/15 w-fit glow-emerald"><TrendingUp size={18} className="text-emerald" /></div>
                 <ComparisonBadge current={investment} previous={prevInvestment} />
               </div>
-              <p className="text-[11px] text-muted-foreground">Investimentos</p>
-              <p className="text-base font-bold text-primary tabular-nums">{formatCurrency(investment)}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Investimentos</p>
+              <p className="text-lg font-extrabold text-emerald tabular-nums">{formatCurrency(investment)}</p>
             </div>
-            <div className="glass rounded-2xl p-4 space-y-1.5">
+            <div className="card-revenue rounded-2xl p-5 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-xl bg-primary/10 w-fit"><ShoppingBag size={16} className="text-primary" /></div>
+                <div className="p-2.5 rounded-xl bg-gold/15 w-fit glow-gold"><ShoppingBag size={18} className="text-gold" /></div>
               </div>
-              <p className="text-[11px] text-muted-foreground">Faturamento</p>
-              <p className="text-base font-bold text-primary tabular-nums">{formatCurrency(monthlyRevenue)}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Faturamento</p>
+              <p className="text-lg font-extrabold text-gold tabular-nums">{formatCurrency(monthlyRevenue)}</p>
             </div>
           </div>
 
