@@ -29,14 +29,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-background">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">
-            <LogIn size={24} className="text-primary-foreground" />
+    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-gradient-to-br from-[#0B0F19] via-[#0F1629] to-[#1E293B]">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="text-center space-y-4">
+          <div className="mx-auto mb-6">
+            <img src={logoFinControl} alt="FinControl" className="h-16 mx-auto" />
           </div>
-          <h1 className="text-2xl font-bold">FinControl</h1>
-          <p className="text-sm text-muted-foreground">Entre na sua conta</p>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-white">Bem-vindo de volta</h1>
+            <p className="text-slate-300">Controle inteligente do seu dinheiro</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
