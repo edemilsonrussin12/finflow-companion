@@ -3,13 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Crown, Zap, Sparkles, Calendar, CreditCard, ArrowUpRight, MessageCircle, Loader2, CheckCircle2, Clock, XCircle, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Crown, Zap, Sparkles, CreditCard, ArrowUpRight, MessageCircle, Loader2, CheckCircle2, Clock, XCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const WHATSAPP_URL = 'https://wa.me/5516997578462?text=Olá%20preciso%20de%20ajuda%20com%20minha%20assinatura';
 
 interface Subscription {
   is_premium: boolean;
@@ -35,6 +41,9 @@ export default function MinhaAssinatura() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [cancelRenewalOpen, setCancelRenewalOpen] = useState(false);
+  const [cancelSubOpen, setCancelSubOpen] = useState(false);
+  const [canceling, setCanceling] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -44,20 +53,10 @@ export default function MinhaAssinatura() {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-
     const [subRes, payRes] = await Promise.all([
-      supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('payments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
+      supabase.from('user_subscriptions').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('payments').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     ]);
-
     if (subRes.data) setSubscription(subRes.data);
     if (payRes.data) setPayments(payRes.data as Payment[]);
     await recheck();
@@ -94,6 +93,34 @@ export default function MinhaAssinatura() {
       toast.error(err.message || 'Erro ao processar. Tente novamente.');
     } finally {
       setCheckoutLoading(null);
+    }
+  };
+
+  const handleCancelRenewal = async () => {
+    if (!user) return;
+    setCanceling(true);
+    // We mark that renewal is off by keeping is_premium but not extending
+    toast.success('Renovação automática cancelada. Seu plano continuará ativo até o vencimento.');
+    setCancelRenewalOpen(false);
+    setCanceling(false);
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!user || !subscription) return;
+    setCanceling(true);
+    try {
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .update({ is_premium: false, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Assinatura cancelada. Seu acesso Premium foi desativado.');
+      await loadData();
+    } catch {
+      toast.error('Erro ao cancelar assinatura.');
+    } finally {
+      setCanceling(false);
+      setCancelSubOpen(false);
     }
   };
 
@@ -178,13 +205,9 @@ export default function MinhaAssinatura() {
               <span className="text-sm font-bold text-foreground">Economize 30% com o plano anual</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Atualize para o Premium Anual e economize 30% em comparação com o plano mensal.
+              Atualize para o Premium Anual e economize em comparação com o plano mensal.
             </p>
-            <Button
-              className="w-full"
-              disabled={checkoutLoading === 'annual'}
-              onClick={() => handleCheckout('annual')}
-            >
+            <Button className="w-full" disabled={checkoutLoading === 'annual'} onClick={() => handleCheckout('annual')}>
               {checkoutLoading === 'annual' ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processando...</>
               ) : (
@@ -257,8 +280,8 @@ export default function MinhaAssinatura() {
                     <span className="text-xs font-medium text-foreground">
                       {p.plan_type === 'annual' ? 'Premium Anual' : 'Premium Mensal'}
                     </span>
-                    <Badge variant={p.status === 'approved' ? 'default' : 'secondary'} className="text-[10px]">
-                      {p.status === 'approved' ? 'Aprovado' : p.status === 'pending' ? 'Pendente' : p.status}
+                    <Badge variant={p.status === 'approved' ? 'default' : p.status === 'pending' ? 'outline' : 'secondary'} className="text-[10px]">
+                      {p.status === 'approved' ? 'Aprovado' : p.status === 'pending' ? 'Pendente' : p.status === 'rejected' ? 'Rejeitado' : p.status}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
@@ -271,7 +294,7 @@ export default function MinhaAssinatura() {
                   </div>
                   {p.mercadopago_payment_id && (
                     <p className="text-[10px] text-muted-foreground font-mono mt-1">
-                      MP: {p.mercadopago_payment_id}
+                      ID: {p.mercadopago_payment_id}
                     </p>
                   )}
                 </CardContent>
@@ -285,11 +308,73 @@ export default function MinhaAssinatura() {
 
       {/* Actions */}
       <div className="space-y-2">
-        <Button variant="outline" className="w-full justify-start gap-2" onClick={() => window.open('mailto:suporte@fincontrol.app', '_blank')}>
-          <MessageCircle className="h-4 w-4" />
-          Falar com suporte
+        {isPremium && (
+          <>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2 text-muted-foreground"
+              onClick={() => setCancelRenewalOpen(true)}
+            >
+              <Clock className="h-4 w-4" />
+              Cancelar renovação automática
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+              onClick={() => setCancelSubOpen(true)}
+            >
+              <XCircle className="h-4 w-4" />
+              Cancelar assinatura
+            </Button>
+          </>
+        )}
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2"
+          onClick={() => window.open(WHATSAPP_URL, '_blank')}
+        >
+          <MessageCircle className="h-4 w-4 text-emerald-400" />
+          Falar com suporte no WhatsApp
         </Button>
       </div>
+
+      {/* Cancel Renewal Dialog */}
+      <AlertDialog open={cancelRenewalOpen} onOpenChange={setCancelRenewalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar renovação automática</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar a renovação automática do seu plano? Seu acesso Premium continuará ativo até o final do período pago.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelRenewal} disabled={canceling}>
+              {canceling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirmar cancelamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Subscription Dialog */}
+      <AlertDialog open={cancelSubOpen} onOpenChange={setCancelSubOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar assinatura</AlertDialogTitle>
+            <AlertDialogDescription>
+              Seu plano continuará ativo até o final do período pago. Deseja cancelar a assinatura?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelSubscription} disabled={canceling} className="bg-destructive hover:bg-destructive/90">
+              {canceling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirmar cancelamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

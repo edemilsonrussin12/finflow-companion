@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, MessageCircle } from 'lucide-react';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+
+const WHATSAPP_URL = 'https://wa.me/5516997578462?text=Olá%20preciso%20de%20ajuda%20com%20minha%20assinatura';
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -15,46 +17,28 @@ export default function PaymentSuccess() {
   const [activating, setActivating] = useState(false);
   const activationAttempted = useRef(false);
 
-  // On mount: try to activate premium using MP redirect params
   useEffect(() => {
     if (!user || activationAttempted.current) return;
     activationAttempted.current = true;
-
     const paymentId = searchParams.get('payment_id') || searchParams.get('collection_id');
     const status = searchParams.get('status') || searchParams.get('collection_status');
-
-    console.log('[SUCCESS PAGE] MP redirect params | payment_id:', paymentId, '| status:', status, '| user:', user.id);
-
     if (paymentId && (status === 'approved' || status === 'null' || !status)) {
       setActivating(true);
-      console.log('[SUCCESS PAGE] Calling activate-premium...');
-
-      // Don't hardcode plan — let the edge function extract it from external_reference
       supabase.functions.invoke('activate-premium', {
         body: { payment_id: paymentId, user_id: user.id },
-      }).then(({ data, error }) => {
-        console.log('[SUCCESS PAGE] activate-premium response:', JSON.stringify(data), error);
-        if (data?.activated) {
-          recheck();
-        }
+      }).then(({ data }) => {
+        if (data?.activated) recheck();
         setActivating(false);
-      }).catch(err => {
-        console.error('[SUCCESS PAGE] activate-premium error:', err);
-        setActivating(false);
-      });
+      }).catch(() => setActivating(false));
     }
   }, [user, searchParams, recheck]);
 
-  // Poll for premium activation as fallback
   useEffect(() => {
     if (isPremium || pollCount >= 15 || activating) return;
-
     const timer = setTimeout(async () => {
-      console.log('[SUCCESS PAGE] Polling premium status... attempt', pollCount + 1);
       await recheck();
       setPollCount(prev => prev + 1);
     }, 2000);
-
     return () => clearTimeout(timer);
   }, [isPremium, pollCount, recheck, activating]);
 
@@ -87,13 +71,7 @@ export default function PaymentSuccess() {
             <p className="text-muted-foreground">
               Seu pagamento foi confirmado. Se o Premium não ativou automaticamente, clique abaixo para tentar novamente.
             </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPollCount(0);
-                activationAttempted.current = false;
-              }}
-            >
+            <Button variant="outline" onClick={() => { setPollCount(0); activationAttempted.current = false; }}>
               Tentar ativar novamente
             </Button>
           </div>
@@ -102,6 +80,16 @@ export default function PaymentSuccess() {
         <Button onClick={() => navigate('/')} className="w-full">
           Ir para o Dashboard
         </Button>
+
+        <div className="pt-2 border-t border-border/50">
+          <p className="text-xs text-muted-foreground mb-2">
+            Problemas com pagamento ou assinatura?
+          </p>
+          <Button variant="ghost" size="sm" className="gap-2 text-emerald-400" onClick={() => window.open(WHATSAPP_URL, '_blank')}>
+            <MessageCircle className="h-4 w-4" />
+            Suporte via WhatsApp
+          </Button>
+        </div>
       </div>
     </div>
   );

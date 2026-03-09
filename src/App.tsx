@@ -26,6 +26,7 @@ import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentPending from "@/pages/PaymentPending";
 import PaymentFailure from "@/pages/PaymentFailure";
 import MinhaAssinatura from "@/pages/MinhaAssinatura";
+import Suporte from "@/pages/Suporte";
 import AdminAssinaturas from "@/pages/AdminAssinaturas";
 import AdminMetricas from "@/pages/AdminMetricas";
 import AdminRoute from "@/components/AdminRoute";
