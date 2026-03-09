@@ -29,15 +29,15 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-gradient-to-br from-[#0B0F19] via-[#0F1629] to-[#1E293B]">
+    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-gradient-to-br from-background via-card to-muted">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-4">
           <div className="mx-auto mb-6">
             <img src={logoFinControl} alt="FinControl" className="h-16 mx-auto" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-white">Bem-vindo de volta</h1>
-            <p className="text-slate-300">Controle inteligente do seu dinheiro</p>
+            <h1 className="text-2xl font-bold text-foreground">Bem-vindo de volta</h1>
+            <p className="text-muted-foreground">Controle inteligente do seu dinheiro</p>
           </div>
         </div>
 
