@@ -6,21 +6,20 @@ import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
-  const { isPremium, loading } = usePremiumStatus();
+  const { isPremium, loading, recheck } = usePremiumStatus();
   const [pollCount, setPollCount] = useState(0);
 
   // Poll for premium activation (webhook may take a few seconds)
   useEffect(() => {
     if (isPremium || pollCount >= 10) return;
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
+      await recheck();
       setPollCount(prev => prev + 1);
-      // Force re-check by reloading the hook (page-level re-render)
-      window.dispatchEvent(new Event('focus'));
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [isPremium, pollCount]);
+  }, [isPremium, pollCount, recheck]);
 
   const activated = isPremium;
   const stillWaiting = !isPremium && pollCount < 10 && !loading;
@@ -48,7 +47,7 @@ export default function PaymentSuccess() {
           </p>
         ) : timedOut ? (
           <p className="text-muted-foreground">
-            Seu pagamento foi confirmado. O acesso Premium será ativado em instantes. 
+            Seu pagamento foi confirmado. O acesso Premium será ativado em instantes.
             Você pode voltar ao Dashboard e atualizar a página.
           </p>
         ) : null}
