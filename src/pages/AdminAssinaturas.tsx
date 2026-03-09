@@ -65,6 +65,17 @@ export default function AdminAssinaturas() {
       setTotalUsers(data.totalUsers || 0);
     }
     setLoading(false);
+
+    // Detect payment mode by checking create-checkout
+    try {
+      const { data: checkData } = await supabase.functions.invoke('create-checkout', {
+        body: { user_id: 'mode-check', plan: 'monthly' },
+      });
+      setPaymentMode(checkData?.mode || 'unknown');
+    } catch {
+      // If it fails, try to detect from access token pattern
+      setPaymentMode('unknown');
+    }
   };
 
   useEffect(() => { load(); }, []);
