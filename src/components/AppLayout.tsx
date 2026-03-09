@@ -5,6 +5,7 @@ import FloatingActionButton from '@/components/FloatingActionButton';
 import InstallPWA from '@/components/InstallPWA';
 import TransactionForm from '@/components/TransactionForm';
 import PremiumPlansDialog from '@/components/PremiumPlansDialog';
+import SplashScreen from '@/components/SplashScreen';
 import { useFinance } from '@/contexts/FinanceContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { getCurrentMonth } from '@/lib/format';
@@ -16,6 +17,7 @@ const FREE_MONTHLY_LIMIT = 50;
 export default function AppLayout() {
   const [formType, setFormType] = useState<TransactionType | null>(null);
   const [showPlans, setShowPlans] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const { addTransaction, transactions } = useFinance();
   const { isPremium } = usePremiumStatus();
   const location = useLocation();
@@ -37,6 +39,10 @@ export default function AppLayout() {
     }
     setFormType(type);
   };
+
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
 
   return (
     <div className="min-h-[100dvh] bg-background overflow-x-hidden">

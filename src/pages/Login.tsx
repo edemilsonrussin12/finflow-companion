@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogIn, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import logoFinControl from '@/assets/logo-fincontrol.png';
 
 export default function Login() {
   const { isAuthenticated, loading, login } = useAuth();
@@ -28,33 +29,64 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-background">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center">
-            <LogIn size={24} className="text-primary-foreground" />
+    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-gradient-to-br from-background via-card to-muted">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="text-center space-y-4">
+          <div className="mx-auto mb-6">
+            <img src={logoFinControl} alt="FinControl" className="h-16 mx-auto" />
           </div>
-          <h1 className="text-2xl font-bold">FinControl</h1>
-          <p className="text-sm text-muted-foreground">Entre na sua conta</p>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-foreground">Bem-vindo de volta</h1>
+            <p className="text-muted-foreground">Controle inteligente do seu dinheiro</p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" required />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email" className="text-foreground text-sm font-medium">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="seu@email.com" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                className="mt-1.5 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:bg-muted focus:border-primary" 
+                required 
+              />
+            </div>
+            <div>
+              <Label htmlFor="password" className="text-foreground text-sm font-medium">Senha</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                className="mt-1.5 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:bg-muted focus:border-primary" 
+                required 
+              />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" placeholder="••••••" value={password} onChange={e => setPassword(e.target.value)} className="mt-1" required />
-          </div>
-          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold" disabled={submitting}>
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Entrar'}
+          
+          <Button 
+            type="submit" 
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-xl shadow-lg shadow-primary/25" 
+            disabled={submitting}
+          >
+            {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Entrar'}
           </Button>
         </form>
 
-        <div className="text-center space-y-2 text-sm">
-          <Link to="/cadastro" className="text-primary hover:underline block">Criar conta</Link>
-          <Link to="/reset-senha" className="text-muted-foreground hover:underline block">Esqueci minha senha</Link>
+        <div className="text-center space-y-4">
+          <Link to="/cadastro" className="text-primary hover:text-primary/80 text-sm font-medium transition-colors">
+            Criar conta
+          </Link>
+          <div>
+            <Link to="/reset-senha" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
+              Esqueci minha senha
+            </Link>
+          </div>
         </div>
       </div>
     </div>
