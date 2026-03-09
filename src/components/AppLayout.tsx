@@ -5,6 +5,7 @@ import FloatingActionButton from '@/components/FloatingActionButton';
 import InstallPWA from '@/components/InstallPWA';
 import TransactionForm from '@/components/TransactionForm';
 import PremiumPlansDialog from '@/components/PremiumPlansDialog';
+import SplashScreen from '@/components/SplashScreen';
 import { useFinance } from '@/contexts/FinanceContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { getCurrentMonth } from '@/lib/format';
