@@ -47,7 +47,7 @@ export default function AdminAssinaturas() {
   const [filter, setFilter] = useState('all');
   const [actionDialog, setActionDialog] = useState<{ type: string; sub: Sub } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [extendDays, setExtendDays] = useState('30');
+  const [paymentMode, setPaymentMode] = useState<string>('unknown');
 
   const load = async () => {
     setLoading(true);
