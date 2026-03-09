@@ -200,15 +200,19 @@ export default function Dashboard() {
       {hasData && (
         <>
           {/* ───── 1: Financial Summary ───── */}
-          <div className="glass rounded-2xl p-5 space-y-1">
+          <div className="card-premium rounded-2xl p-6 space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Wallet size={18} className="text-primary" />
-                <span className="text-xs text-muted-foreground">Saldo livre do mês</span>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-primary/15 glow-income">
+                  <Wallet size={20} className="text-primary" />
+                </div>
+                <span className="text-sm text-muted-foreground font-medium">Saldo livre do mês</span>
               </div>
               <ComparisonBadge current={saldoLivre} previous={prevIncome - prevExpense - prevInvestment} format="currency" />
             </div>
-            <p className={`text-3xl font-extrabold tabular-nums ${saldoLivre >= 0 ? 'text-income' : 'text-expense'}`}>
+            <p className={`text-4xl font-extrabold tabular-nums ${saldoLivre >= 0 ? 'text-emerald' : 'text-expense'}`} style={{
+              textShadow: saldoLivre >= 0 ? '0 0 20px hsl(142,71%,45%,0.4)' : '0 0 20px hsl(0,72%,55%,0.4)'
+            }}>
               {formatCurrency(saldoLivre)}
             </p>
           </div>
