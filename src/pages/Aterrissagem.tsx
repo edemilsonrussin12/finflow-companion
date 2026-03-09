@@ -37,8 +37,12 @@ export default function Aterrissagem() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-6">
-        <div className="max-w-6xl mx-auto text-center space-y-8">
+        <div className="max-w-6xl mx-auto text-center space-y-8 animate-fade-in">
           <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 bg-emerald/10 border border-emerald/20 text-emerald px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+              <span className="w-2 h-2 bg-emerald rounded-full animate-pulse" />
+              Inteligência financeira para todos
+            </div>
             <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight">
               Transforme sua{' '}
               <span className="bg-gradient-to-r from-primary via-cyan to-emerald bg-clip-text text-transparent">
@@ -62,7 +66,7 @@ export default function Aterrissagem() {
             </Button>
           </div>
 
-          <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <CheckCircle size={16} className="text-emerald" />
               Gratuito para começar
@@ -78,6 +82,12 @@ export default function Aterrissagem() {
           </div>
         </div>
       </section>
+
+      {/* Financial Health Quiz */}
+      <FinancialHealthQuiz />
+
+      {/* Social Proof */}
+      <SocialProof />
 
       {/* Benefícios Section */}
       <section className="py-20 px-6 relative">
