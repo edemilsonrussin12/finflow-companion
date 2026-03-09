@@ -37,6 +37,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
+              <Route path="/landing" element={<Aterrissagem />} />
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/reset-senha" element={<ResetSenha />} />
