@@ -22,6 +22,9 @@ import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
 import ResetPassword from "@/pages/ResetPassword";
 import Aterrissagem from "@/pages/Aterrissagem";
+import PaymentSuccess from "@/pages/PaymentSuccess";
+import PaymentPending from "@/pages/PaymentPending";
+import PaymentFailure from "@/pages/PaymentFailure";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
