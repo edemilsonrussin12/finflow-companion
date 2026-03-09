@@ -45,6 +45,9 @@ const App = () => (
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/reset-senha" element={<ResetSenha />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment-pending" element={<PaymentPending />} />
+              <Route path="/payment-failure" element={<PaymentFailure />} />
 
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
