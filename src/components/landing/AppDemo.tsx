@@ -1,7 +1,7 @@
 import { useInView } from '@/hooks/useInView';
 import { useCountUp } from '@/hooks/useCountUp';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, Wallet, PiggyBank, BarChart3 } from 'lucide-react';
+import { TrendingUp, Wallet, PiggyBank, BarChart3, Brain } from 'lucide-react';
 
 function AnimatedCounter({ end, prefix = '', suffix = '' }: { end: number; prefix?: string; suffix?: string }) {
   const { ref, inView } = useInView();
@@ -39,6 +39,12 @@ export default function AppDemo() {
       title: 'Monitoramento de Investimentos',
       description: 'Acompanhe seus investimentos em um só lugar',
       color: 'text-cyan',
+    },
+    {
+      icon: Brain,
+      title: 'Recomendações com IA',
+      description: 'Insights personalizados para melhorar suas finanças',
+      color: 'text-primary',
     },
   ];
 

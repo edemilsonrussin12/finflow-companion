@@ -41,7 +41,7 @@ export default function FinalCTA() {
 
             <Link to="/cadastro">
               <Button size="lg" className="fab-glow text-lg px-10 py-7 h-auto mb-8">
-                Criar minha conta agora
+              Criar minha conta agora
                 <ArrowRight className="ml-2" size={22} />
               </Button>
             </Link>
