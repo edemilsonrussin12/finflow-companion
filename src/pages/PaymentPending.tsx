@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Clock } from 'lucide-react';
+import { Clock, MessageCircle } from 'lucide-react';
+
+const WHATSAPP_URL = 'https://wa.me/5516997578462?text=Olá%20preciso%20de%20ajuda%20com%20minha%20assinatura';
 
 export default function PaymentPending() {
   const navigate = useNavigate();
@@ -18,6 +20,15 @@ export default function PaymentPending() {
         <Button onClick={() => navigate('/')} variant="outline" className="w-full">
           Voltar ao Dashboard
         </Button>
+        <div className="pt-2 border-t border-border/50">
+          <p className="text-xs text-muted-foreground mb-2">
+            Problemas com pagamento ou assinatura?
+          </p>
+          <Button variant="ghost" size="sm" className="gap-2 text-emerald-400" onClick={() => window.open(WHATSAPP_URL, '_blank')}>
+            <MessageCircle className="h-4 w-4" />
+            Suporte via WhatsApp
+          </Button>
+        </div>
       </div>
     </div>
   );

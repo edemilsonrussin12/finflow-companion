@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { XCircle } from 'lucide-react';
+import { XCircle, MessageCircle } from 'lucide-react';
+
+const WHATSAPP_URL = 'https://wa.me/5516997578462?text=Olá%20preciso%20de%20ajuda%20com%20minha%20assinatura';
 
 export default function PaymentFailure() {
   const navigate = useNavigate();
@@ -19,8 +21,17 @@ export default function PaymentFailure() {
           <Button onClick={() => navigate('/')} variant="outline" className="flex-1">
             Voltar
           </Button>
-          <Button onClick={() => navigate('/')} className="flex-1">
+          <Button onClick={() => navigate('/minha-assinatura')} className="flex-1">
             Tentar novamente
+          </Button>
+        </div>
+        <div className="pt-2 border-t border-border/50">
+          <p className="text-xs text-muted-foreground mb-2">
+            Problemas com pagamento ou assinatura?
+          </p>
+          <Button variant="ghost" size="sm" className="gap-2 text-emerald-400" onClick={() => window.open(WHATSAPP_URL, '_blank')}>
+            <MessageCircle className="h-4 w-4" />
+            Suporte via WhatsApp
           </Button>
         </div>
       </div>
