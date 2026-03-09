@@ -41,23 +41,52 @@ export default function Login() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" required />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email" className="text-white text-sm font-medium">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="seu@email.com" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                className="mt-1.5 bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:bg-white/15 focus:border-primary" 
+                required 
+              />
+            </div>
+            <div>
+              <Label htmlFor="password" className="text-white text-sm font-medium">Senha</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                className="mt-1.5 bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:bg-white/15 focus:border-primary" 
+                required 
+              />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" placeholder="••••••" value={password} onChange={e => setPassword(e.target.value)} className="mt-1" required />
-          </div>
-          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold" disabled={submitting}>
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Entrar'}
+          
+          <Button 
+            type="submit" 
+            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl shadow-lg shadow-primary/25" 
+            disabled={submitting}
+          >
+            {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Entrar'}
           </Button>
         </form>
 
-        <div className="text-center space-y-2 text-sm">
-          <Link to="/cadastro" className="text-primary hover:underline block">Criar conta</Link>
-          <Link to="/reset-senha" className="text-muted-foreground hover:underline block">Esqueci minha senha</Link>
+        <div className="text-center space-y-4">
+          <Link to="/cadastro" className="text-primary hover:text-primary/80 text-sm font-medium transition-colors">
+            Criar conta
+          </Link>
+          <div>
+            <Link to="/reset-senha" className="text-slate-400 hover:text-slate-300 text-sm transition-colors">
+              Esqueci minha senha
+            </Link>
+          </div>
         </div>
       </div>
     </div>

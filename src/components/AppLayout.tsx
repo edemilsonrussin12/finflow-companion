@@ -40,6 +40,10 @@ export default function AppLayout() {
     setFormType(type);
   };
 
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
+
   return (
     <div className="min-h-[100dvh] bg-background overflow-x-hidden">
       <InstallPWA />
