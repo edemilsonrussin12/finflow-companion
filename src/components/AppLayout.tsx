@@ -17,6 +17,7 @@ const FREE_MONTHLY_LIMIT = 50;
 export default function AppLayout() {
   const [formType, setFormType] = useState<TransactionType | null>(null);
   const [showPlans, setShowPlans] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const { addTransaction, transactions } = useFinance();
   const { isPremium } = usePremiumStatus();
   const location = useLocation();
