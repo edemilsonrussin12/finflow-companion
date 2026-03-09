@@ -261,7 +261,10 @@ export type Database = {
           created_at: string
           id: string
           is_premium: boolean
+          mercadopago_payment_id: string | null
+          plan_type: string | null
           premium_expires_at: string | null
+          premium_started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -269,7 +272,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_premium?: boolean
+          mercadopago_payment_id?: string | null
+          plan_type?: string | null
           premium_expires_at?: string | null
+          premium_started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -277,7 +283,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_premium?: boolean
+          mercadopago_payment_id?: string | null
+          plan_type?: string | null
           premium_expires_at?: string | null
+          premium_started_at?: string | null
           updated_at?: string
           user_id?: string
         }
