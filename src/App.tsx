@@ -22,6 +22,9 @@ import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
 import ResetPassword from "@/pages/ResetPassword";
 import Aterrissagem from "@/pages/Aterrissagem";
+import PaymentSuccess from "@/pages/PaymentSuccess";
+import PaymentPending from "@/pages/PaymentPending";
+import PaymentFailure from "@/pages/PaymentFailure";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +45,9 @@ const App = () => (
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/reset-senha" element={<ResetSenha />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment-pending" element={<PaymentPending />} />
+              <Route path="/payment-failure" element={<PaymentFailure />} />
 
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
