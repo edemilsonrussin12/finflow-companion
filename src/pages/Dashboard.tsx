@@ -24,6 +24,7 @@ import SmartNotifications from '@/components/SmartNotifications';
 import CourseRecommendation from '@/components/CourseRecommendation';
 import EmptyState from '@/components/EmptyState';
 import { useNavigate } from 'react-router-dom';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)',
