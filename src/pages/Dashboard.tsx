@@ -252,15 +252,19 @@ export default function Dashboard() {
           </div>
 
           {/* Patrimônio */}
-          <div className="glass rounded-2xl p-5 space-y-1">
+          <div className="card-premium rounded-2xl p-6 space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <LineChart size={18} className="text-primary" />
-                <span className="text-xs text-muted-foreground">Patrimônio total</span>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-emerald/15 glow-emerald">
+                  <LineChart size={20} className="text-emerald" />
+                </div>
+                <span className="text-sm text-muted-foreground font-medium">Patrimônio total</span>
               </div>
               <ComparisonBadge current={patrimonio} previous={prevPatrimonio} format="currency" />
             </div>
-            <p className={`text-2xl font-extrabold tabular-nums ${patrimonio >= 0 ? 'text-income' : 'text-expense'}`}>
+            <p className={`text-3xl font-extrabold tabular-nums ${patrimonio >= 0 ? 'text-emerald' : 'text-expense'}`} style={{
+              textShadow: patrimonio >= 0 ? '0 0 20px hsl(142,71%,45%,0.4)' : '0 0 20px hsl(0,72%,55%,0.4)'
+            }}>
               {formatCurrency(patrimonio)}
             </p>
           </div>
