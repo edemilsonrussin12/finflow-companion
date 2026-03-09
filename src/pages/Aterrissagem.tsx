@@ -89,56 +89,58 @@ export default function Aterrissagem() {
       {/* Social Proof */}
       <SocialProof />
 
-      {/* Benefícios Section */}
+      {/* Benefits Section */}
       <section className="py-20 px-6 relative">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold">
-              Por que escolher o <span className="text-emerald">FinControl</span>?
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Tecnologia avançada para simplificar sua vida financeira
-            </p>
+        <FadeInSection>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center space-y-4 mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold">
+                Por que escolher o <span className="text-emerald">FinControl</span>?
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Tecnologia avançada para simplificar sua vida financeira
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card className="card-income p-8 hover-scale">
+                <CardContent className="space-y-4">
+                  <div className="w-12 h-12 bg-income/20 rounded-2xl flex items-center justify-center">
+                    <BarChart3 className="text-income" size={24} />
+                  </div>
+                  <h3 className="text-xl font-semibold">Controle Total</h3>
+                  <p className="text-muted-foreground">
+                    Veja exatamente para onde vai cada centavo do seu dinheiro com categorização automática e relatórios inteligentes
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-investment p-8 hover-scale">
+                <CardContent className="space-y-4">
+                  <div className="w-12 h-12 bg-emerald/20 rounded-2xl flex items-center justify-center">
+                    <TrendingUp className="text-emerald" size={24} />
+                  </div>
+                  <h3 className="text-xl font-semibold">Crescimento Inteligente</h3>
+                  <p className="text-muted-foreground">
+                    Algoritmos que analisam seus hábitos e sugerem as melhores estratégias para fazer seu dinheiro crescer
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="card-revenue p-8 hover-scale">
+                <CardContent className="space-y-4">
+                  <div className="w-12 h-12 bg-gold/20 rounded-2xl flex items-center justify-center">
+                    <Target className="text-gold" size={24} />
+                  </div>
+                  <h3 className="text-xl font-semibold">Metas Realizáveis</h3>
+                  <p className="text-muted-foreground">
+                    Defina objetivos financeiros e acompanhe seu progresso com planos personalizados e motivação constante
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="card-income p-8">
-              <CardContent className="space-y-4">
-                <div className="w-12 h-12 bg-income/20 rounded-2xl flex items-center justify-center">
-                  <BarChart3 className="text-income" size={24} />
-                </div>
-                <h3 className="text-xl font-semibold">Controle Total</h3>
-                <p className="text-muted-foreground">
-                  Veja exatamente para onde vai cada centavo do seu dinheiro com categorização automática e relatórios inteligentes
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-investment p-8">
-              <CardContent className="space-y-4">
-                <div className="w-12 h-12 bg-emerald/20 rounded-2xl flex items-center justify-center">
-                  <TrendingUp className="text-emerald" size={24} />
-                </div>
-                <h3 className="text-xl font-semibold">Crescimento Inteligente</h3>
-                <p className="text-muted-foreground">
-                  Algoritmos que analisam seus hábitos e sugerem as melhores estratégias para fazer seu dinheiro crescer
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-revenue p-8">
-              <CardContent className="space-y-4">
-                <div className="w-12 h-12 bg-gold/20 rounded-2xl flex items-center justify-center">
-                  <Target className="text-gold" size={24} />
-                </div>
-                <h3 className="text-xl font-semibold">Metas Realizáveis</h3>
-                <p className="text-muted-foreground">
-                  Defina objetivos financeiros e acompanhe seu progresso com planos personalizados e motivação constante
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        </FadeInSection>
       </section>
 
       {/* Dashboard Demo Section */}
