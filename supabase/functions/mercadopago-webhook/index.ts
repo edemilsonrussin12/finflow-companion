@@ -12,11 +12,11 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log('Webhook received:', JSON.stringify(body));
+    console.log('[WEBHOOK] Notification received:', JSON.stringify(body));
 
     // Mercado Pago sends different notification types
-    // We only care about payment notifications
     if (body.type !== 'payment' && body.action !== 'payment.updated') {
+      console.log('[WEBHOOK] Ignoring non-payment notification type:', body.type, body.action);
       return new Response(JSON.stringify({ received: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -24,29 +24,32 @@ Deno.serve(async (req) => {
 
     const paymentId = body.data?.id;
     if (!paymentId) {
-      console.error('No payment ID in webhook');
+      console.error('[WEBHOOK] No payment ID in notification body');
       return new Response(JSON.stringify({ error: 'No payment ID' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Fetch payment details from Mercado Pago
+    console.log('[WEBHOOK] Processing payment ID:', paymentId);
+
     const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
     if (!accessToken) {
-      console.error('MERCADOPAGO_ACCESS_TOKEN not configured');
+      console.error('[WEBHOOK] MERCADOPAGO_ACCESS_TOKEN not configured');
       return new Response(JSON.stringify({ error: 'Not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Fetch payment details from Mercado Pago
     const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!mpResponse.ok) {
-      console.error('Failed to fetch payment:', await mpResponse.text());
+      const errText = await mpResponse.text();
+      console.error('[WEBHOOK] Failed to fetch payment from MP:', mpResponse.status, errText);
       return new Response(JSON.stringify({ error: 'Failed to fetch payment' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -54,10 +57,10 @@ Deno.serve(async (req) => {
     }
 
     const payment = await mpResponse.json();
-    console.log('Payment status:', payment.status, 'External ref:', payment.external_reference);
+    console.log('[WEBHOOK] Payment status:', payment.status, '| External ref:', payment.external_reference);
 
     if (payment.status !== 'approved') {
-      console.log('Payment not approved, skipping. Status:', payment.status);
+      console.log('[WEBHOOK] Payment not approved, skipping. Status:', payment.status);
       return new Response(JSON.stringify({ received: true, status: payment.status }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -71,7 +74,7 @@ Deno.serve(async (req) => {
       userId = ref.user_id;
       plan = ref.plan;
     } catch {
-      console.error('Invalid external_reference:', payment.external_reference);
+      console.error('[WEBHOOK] Invalid external_reference:', payment.external_reference);
       return new Response(JSON.stringify({ error: 'Invalid reference' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -79,7 +82,7 @@ Deno.serve(async (req) => {
     }
 
     if (!userId || !plan) {
-      console.error('Missing user_id or plan in reference');
+      console.error('[WEBHOOK] Missing user_id or plan in reference');
       return new Response(JSON.stringify({ error: 'Missing data' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -94,6 +97,8 @@ Deno.serve(async (req) => {
     } else {
       expiresAt.setDate(expiresAt.getDate() + 30);
     }
+
+    console.log('[WEBHOOK] Activating premium for user:', userId, '| Plan:', plan, '| Expires:', expiresAt.toISOString());
 
     // Use service role to bypass RLS
     const supabase = createClient(
@@ -118,20 +123,20 @@ Deno.serve(async (req) => {
       );
 
     if (upsertError) {
-      console.error('Failed to upsert subscription:', upsertError);
+      console.error('[WEBHOOK] Failed to upsert subscription:', JSON.stringify(upsertError));
       return new Response(JSON.stringify({ error: 'Database error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`Premium activated for user ${userId}, plan: ${plan}, expires: ${expiresAt.toISOString()}`);
+    console.log('[WEBHOOK] ✅ Premium activated successfully for user', userId);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('Webhook error:', err);
+    console.error('[WEBHOOK] Unhandled error:', err);
     return new Response(JSON.stringify({ error: 'Internal error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

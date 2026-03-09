@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
 
   try {
     const { user_id, plan } = await req.json();
+    console.log('[CHECKOUT] Request received | user_id:', user_id, '| plan:', plan);
 
     if (!user_id || !plan) {
       return new Response(JSON.stringify({ error: 'user_id and plan are required' }), {
@@ -40,6 +41,7 @@ Deno.serve(async (req) => {
     }
 
     const origin = req.headers.get('origin') || 'https://money-grow-pal.lovable.app';
+    console.log('[CHECKOUT] Using origin:', origin);
 
     const preference = {
       items: [
@@ -58,7 +60,11 @@ Deno.serve(async (req) => {
       auto_return: 'approved',
       external_reference: JSON.stringify({ user_id, plan }),
       metadata: { user_id, plan },
+      notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
     };
+
+    console.log('[CHECKOUT] Creating MP preference with back_urls:', JSON.stringify(preference.back_urls));
+    console.log('[CHECKOUT] Notification URL:', preference.notification_url);
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
@@ -71,7 +77,7 @@ Deno.serve(async (req) => {
 
     if (!mpResponse.ok) {
       const errorBody = await mpResponse.text();
-      console.error('MercadoPago error:', errorBody);
+      console.error('[CHECKOUT] MercadoPago error:', errorBody);
       return new Response(JSON.stringify({ error: 'Failed to create checkout preference' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -79,12 +85,13 @@ Deno.serve(async (req) => {
     }
 
     const mpData = await mpResponse.json();
+    console.log('[CHECKOUT] ✅ Preference created | id:', mpData.id, '| init_point:', mpData.init_point);
 
     return new Response(JSON.stringify({ init_point: mpData.init_point, id: mpData.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('Checkout error:', err);
+    console.error('[CHECKOUT] Unhandled error:', err);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
