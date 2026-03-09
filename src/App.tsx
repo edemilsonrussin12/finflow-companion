@@ -25,6 +25,10 @@ import Aterrissagem from "@/pages/Aterrissagem";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentPending from "@/pages/PaymentPending";
 import PaymentFailure from "@/pages/PaymentFailure";
+import MinhaAssinatura from "@/pages/MinhaAssinatura";
+import AdminAssinaturas from "@/pages/AdminAssinaturas";
+import AdminMetricas from "@/pages/AdminMetricas";
+import AdminRoute from "@/components/AdminRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +65,13 @@ const App = () => (
                   <Route path="/relatorios" element={<Relatorios />} />
                   <Route path="/engenharia" element={<EngenhariaRiqueza />} />
                   <Route path="/convites" element={<Convites />} />
+                  <Route path="/minha-assinatura" element={<MinhaAssinatura />} />
+
+                  {/* Admin routes */}
+                  <Route element={<AdminRoute />}>
+                    <Route path="/admin/assinaturas" element={<AdminAssinaturas />} />
+                    <Route path="/admin/metricas" element={<AdminMetricas />} />
+                  </Route>
                 </Route>
               </Route>
 
