@@ -72,7 +72,7 @@ export default function Aterrissagem() {
               100% seguro
             </div>
             <div className="flex items-center gap-2">
-              <Star size={16} className="text-gold" />
+              <span className="text-gold">★</span>
               +10.000 usuários
             </div>
           </div>
