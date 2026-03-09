@@ -79,6 +79,10 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
+  const { recheck: recheckPremium } = usePremiumStatus();
+
+  // Recheck premium status on Dashboard mount
+  useEffect(() => { recheckPremium(); }, [recheckPremium]);
 
   // Current month data
   const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);
