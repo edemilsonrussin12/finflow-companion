@@ -44,26 +44,26 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email" className="text-white text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-foreground text-sm font-medium">Email</Label>
               <Input 
                 id="email" 
                 type="email" 
                 placeholder="seu@email.com" 
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
-                className="mt-1.5 bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:bg-white/15 focus:border-primary" 
+                className="mt-1.5 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:bg-muted focus:border-primary" 
                 required 
               />
             </div>
             <div>
-              <Label htmlFor="password" className="text-white text-sm font-medium">Senha</Label>
+              <Label htmlFor="password" className="text-foreground text-sm font-medium">Senha</Label>
               <Input 
                 id="password" 
                 type="password" 
                 placeholder="••••••••" 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
-                className="mt-1.5 bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:bg-white/15 focus:border-primary" 
+                className="mt-1.5 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:bg-muted focus:border-primary" 
                 required 
               />
             </div>
@@ -71,7 +71,7 @@ export default function Login() {
           
           <Button 
             type="submit" 
-            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl shadow-lg shadow-primary/25" 
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-xl shadow-lg shadow-primary/25" 
             disabled={submitting}
           >
             {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Entrar'}
@@ -83,7 +83,7 @@ export default function Login() {
             Criar conta
           </Link>
           <div>
-            <Link to="/reset-senha" className="text-slate-400 hover:text-slate-300 text-sm transition-colors">
+            <Link to="/reset-senha" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
               Esqueci minha senha
             </Link>
           </div>

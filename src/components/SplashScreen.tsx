@@ -28,10 +28,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#0B0F19] flex flex-col items-center justify-center z-50 transition-opacity duration-300">
+    <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 transition-opacity duration-300">
       <img src={iconFinControl} alt="FinControl" className="w-24 h-24 mb-6 animate-pulse" />
-      <h1 className="text-3xl font-bold text-white mb-2">FinControl</h1>
-      <p className="text-lg text-slate-300">Controle inteligente do seu dinheiro</p>
+      <h1 className="text-3xl font-bold text-foreground mb-2">FinControl</h1>
+      <p className="text-lg text-muted-foreground">Controle inteligente do seu dinheiro</p>
     </div>
   );
 }
