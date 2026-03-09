@@ -21,6 +21,7 @@ import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
 import ResetPassword from "@/pages/ResetPassword";
+import Aterrissagem from "@/pages/Aterrissagem";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
