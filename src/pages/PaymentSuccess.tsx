@@ -27,10 +27,11 @@ export default function PaymentSuccess() {
 
     if (paymentId && (status === 'approved' || status === 'null' || !status)) {
       setActivating(true);
-      console.log('[SUCCESS PAGE] Calling activate-premium edge function...');
+      console.log('[SUCCESS PAGE] Calling activate-premium...');
 
+      // Don't hardcode plan — let the edge function extract it from external_reference
       supabase.functions.invoke('activate-premium', {
-        body: { payment_id: paymentId, user_id: user.id, plan: 'monthly' },
+        body: { payment_id: paymentId, user_id: user.id },
       }).then(({ data, error }) => {
         console.log('[SUCCESS PAGE] activate-premium response:', JSON.stringify(data), error);
         if (data?.activated) {
@@ -46,20 +47,20 @@ export default function PaymentSuccess() {
 
   // Poll for premium activation as fallback
   useEffect(() => {
-    if (isPremium || pollCount >= 10 || activating) return;
+    if (isPremium || pollCount >= 15 || activating) return;
 
     const timer = setTimeout(async () => {
       console.log('[SUCCESS PAGE] Polling premium status... attempt', pollCount + 1);
       await recheck();
       setPollCount(prev => prev + 1);
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [isPremium, pollCount, recheck, activating]);
 
   const activated = isPremium;
-  const stillWaiting = !isPremium && (pollCount < 10 || activating) && !loading;
-  const timedOut = !isPremium && pollCount >= 10 && !activating;
+  const stillWaiting = !isPremium && (pollCount < 15 || activating) && !loading;
+  const timedOut = !isPremium && pollCount >= 15 && !activating;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -82,10 +83,20 @@ export default function PaymentSuccess() {
             Seu acesso Premium foi ativado com sucesso! Aproveite todos os recursos do FinControl.
           </p>
         ) : timedOut ? (
-          <p className="text-muted-foreground">
-            Seu pagamento foi confirmado. O acesso Premium será ativado em instantes.
-            Você pode voltar ao Dashboard e atualizar a página.
-          </p>
+          <div className="space-y-3">
+            <p className="text-muted-foreground">
+              Seu pagamento foi confirmado. Se o Premium não ativou automaticamente, clique abaixo para tentar novamente.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPollCount(0);
+                activationAttempted.current = false;
+              }}
+            >
+              Tentar ativar novamente
+            </Button>
+          </div>
         ) : null}
 
         <Button onClick={() => navigate('/')} className="w-full">

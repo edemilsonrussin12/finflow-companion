@@ -47,6 +47,7 @@ export default function AdminAssinaturas() {
   const [filter, setFilter] = useState('all');
   const [actionDialog, setActionDialog] = useState<{ type: string; sub: Sub } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<string>('unknown');
   const [extendDays, setExtendDays] = useState('30');
 
   const load = async () => {
@@ -64,6 +65,17 @@ export default function AdminAssinaturas() {
       setTotalUsers(data.totalUsers || 0);
     }
     setLoading(false);
+
+    // Detect payment mode by checking create-checkout
+    try {
+      const { data: checkData } = await supabase.functions.invoke('create-checkout', {
+        body: { user_id: 'mode-check', plan: 'monthly' },
+      });
+      setPaymentMode(checkData?.mode || 'unknown');
+    } catch {
+      // If it fails, try to detect from access token pattern
+      setPaymentMode('unknown');
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -130,7 +142,14 @@ export default function AdminAssinaturas() {
             <Shield className="h-5 w-5 text-primary" />
             Admin — Assinaturas
           </h1>
-          <p className="text-sm text-muted-foreground">Gerencie assinaturas de todos os usuários</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-muted-foreground">Gerencie assinaturas de todos os usuários</p>
+            {paymentMode !== 'unknown' && (
+              <Badge variant={paymentMode === 'production' ? 'default' : 'secondary'} className="text-[10px] uppercase">
+                {paymentMode === 'production' ? '🟢 Produção' : '🟡 Teste'}
+              </Badge>
+            )}
+          </div>
         </div>
         <Button variant="ghost" size="icon" onClick={load}>
           <RefreshCw className="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +24,7 @@ import SmartNotifications from '@/components/SmartNotifications';
 import CourseRecommendation from '@/components/CourseRecommendation';
 import EmptyState from '@/components/EmptyState';
 import { useNavigate } from 'react-router-dom';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)',
@@ -78,6 +79,10 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [editingTx, setEditingTx] = useState<import('@/types/finance').Transaction | null>(null);
+  const { recheck: recheckPremium } = usePremiumStatus();
+
+  // Recheck premium status on Dashboard mount
+  useEffect(() => { recheckPremium(); }, [recheckPremium]);
 
   // Current month data
   const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);

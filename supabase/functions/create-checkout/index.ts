@@ -8,6 +8,8 @@ const PLANS: Record<string, { title: string; price: number }> = {
   annual: { title: 'FinControl Premium Anual', price: 167.00 },
 };
 
+const PRODUCTION_ORIGIN = 'https://money-grow-pal.lovable.app';
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -15,7 +17,8 @@ Deno.serve(async (req) => {
 
   try {
     const { user_id, plan } = await req.json();
-    console.log('[CHECKOUT] Request received | user_id:', user_id, '| plan:', plan);
+    console.log('[CHECKOUT] ─── Request received ───');
+    console.log('[CHECKOUT] user_id:', user_id, '| plan:', plan);
 
     if (!user_id || !plan) {
       return new Response(JSON.stringify({ error: 'user_id and plan are required' }), {
@@ -34,16 +37,31 @@ Deno.serve(async (req) => {
 
     const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
     if (!accessToken) {
+      console.error('[CHECKOUT] MERCADOPAGO_ACCESS_TOKEN not configured');
       return new Response(JSON.stringify({ error: 'Payment gateway not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const origin = req.headers.get('origin') || 'https://money-grow-pal.lovable.app';
-    console.log('[CHECKOUT] Using origin:', origin);
+    // Detect mode
+    const isTestMode = accessToken.startsWith('TEST-');
+    console.log('[CHECKOUT] Mode:', isTestMode ? 'TEST' : 'PRODUCTION');
 
-    const preference = {
+    // Use request origin or fallback to production URL
+    const origin = req.headers.get('origin') || PRODUCTION_ORIGIN;
+    console.log('[CHECKOUT] Origin:', origin);
+
+    // Build notification URL
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const notificationUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
+
+    // Safety checks
+    if (!supabaseUrl) {
+      console.error('[CHECKOUT] ⚠️ SUPABASE_URL not configured — webhook will not work');
+    }
+
+    const preference: Record<string, unknown> = {
       items: [
         {
           title: planConfig.title,
@@ -60,24 +78,25 @@ Deno.serve(async (req) => {
       auto_return: 'approved',
       external_reference: JSON.stringify({ user_id, plan }),
       metadata: { user_id, plan },
-      notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
+      notification_url: notificationUrl,
     };
 
-    console.log('[CHECKOUT] Creating MP preference with back_urls:', JSON.stringify(preference.back_urls));
-    console.log('[CHECKOUT] Notification URL:', preference.notification_url);
+    console.log('[CHECKOUT] Return URLs:', JSON.stringify(preference.back_urls));
+    console.log('[CHECKOUT] Notification URL:', notificationUrl);
+    console.log('[CHECKOUT] Price:', planConfig.price, 'BRL | Plan:', plan);
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(preference),
     });
 
     if (!mpResponse.ok) {
       const errorBody = await mpResponse.text();
-      console.error('[CHECKOUT] MercadoPago error:', errorBody);
+      console.error('[CHECKOUT] MP API error:', mpResponse.status, errorBody);
       return new Response(JSON.stringify({ error: 'Failed to create checkout preference' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -85,9 +104,19 @@ Deno.serve(async (req) => {
     }
 
     const mpData = await mpResponse.json();
-    console.log('[CHECKOUT] ✅ Preference created | id:', mpData.id, '| init_point:', mpData.init_point);
 
-    return new Response(JSON.stringify({ init_point: mpData.init_point, id: mpData.id }), {
+    // In production, use init_point; in test, use sandbox_init_point
+    const checkoutUrl = isTestMode ? (mpData.sandbox_init_point || mpData.init_point) : mpData.init_point;
+
+    console.log('[CHECKOUT] ✅ Preference created | id:', mpData.id);
+    console.log('[CHECKOUT] Checkout URL:', checkoutUrl);
+    console.log('[CHECKOUT] Mode:', isTestMode ? 'SANDBOX' : 'PRODUCTION');
+
+    return new Response(JSON.stringify({
+      init_point: checkoutUrl,
+      id: mpData.id,
+      mode: isTestMode ? 'test' : 'production',
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
