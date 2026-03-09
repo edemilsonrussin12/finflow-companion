@@ -1,0 +1,125 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { payment_id, user_id, plan } = await req.json();
+    console.log('[ACTIVATE] Request received | payment_id:', payment_id, '| user_id:', user_id, '| plan:', plan);
+
+    if (!payment_id || !user_id) {
+      return new Response(JSON.stringify({ error: 'payment_id and user_id required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN');
+    if (!accessToken) {
+      console.error('[ACTIVATE] MERCADOPAGO_ACCESS_TOKEN not configured');
+      return new Response(JSON.stringify({ error: 'Not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verify payment with Mercado Pago API
+    console.log('[ACTIVATE] Fetching payment from MP API:', payment_id);
+    const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${payment_id}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!mpResponse.ok) {
+      const errText = await mpResponse.text();
+      console.error('[ACTIVATE] MP API error:', mpResponse.status, errText);
+      return new Response(JSON.stringify({ error: 'Failed to verify payment' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const payment = await mpResponse.json();
+    console.log('[ACTIVATE] Payment status:', payment.status, '| external_reference:', payment.external_reference);
+
+    if (payment.status !== 'approved') {
+      console.log('[ACTIVATE] Payment not approved:', payment.status);
+      return new Response(JSON.stringify({ activated: false, status: payment.status }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Parse plan from external_reference or use provided plan
+    let activePlan = plan || 'monthly';
+    try {
+      const ref = JSON.parse(payment.external_reference);
+      if (ref.plan) activePlan = ref.plan;
+      // Verify user matches
+      if (ref.user_id && ref.user_id !== user_id) {
+        console.error('[ACTIVATE] User mismatch! ref:', ref.user_id, 'req:', user_id);
+        return new Response(JSON.stringify({ error: 'User mismatch' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } catch {
+      console.log('[ACTIVATE] Could not parse external_reference, using provided plan:', activePlan);
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(now);
+    if (activePlan === 'annual') {
+      expiresAt.setDate(expiresAt.getDate() + 365);
+    } else {
+      expiresAt.setDate(expiresAt.getDate() + 30);
+    }
+
+    console.log('[ACTIVATE] Activating premium | user:', user_id, '| plan:', activePlan, '| expires:', expiresAt.toISOString());
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    const { error: upsertError } = await supabase
+      .from('user_subscriptions')
+      .upsert(
+        {
+          user_id: user_id,
+          is_premium: true,
+          premium_started_at: now.toISOString(),
+          premium_expires_at: expiresAt.toISOString(),
+          mercadopago_payment_id: String(payment_id),
+          plan_type: activePlan,
+          updated_at: now.toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+
+    if (upsertError) {
+      console.error('[ACTIVATE] DB error:', JSON.stringify(upsertError));
+      return new Response(JSON.stringify({ error: 'Database error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('[ACTIVATE] ✅ Premium activated for user', user_id);
+
+    return new Response(JSON.stringify({ activated: true, plan: activePlan, expires_at: expiresAt.toISOString() }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    console.error('[ACTIVATE] Unhandled error:', err);
+    return new Response(JSON.stringify({ error: 'Internal error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
