@@ -39,13 +39,3 @@ export default function Aterrissagem() {
     </div>
   );
 }
-          <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-            <span>✓ Sem compromisso</span>
-            <span>✓ Sem cartão de crédito</span>
-            <span>✓ Começe em 2 minutos</span>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
