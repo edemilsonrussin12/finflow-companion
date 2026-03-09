@@ -52,14 +52,21 @@ function calculateScore(income: number, expense: number, investment: number, pat
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return 'hsl(var(--score-excellent))';
+  if (score >= 80) return 'hsl(var(--emerald))';
   if (score >= 60) return 'hsl(var(--score-good))';
   if (score >= 40) return 'hsl(var(--score-attention))';
   return 'hsl(var(--score-critical))';
 }
 
+function getScoreGradient(score: number): { from: string; to: string } {
+  if (score >= 80) return { from: 'hsl(142, 71%, 45%)', to: 'hsl(142, 71%, 55%)' };
+  if (score >= 60) return { from: 'hsl(50, 80%, 50%)', to: 'hsl(50, 80%, 60%)' };
+  if (score >= 40) return { from: 'hsl(35, 85%, 55%)', to: 'hsl(35, 85%, 65%)' };
+  return { from: 'hsl(0, 72%, 55%)', to: 'hsl(0, 72%, 65%)' };
+}
+
 function getScoreLabel(score: number): { text: string; colorClass: string } {
-  if (score >= 80) return { text: 'Excelente saúde financeira', colorClass: 'text-income' };
+  if (score >= 80) return { text: 'Excelente saúde financeira', colorClass: 'text-emerald' };
   if (score >= 60) return { text: 'Boa saúde financeira', colorClass: 'text-[hsl(var(--score-good))]' };
   if (score >= 40) return { text: 'Atenção necessária', colorClass: 'text-[hsl(var(--score-attention))]' };
   return { text: 'Situação financeira crítica', colorClass: 'text-expense' };
@@ -152,7 +159,7 @@ const recIconMap = {
 const recColorMap = {
   warning: 'text-[hsl(var(--score-attention))] bg-[hsl(var(--score-attention))]/10',
   danger: 'text-expense bg-expense/10',
-  success: 'text-income bg-income/10',
+  success: 'text-emerald bg-emerald/10',
 };
 
 function buildEvolutionData(allTransactions: Transaction[], selectedMonth: string) {
@@ -196,6 +203,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
   const insightMessage = getInsightMessage(breakdown.total);
   const recommendations = useMemo(() => getRecommendations(income, expense, investment, breakdown.total), [income, expense, investment, breakdown.total]);
   const scoreColor = getScoreColor(breakdown.total);
+  const scoreGradient = getScoreGradient(breakdown.total);
 
   const evolutionData = useMemo(() => {
     if (!allTransactions || !selectedMonth) return [];
@@ -206,7 +214,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
   useEffect(() => {
     let frame: number;
     const start = performance.now();
-    const duration = 800;
+    const duration = 1200;
     const from = 0;
     const to = breakdown.total;
     const animate = (now: number) => {
@@ -220,7 +228,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
     return () => cancelAnimationFrame(frame);
   }, [breakdown.total]);
 
-  const circumference = 2 * Math.PI * 40;
+  const circumference = 2 * Math.PI * 42;
   const strokeDashoffset = circumference - (animatedScore / 100) * circumference;
 
   const hasEvolution = evolutionData.some(d => d.score > 0);
@@ -243,53 +251,110 @@ export default function FinancialScore({ income, expense, investment, patrimonio
     }
   };
 
+  // Generate unique gradient ID
+  const gradientId = `score-gradient-${breakdown.total}`;
+
   return (
     <div className="space-y-4">
-      {/* Gauge Card */}
-      <div className="glass rounded-2xl p-5 space-y-4">
+      {/* Premium Gauge Card */}
+      <div className="card-premium rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-2">
-          <Award size={18} className="text-primary" />
-          <span className="text-sm font-medium">Saúde Financeira</span>
+          <div className="p-2 rounded-xl bg-emerald/10">
+            <Award size={18} className="text-emerald" />
+          </div>
+          <span className="text-sm font-semibold">Saúde Financeira</span>
         </div>
 
-        <div className="flex items-center gap-5">
-          <div className="relative w-28 h-28 shrink-0">
-            <svg className="w-28 h-28 -rotate-90" viewBox="0 0 96 96">
-              <circle cx="48" cy="48" r="40" fill="none" stroke="hsl(var(--muted))" strokeWidth="7" />
+        <div className="flex items-center gap-6">
+          {/* Premium Gauge */}
+          <div className="relative w-32 h-32 shrink-0">
+            {/* Outer glow ring */}
+            <div 
+              className="absolute inset-0 rounded-full opacity-30 blur-md"
+              style={{ background: `radial-gradient(circle, ${scoreColor} 0%, transparent 70%)` }}
+            />
+            
+            <svg className="w-32 h-32 -rotate-90 score-glow" viewBox="0 0 100 100">
+              <defs>
+                <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={scoreGradient.from} />
+                  <stop offset="100%" stopColor={scoreGradient.to} />
+                </linearGradient>
+              </defs>
+              
+              {/* Background track */}
+              <circle 
+                cx="50" cy="50" r="42" 
+                fill="none" 
+                stroke="hsl(var(--muted))" 
+                strokeWidth="6" 
+                opacity="0.3"
+              />
+              
+              {/* Progress arc with gradient */}
               <circle
-                cx="48" cy="48" r="40" fill="none"
-                stroke={scoreColor}
-                strokeWidth="7"
+                cx="50" cy="50" r="42" 
+                fill="none"
+                stroke={`url(#${gradientId})`}
+                strokeWidth="6"
                 strokeLinecap="round"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
-                style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1), stroke 0.4s ease' }}
+                style={{ 
+                  transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)', 
+                  filter: `drop-shadow(0 0 8px ${scoreColor})`
+                }}
               />
             </svg>
+            
+            {/* Center content */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-extrabold tabular-nums" style={{ color: scoreColor }}>{animatedScore}</span>
-              <span className="text-[9px] text-muted-foreground">/ 100</span>
+              <span 
+                className="text-3xl font-extrabold tabular-nums" 
+                style={{ color: scoreColor, textShadow: `0 0 20px ${scoreColor}40` }}
+              >
+                {animatedScore}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium">/ 100</span>
             </div>
           </div>
+          
+          {/* Score info */}
           <div className="space-y-2">
-            <p className={`text-sm font-semibold ${label.colorClass}`}>{label.text}</p>
-            <p className="text-xs text-muted-foreground">{insightMessage}</p>
+            <p className={`text-sm font-bold ${label.colorClass}`}>{label.text}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{insightMessage}</p>
           </div>
         </div>
 
-        {/* Score breakdown */}
-        <div className="grid grid-cols-2 gap-2 text-[11px]">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Wallet size={12} /> Gastos: <span className="font-semibold text-foreground">{breakdown.expenseScore}/30</span>
+        {/* Score breakdown with premium styling */}
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/30 border border-border/30">
+            <Wallet size={14} className="text-income" />
+            <div className="flex-1">
+              <span className="text-[10px] text-muted-foreground">Gastos</span>
+              <p className="text-xs font-bold text-foreground">{breakdown.expenseScore}/30</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <TrendingUp size={12} /> Investimentos: <span className="font-semibold text-foreground">{breakdown.investmentScore}/30</span>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/30 border border-border/30">
+            <TrendingUp size={14} className="text-emerald" />
+            <div className="flex-1">
+              <span className="text-[10px] text-muted-foreground">Investimentos</span>
+              <p className="text-xs font-bold text-foreground">{breakdown.investmentScore}/30</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <PiggyBank size={12} /> Poupança: <span className="font-semibold text-foreground">{breakdown.savingsScore}/20</span>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/30 border border-border/30">
+            <PiggyBank size={14} className="text-gold" />
+            <div className="flex-1">
+              <span className="text-[10px] text-muted-foreground">Poupança</span>
+              <p className="text-xs font-bold text-foreground">{breakdown.savingsScore}/20</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <TrendingUp size={12} /> Patrimônio: <span className="font-semibold text-foreground">{breakdown.patrimonyScore}/20</span>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/30 border border-border/30">
+            <TrendingUp size={14} className="text-cyan" />
+            <div className="flex-1">
+              <span className="text-[10px] text-muted-foreground">Patrimônio</span>
+              <p className="text-xs font-bold text-foreground">{breakdown.patrimonyScore}/20</p>
+            </div>
           </div>
         </div>
       </div>
@@ -307,7 +372,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
               const colors = recColorMap[rec.type];
               const [textColor, bgColor] = colors.split(' ');
               return (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30">
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/30">
                   <div className={`p-2 rounded-lg shrink-0 ${bgColor}`}>
                     <Icon size={14} className={textColor} />
                   </div>
@@ -335,7 +400,7 @@ export default function FinancialScore({ income, expense, investment, patrimonio
       {hasEvolution && (
         <div className="glass rounded-2xl p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <TrendingUp size={18} className="text-primary" />
+            <TrendingUp size={18} className="text-emerald" />
             <span className="text-sm font-medium">Progresso Financeiro</span>
           </div>
           <div className="h-32">
@@ -344,11 +409,18 @@ export default function FinancialScore({ income, expense, investment, patrimonio
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'hsl(215,12%,55%)' }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: 'hsl(215,12%,55%)' }} axisLine={false} tickLine={false} width={28} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'hsl(220,18%,12%)', border: '1px solid hsl(220,14%,16%)', borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ backgroundColor: 'hsl(222,40%,8%)', border: '1px solid hsl(222,20%,14%)', borderRadius: 12, fontSize: 12 }}
                   labelStyle={{ color: 'hsl(210,20%,85%)' }}
                   formatter={(value: number) => [`${value} pts`, 'Score']}
                 />
-                <Line type="monotone" dataKey="score" stroke="hsl(153,60%,50%)" strokeWidth={2.5} dot={{ r: 3, fill: 'hsl(153,60%,50%)' }} activeDot={{ r: 5 }} />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="hsl(142,71%,45%)" 
+                  strokeWidth={2.5} 
+                  dot={{ r: 4, fill: 'hsl(142,71%,45%)', stroke: 'hsl(142,71%,55%)', strokeWidth: 2 }} 
+                  activeDot={{ r: 6, fill: 'hsl(142,71%,55%)', stroke: 'hsl(142,71%,45%)', strokeWidth: 2 }} 
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
