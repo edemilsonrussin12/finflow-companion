@@ -8,12 +8,24 @@ import {
   Wallet, 
   PieChart,
   Clock,
-  CheckCircle,
-  Star
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useInView } from '@/hooks/useInView';
+import FinancialHealthQuiz from '@/components/landing/FinancialHealthQuiz';
+import LeadCapture from '@/components/landing/LeadCapture';
+import SocialProof from '@/components/landing/SocialProof';
+
+function FadeInSection({ children, className = '' }: { children: React.ReactNode, className?: string }) {
+  const { ref, inView } = useInView();
+  return (
+    <div ref={ref} className={`transition-all duration-700 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`}>
+      {children}
+    </div>
+  );
+}
 
 export default function Aterrissagem() {
   return (
