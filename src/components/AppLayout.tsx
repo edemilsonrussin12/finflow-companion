@@ -6,6 +6,7 @@ import InstallPWA from '@/components/InstallPWA';
 import TransactionForm from '@/components/TransactionForm';
 import PremiumPlansDialog from '@/components/PremiumPlansDialog';
 import SplashScreen from '@/components/SplashScreen';
+import TrialBanner from '@/components/TrialBanner';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
