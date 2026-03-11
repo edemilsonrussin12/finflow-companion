@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users, Crown, Headphones, Shield } from 'lucide-react';
+import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users, Crown, Headphones, Shield, Trophy } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -18,6 +18,7 @@ const moreTabs = [
   { path: '/engenharia', icon: Sparkles, label: 'Engenharia da Riqueza' },
   { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
   { path: '/convites', icon: Users, label: 'Convites' },
+  { path: '/conquistas', icon: Trophy, label: 'Conquistas' },
   { path: '/suporte', icon: Headphones, label: 'Suporte' },
 ];
 

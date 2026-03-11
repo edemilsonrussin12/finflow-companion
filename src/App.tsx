@@ -17,6 +17,7 @@ import Patrimonio from "@/pages/Patrimonio";
 import Relatorios from "@/pages/Relatorios";
 import EngenhariaRiqueza from "@/pages/EngenhariaRiqueza";
 import Convites from "@/pages/Convites";
+import Conquistas from "@/pages/Conquistas";
 import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
@@ -65,6 +66,7 @@ const App = () => (
                   <Route path="/relatorios" element={<Relatorios />} />
                   <Route path="/engenharia" element={<EngenhariaRiqueza />} />
                   <Route path="/convites" element={<Convites />} />
+                  <Route path="/conquistas" element={<Conquistas />} />
                   <Route path="/minha-assinatura" element={<MinhaAssinatura />} />
                   <Route path="/suporte" element={<Suporte />} />
 
