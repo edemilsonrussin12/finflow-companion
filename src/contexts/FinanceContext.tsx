@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getCurrentMonth } from '@/lib/format';
 import { migrateLegacyCategory, getCategoryById } from '@/lib/categories';
 
+const PAGE_SIZE = 100;
+
 interface FinanceContextType {
   transactions: Transaction[];
   addTransaction: (t: Omit<Transaction, 'id'>) => void;
@@ -18,6 +20,10 @@ interface FinanceContextType {
   selectedMonth: string;
   setSelectedMonth: (month: string) => void;
   availableMonths: string[];
+  hasMoreTransactions: boolean;
+  loadMoreTransactions: () => void;
+  hasMoreSales: boolean;
+  loadMoreSales: () => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
