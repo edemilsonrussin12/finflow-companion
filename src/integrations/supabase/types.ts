@@ -217,23 +217,38 @@ export type Database = {
       referrals: {
         Row: {
           created_at: string
+          email_confirmed: boolean
           id: string
+          premium_converted: boolean
           referred_id: string
           referrer_id: string
+          reward_granted: boolean
+          reward_granted_at: string | null
+          reward_type: string | null
           status: string
         }
         Insert: {
           created_at?: string
+          email_confirmed?: boolean
           id?: string
+          premium_converted?: boolean
           referred_id: string
           referrer_id: string
+          reward_granted?: boolean
+          reward_granted_at?: string | null
+          reward_type?: string | null
           status?: string
         }
         Update: {
           created_at?: string
+          email_confirmed?: boolean
           id?: string
+          premium_converted?: boolean
           referred_id?: string
           referrer_id?: string
+          reward_granted?: boolean
+          reward_granted_at?: string | null
+          reward_type?: string | null
           status?: string
         }
         Relationships: []
