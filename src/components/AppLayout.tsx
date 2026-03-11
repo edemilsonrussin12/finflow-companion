@@ -29,7 +29,7 @@ export default function AppLayout() {
   const [showSplash, setShowSplash] = useState(true);
   const { addTransaction, transactions } = useFinance();
   const { user, logout } = useAuth();
-  const { isPremium } = usePremiumStatus();
+  const { isPremium, trial } = usePremiumStatus();
   const location = useLocation();
   const navigate = useNavigate();
 
