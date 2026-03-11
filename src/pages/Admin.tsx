@@ -575,7 +575,7 @@ export default function Admin() {
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{format(new Date(p.created_at), 'dd/MM/yy HH:mm')}</span>
+                    <span>{p.created_at ? format(new Date(p.created_at), 'dd/MM/yy HH:mm') : '—'}</span>
                     <span>{p.plan_type === 'annual' ? 'Anual' : 'Mensal'}</span>
                     <span className="font-bold text-foreground">R$ {Number(p.amount).toFixed(2).replace('.', ',')}</span>
                   </div>
