@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-const ADMIN_EMAILS = ['edemilso-cardoso2@hotmail.com'];
-
 export function usePremiumStatus() {
   const { user } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
@@ -16,7 +14,15 @@ export function usePremiumStatus() {
       return;
     }
 
-    if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    // Check if user is admin (admins get premium bypass)
+    const { data: roleRow } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (roleRow) {
       setIsPremium(true);
       setLoading(false);
       return;
