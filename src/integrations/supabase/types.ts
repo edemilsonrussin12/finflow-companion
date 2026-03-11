@@ -87,11 +87,13 @@ export type Database = {
       }
       budgets: {
         Row: {
+          client_contact: string | null
           client_name: string
           created_at: string
           date: string
           id: string
           notes: string | null
+          quote_number: number
           service_description: string | null
           status: string
           total: number
@@ -99,11 +101,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_contact?: string | null
           client_name?: string
           created_at?: string
           date?: string
           id?: string
           notes?: string | null
+          quote_number?: number
           service_description?: string | null
           status?: string
           total?: number
@@ -111,11 +115,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_contact?: string | null
           client_name?: string
           created_at?: string
           date?: string
           id?: string
           notes?: string | null
+          quote_number?: number
           service_description?: string | null
           status?: string
           total?: number
