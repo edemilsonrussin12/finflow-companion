@@ -188,8 +188,8 @@ export default function Admin() {
       return d > now && d.getTime() - now.getTime() < 7 * 24 * 60 * 60 * 1000;
     });
 
-    const newUsers7d = profiles.filter(p => new Date(p.created_at) >= sevenDaysAgo).length;
-    const newUsers30d = profiles.filter(p => new Date(p.created_at) >= thirtyDaysAgo).length;
+    const newUsers7d = profiles.filter(p => p.created_at && new Date(p.created_at) >= sevenDaysAgo).length;
+    const newUsers30d = profiles.filter(p => p.created_at && new Date(p.created_at) >= thirtyDaysAgo).length;
 
     const mrr = (monthly.length * 19.90) + (annual.length * (167 / 12));
     const arr = mrr * 12;
@@ -510,7 +510,7 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
-                      <span>Cadastro: {format(new Date(p.created_at), 'dd/MM/yy')}</span>
+                      <span>Cadastro: {p.created_at ? format(new Date(p.created_at), 'dd/MM/yy') : '—'}</span>
                       {sub?.premium_expires_at && <span>· Expira: {format(new Date(sub.premium_expires_at), 'dd/MM/yy')}</span>}
                     </div>
                     <div className="flex flex-wrap gap-1">
@@ -575,7 +575,7 @@ export default function Admin() {
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{format(new Date(p.created_at), 'dd/MM/yy HH:mm')}</span>
+                    <span>{p.created_at ? format(new Date(p.created_at), 'dd/MM/yy HH:mm') : '—'}</span>
                     <span>{p.plan_type === 'annual' ? 'Anual' : 'Mensal'}</span>
                     <span className="font-bold text-foreground">R$ {Number(p.amount).toFixed(2).replace('.', ',')}</span>
                   </div>
@@ -685,7 +685,7 @@ export default function Admin() {
                       <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
                     </div>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                      <span>{format(new Date(r.created_at), 'dd/MM/yy')}</span>
+                      <span>{r.created_at ? format(new Date(r.created_at), 'dd/MM/yy') : '—'}</span>
                       {r.email_confirmed && <Badge variant="outline" className="text-[8px] px-1">✉️ Confirmado</Badge>}
                       {r.premium_converted && <Badge variant="outline" className="text-[8px] px-1">💎 Premium</Badge>}
                       {r.reward_granted && <Badge variant="default" className="text-[8px] px-1">🎁 Recompensado</Badge>}
@@ -724,7 +724,7 @@ export default function Admin() {
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center justify-between mb-1">
                     <Badge variant="outline" className="text-[10px]">{log.action.replace(/_/g, ' ')}</Badge>
-                    <span className="text-[10px] text-muted-foreground">{format(new Date(log.created_at), 'dd/MM/yy HH:mm')}</span>
+                    <span className="text-[10px] text-muted-foreground">{log.created_at ? format(new Date(log.created_at), 'dd/MM/yy HH:mm') : '—'}</span>
                   </div>
                   {log.user_email && <p className="text-[10px] text-muted-foreground">Usuário: {log.user_email}</p>}
                   {log.admin_email && <p className="text-[10px] text-muted-foreground">Admin: {log.admin_email}</p>}
