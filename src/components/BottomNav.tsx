@@ -22,6 +22,7 @@ const moreTabs = [
   { path: '/orcamentos', icon: ClipboardList, label: 'Orçamentos' },
   { path: '/planilha', icon: Grid3X3, label: 'Planilha' },
   { path: '/suporte', icon: Headphones, label: 'Suporte' },
+  { path: '/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 
 const adminTab = { path: '/admin', icon: Shield, label: 'Painel Admin' };
