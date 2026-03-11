@@ -327,6 +327,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       transactions, addTransaction, updateTransaction, deleteTransaction,
       sales, addSale, updateSale, deleteSale,
       loading, selectedMonth, setSelectedMonth, availableMonths,
+      hasMoreTransactions, loadMoreTransactions,
+      hasMoreSales, loadMoreSales,
     }}>
       {children}
     </FinanceContext.Provider>
