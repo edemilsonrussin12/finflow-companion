@@ -117,6 +117,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
+  const [hasMoreTransactions, setHasMoreTransactions] = useState(false);
+  const [hasMoreSales, setHasMoreSales] = useState(false);
+  const [txOffset, setTxOffset] = useState(0);
+  const [salesOffset, setSalesOffset] = useState(0);
 
   const availableMonths = React.useMemo(
     () => buildAvailableMonths(transactions, sales),
@@ -178,22 +182,66 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       setTransactions([]);
       setSales([]);
       setLoading(false);
+      setTxOffset(0);
+      setSalesOffset(0);
+      setHasMoreTransactions(false);
+      setHasMoreSales(false);
       return;
     }
     setLoading(true);
     const fetchAll = async () => {
       const [txRes, salesRes] = await Promise.all([
-        supabase.from('transactions').select('*').order('date', { ascending: false }),
-        supabase.from('sales').select('*').order('date', { ascending: false }),
+        supabase.from('transactions').select('*').order('date', { ascending: false }).range(0, PAGE_SIZE - 1),
+        supabase.from('sales').select('*').order('date', { ascending: false }).range(0, PAGE_SIZE - 1),
       ]);
-      const txList = (txRes.data ?? []).map(mapTx);
-      setSales((salesRes.data ?? []).map(mapSale));
+      const txRows = txRes.data ?? [];
+      const salesRows = salesRes.data ?? [];
+      const txList = txRows.map(mapTx);
+      setSales(salesRows.map(mapSale));
+      setTxOffset(txRows.length);
+      setSalesOffset(salesRows.length);
+      setHasMoreTransactions(txRows.length >= PAGE_SIZE);
+      setHasMoreSales(salesRows.length >= PAGE_SIZE);
       const newEntries = await generateRecurringEntries(txList);
       setTransactions([...newEntries, ...txList].sort((a, b) => b.date.localeCompare(a.date)));
       setLoading(false);
     };
     fetchAll();
   }, [user, generateRecurringEntries]);
+
+  const loadMoreTransactions = useCallback(async () => {
+    if (!user || !hasMoreTransactions) return;
+    const { data } = await supabase.from('transactions').select('*')
+      .order('date', { ascending: false })
+      .range(txOffset, txOffset + PAGE_SIZE - 1);
+    const rows = data ?? [];
+    if (rows.length > 0) {
+      setTransactions(prev => {
+        const existingIds = new Set(prev.map(t => t.id));
+        const newTx = rows.map(mapTx).filter(t => !existingIds.has(t.id));
+        return [...prev, ...newTx].sort((a, b) => b.date.localeCompare(a.date));
+      });
+      setTxOffset(prev => prev + rows.length);
+    }
+    setHasMoreTransactions(rows.length >= PAGE_SIZE);
+  }, [user, hasMoreTransactions, txOffset]);
+
+  const loadMoreSales = useCallback(async () => {
+    if (!user || !hasMoreSales) return;
+    const { data } = await supabase.from('sales').select('*')
+      .order('date', { ascending: false })
+      .range(salesOffset, salesOffset + PAGE_SIZE - 1);
+    const rows = data ?? [];
+    if (rows.length > 0) {
+      setSales(prev => {
+        const existingIds = new Set(prev.map(s => s.id));
+        const newSales = rows.map(mapSale).filter(s => !existingIds.has(s.id));
+        return [...prev, ...newSales].sort((a, b) => b.date.localeCompare(a.date));
+      });
+      setSalesOffset(prev => prev + rows.length);
+    }
+    setHasMoreSales(rows.length >= PAGE_SIZE);
+  }, [user, hasMoreSales, salesOffset]);
 
   const addTransaction = useCallback(async (t: Omit<Transaction, 'id'>) => {
     if (!user) return;
