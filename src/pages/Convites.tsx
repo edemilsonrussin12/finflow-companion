@@ -100,7 +100,7 @@ export default function Convites() {
 
   function shareWhatsApp() {
     const text = encodeURIComponent(
-      `Conheça o FinControl, seu parceiro financeiro pessoal.\n\nOrganize seus gastos, acompanhe metas e tenha mais controle do seu dinheiro.\n\nAcesse: ${referralLink}`
+      `Estou usando o FinControl para organizar minhas finanças e está me ajudando muito.\n\nControle seus gastos, acompanhe metas e tenha mais clareza sobre seu dinheiro.\n\nCrie sua conta gratuita:\n${referralLink}`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
