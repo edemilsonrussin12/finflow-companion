@@ -18,6 +18,7 @@ const moreTabs = [
   { path: '/engenharia', icon: Sparkles, label: 'Engenharia da Riqueza' },
   { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
   { path: '/convites', icon: Users, label: 'Convites' },
+  { path: '/conquistas', icon: Trophy, label: 'Conquistas' },
   { path: '/suporte', icon: Headphones, label: 'Suporte' },
 ];
 
