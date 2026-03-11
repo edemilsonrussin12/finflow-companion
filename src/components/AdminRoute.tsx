@@ -4,10 +4,10 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminRoute() {
-  const { loading } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
 
-  if (loading) {
+  if (authLoading || adminLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

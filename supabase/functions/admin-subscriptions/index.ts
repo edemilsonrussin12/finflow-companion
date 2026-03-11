@@ -5,8 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const ADMIN_EMAILS = ['edemilso-cardoso2@hotmail.com'];
-
 function getAdminClient() {
   return createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -24,7 +22,6 @@ async function verifyAdmin(req: Request) {
   const token = authHeader.replace('Bearer ', '');
   const supabaseAdmin = getAdminClient();
 
-  // Use service role client to verify the token
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
 
   if (error) {
@@ -32,12 +29,20 @@ async function verifyAdmin(req: Request) {
     return null;
   }
 
-  if (!user?.email) {
-    console.error('[ADMIN] No email on user');
+  if (!user?.id) {
+    console.error('[ADMIN] No user id');
     return null;
   }
 
-  if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+  // Check admin role from user_roles table
+  const { data: roleRow, error: roleError } = await supabaseAdmin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (roleError || !roleRow) {
     console.error('[ADMIN] User is not admin:', user.email);
     return null;
   }
@@ -240,7 +245,6 @@ Deno.serve(async (req) => {
       const { referral_id, referrer_id, reward_days } = params;
       const days = reward_days || 30;
 
-      // Extend or activate premium for referrer
       const { data: existing } = await supabaseAdmin
         .from('user_subscriptions')
         .select('premium_expires_at, is_premium')
@@ -262,7 +266,6 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
-      // Mark referral as rewarded
       await supabaseAdmin
         .from('referrals')
         .update({
