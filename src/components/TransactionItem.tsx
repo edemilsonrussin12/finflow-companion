@@ -47,20 +47,20 @@ export default function TransactionItem({ transaction, onEdit, onDelete, onToggl
           {type === 'expense' ? '-' : '+'}{formatCurrency(amount)}
         </span>
 
-        <div className="hidden group-hover:flex items-center gap-1">
+        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           {isRecurring && onToggleRecurrence && (
             <button
               onClick={() => onToggleRecurrence(transaction)}
-              className="p-1 rounded hover:bg-accent text-muted-foreground"
+              className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-muted-foreground"
               title={recurrencePaused ? 'Reativar' : 'Pausar'}
             >
               {recurrencePaused ? <Repeat size={14} /> : <Pause size={14} />}
             </button>
           )}
-          <button onClick={() => onEdit(transaction)} className="p-1 rounded hover:bg-accent text-muted-foreground">
+          <button onClick={() => onEdit(transaction)} className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-muted-foreground">
             <Pencil size={14} />
           </button>
-          <button onClick={() => onDelete(transaction.id)} className="p-1 rounded hover:bg-accent text-expense">
+          <button onClick={() => onDelete(transaction.id)} className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-expense">
             <Trash2 size={14} />
           </button>
         </div>

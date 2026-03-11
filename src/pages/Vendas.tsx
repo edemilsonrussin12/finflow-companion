@@ -101,11 +101,11 @@ export default function Vendas() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-income tabular-nums">{formatCurrency(s.totalValue)}</span>
-                <div className="hidden group-hover:flex items-center gap-1">
-                  <button onClick={() => { setEditingSale(s); setShowForm(true); }} className="p-1 rounded hover:bg-accent text-muted-foreground">
+                <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => { setEditingSale(s); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-muted-foreground">
                     <Pencil size={14} />
                   </button>
-                  <button onClick={() => deleteSale(s.id)} className="p-1 rounded hover:bg-accent text-expense">
+                  <button onClick={() => deleteSale(s.id)} className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-expense">
                     <Trash2 size={14} />
                   </button>
                 </div>
