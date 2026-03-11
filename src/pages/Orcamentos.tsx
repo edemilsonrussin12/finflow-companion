@@ -12,11 +12,13 @@ import { format } from 'date-fns';
 export interface Budget {
   id: string;
   client_name: string;
+  client_contact: string;
   service_description: string;
   date: string;
   notes: string;
   status: string;
   total: number;
+  quote_number: number;
   created_at: string;
 }
 
