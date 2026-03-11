@@ -724,7 +724,7 @@ export default function Admin() {
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center justify-between mb-1">
                     <Badge variant="outline" className="text-[10px]">{log.action.replace(/_/g, ' ')}</Badge>
-                    <span className="text-[10px] text-muted-foreground">{format(new Date(log.created_at), 'dd/MM/yy HH:mm')}</span>
+                    <span className="text-[10px] text-muted-foreground">{log.created_at ? format(new Date(log.created_at), 'dd/MM/yy HH:mm') : '—'}</span>
                   </div>
                   {log.user_email && <p className="text-[10px] text-muted-foreground">Usuário: {log.user_email}</p>}
                   {log.admin_email && <p className="text-[10px] text-muted-foreground">Admin: {log.admin_email}</p>}
