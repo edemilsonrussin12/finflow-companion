@@ -207,12 +207,12 @@ export default function Admin() {
       newUsersByMonth[key] = 0;
     }
     approvedPayments.forEach(p => {
-      const key = p.created_at.slice(0, 7);
-      if (key in revenueByMonth) revenueByMonth[key] += Number(p.amount);
+      const key = p.created_at?.slice(0, 7);
+      if (key && key in revenueByMonth) revenueByMonth[key] += Number(p.amount);
     });
     profiles.forEach(p => {
-      const key = p.created_at.slice(0, 7);
-      if (key in newUsersByMonth) newUsersByMonth[key]++;
+      const key = p.created_at?.slice(0, 7);
+      if (key && key in newUsersByMonth) newUsersByMonth[key]++;
     });
 
     const revenueChartData = Object.entries(revenueByMonth).map(([m, v]) => ({ month: m.slice(5), value: v }));
