@@ -7,75 +7,83 @@ const corsHeaders = {
 
 const ADMIN_EMAILS = ['edemilso-cardoso2@hotmail.com'];
 
+async function getAdminClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+}
+
+async function verifyAdmin(req: Request) {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) return null;
+  const userClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  const { data: { user }, error } = await userClient.auth.getUser();
+  if (error || !user?.email || !ADMIN_EMAILS.includes(user.email.toLowerCase())) return null;
+  return user;
+}
+
+async function addLog(admin: any, supabaseAdmin: any, action: string, userId?: string, userEmail?: string, notes?: string) {
+  await supabaseAdmin.from('admin_logs').insert({
+    user_id: userId || null,
+    user_email: userEmail || null,
+    action,
+    admin_email: admin.email,
+    notes: notes || null,
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify admin via JWT
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-
-    // Verify user from JWT
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user || !user.email || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    const admin = await verifyAdmin(req);
+    if (!admin) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    const supabaseAdmin = await getAdminClient();
     const { action, ...params } = await req.json();
 
+    // ─── LIST ───
     if (action === 'list') {
-      // Get all subscriptions with profiles
-      const { data: subs, error } = await supabaseAdmin
-        .from('user_subscriptions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [subsRes, profilesRes, paymentsRes, logsRes] = await Promise.all([
+        supabaseAdmin.from('user_subscriptions').select('*').order('created_at', { ascending: false }),
+        supabaseAdmin.from('profiles').select('id, email, display_name, created_at'),
+        supabaseAdmin.from('payments').select('*').order('created_at', { ascending: false }),
+        supabaseAdmin.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(100),
+      ]);
 
-      const { data: profiles } = await supabaseAdmin
-        .from('profiles')
-        .select('id, email, display_name');
-
-      const { data: payments } = await supabaseAdmin
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      // Get total user count
       const { count: totalUsers } = await supabaseAdmin
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      // Check payment mode
+      const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN') || '';
+      const paymentMode = accessToken.startsWith('TEST-') ? 'test' : 'production';
 
-      return new Response(JSON.stringify({ subscriptions: subs || [], profiles: profiles || [], payments: payments || [], totalUsers: totalUsers || 0 }), {
+      return new Response(JSON.stringify({
+        subscriptions: subsRes.data || [],
+        profiles: profilesRes.data || [],
+        payments: paymentsRes.data || [],
+        logs: logsRes.data || [],
+        totalUsers: totalUsers || 0,
+        paymentMode,
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // ─── ACTIVATE ───
     if (action === 'activate') {
       const { user_id, plan_type, days } = params;
       const now = new Date();
@@ -93,18 +101,18 @@ Deno.serve(async (req) => {
           updated_at: now.toISOString(),
         }, { onConflict: 'user_id' });
 
-      if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      if (error) throw error;
+
+      // Find user email for log
+      const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
+      await addLog(admin, supabaseAdmin, 'premium_activated', user_id, profile?.email, `Plan: ${plan_type || 'monthly'}, Days: ${days || (plan_type === 'annual' ? 365 : 30)}`);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // ─── EXTEND ───
     if (action === 'extend') {
       const { user_id, days } = params;
       const { data: existing } = await supabaseAdmin
@@ -125,18 +133,17 @@ Deno.serve(async (req) => {
         })
         .eq('user_id', user_id);
 
-      if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      if (error) throw error;
+
+      const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
+      await addLog(admin, supabaseAdmin, 'subscription_extended', user_id, profile?.email, `Extended by ${days || 30} days`);
 
       return new Response(JSON.stringify({ success: true, new_expires_at: baseDate.toISOString() }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // ─── EXPIRE / DOWNGRADE ───
     if (action === 'expire') {
       const { user_id } = params;
       const { error } = await supabaseAdmin
@@ -147,14 +154,64 @@ Deno.serve(async (req) => {
         })
         .eq('user_id', user_id);
 
-      if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      if (error) throw error;
+
+      const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
+      await addLog(admin, supabaseAdmin, 'premium_expired', user_id, profile?.email, 'Manually expired by admin');
 
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ─── CONVERT MONTHLY → ANNUAL ───
+    if (action === 'convert_annual') {
+      const { user_id } = params;
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + 365);
+
+      const { error } = await supabaseAdmin
+        .from('user_subscriptions')
+        .update({
+          plan_type: 'annual',
+          is_premium: true,
+          premium_started_at: now.toISOString(),
+          premium_expires_at: expiresAt.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .eq('user_id', user_id);
+
+      if (error) throw error;
+
+      const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
+      await addLog(admin, supabaseAdmin, 'converted_to_annual', user_id, profile?.email, 'Converted from monthly to annual');
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ─── EXPIRE ALL OVERDUE ───
+    if (action === 'expire_overdue') {
+      const now = new Date().toISOString();
+      const { data: overdue } = await supabaseAdmin
+        .from('user_subscriptions')
+        .select('user_id')
+        .eq('is_premium', true)
+        .lt('premium_expires_at', now);
+
+      if (overdue && overdue.length > 0) {
+        const ids = overdue.map((s: any) => s.user_id);
+        await supabaseAdmin
+          .from('user_subscriptions')
+          .update({ is_premium: false, updated_at: now })
+          .in('user_id', ids);
+
+        await addLog(admin, supabaseAdmin, 'bulk_expiration', undefined, undefined, `Expired ${ids.length} overdue subscriptions`);
+      }
+
+      return new Response(JSON.stringify({ success: true, expired_count: overdue?.length || 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -165,7 +222,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error('[ADMIN] Error:', err);
-    return new Response(JSON.stringify({ error: 'Internal error' }), {
+    return new Response(JSON.stringify({ error: err.message || 'Internal error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
