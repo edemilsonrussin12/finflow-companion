@@ -32,7 +32,12 @@ export function usePremiumStatus() {
       if (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date()) {
         setIsPremium(true);
       } else {
+        // Auto-expire: update DB to reflect expired status
         setIsPremium(false);
+        await supabase
+          .from('user_subscriptions')
+          .update({ is_premium: false, updated_at: new Date().toISOString() })
+          .eq('user_id', user.id);
       }
     } else {
       setIsPremium(false);
@@ -42,8 +47,6 @@ export function usePremiumStatus() {
 
   useEffect(() => {
     check();
-
-    // Re-check on window focus (useful for post-payment polling)
     const onFocus = () => check();
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
