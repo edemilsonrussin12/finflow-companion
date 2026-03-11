@@ -144,6 +144,22 @@ Deno.serve(async (req) => {
       }
 
       console.log('[WEBHOOK] ✅ Premium activated successfully for user', userId);
+
+      // Update referral status if this user was referred
+      const { data: referral } = await supabase
+        .from('referrals')
+        .select('id, referrer_id')
+        .eq('referred_id', userId)
+        .maybeSingle();
+
+      if (referral) {
+        await supabase.from('referrals').update({
+          status: 'premium_paid',
+          premium_converted: true,
+        }).eq('id', referral.id);
+        console.log('[WEBHOOK] Referral updated to premium_paid for referrer', referral.referrer_id);
+      }
+
       return new Response(JSON.stringify({ success: true, activated: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
