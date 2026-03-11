@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, FileText, Loader2, Trash2, Eye } from 'lucide-react';
+import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import BudgetEditor from '@/components/BudgetEditor';
@@ -104,11 +105,13 @@ export default function Orcamentos() {
           <Loader2 className="animate-spin text-primary" size={28} />
         </div>
       ) : budgets.length === 0 ? (
-        <div className="glass rounded-2xl p-8 text-center space-y-2">
-          <FileText size={32} className="mx-auto text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Nenhum orçamento ainda.</p>
-          <p className="text-xs text-muted-foreground">Crie seu primeiro orçamento profissional.</p>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="Crie seu primeiro orçamento profissional"
+          message="Organize seus serviços, gere PDFs e envie para clientes pelo WhatsApp."
+          actionLabel="Criar orçamento"
+          onAction={createBudget}
+        />
       ) : (
         <div className="space-y-3">
           {budgets.map(b => (
