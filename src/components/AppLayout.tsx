@@ -83,6 +83,7 @@ export default function AppLayout() {
       </header>
 
       <InstallPWA />
+      <TrialBanner trial={trial} />
       <Outlet />
       <FloatingActionButton onClick={handleFabClick} />
       <BottomNav />
