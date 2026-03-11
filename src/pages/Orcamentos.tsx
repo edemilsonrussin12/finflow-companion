@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, FileText, Loader2, Trash2, Eye } from 'lucide-react';
+import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import BudgetEditor from '@/components/BudgetEditor';
