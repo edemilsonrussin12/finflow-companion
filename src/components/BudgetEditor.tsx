@@ -135,22 +135,22 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     toast({ title: 'Orçamento salvo!' });
   }
 
-  async function generatePDF() {
+  function generatePDF() {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
     // FinControl Brand Colors (HSL to RGB)
-    const primaryBlue = [59, 130, 246]; // --primary: 217 91% 60%
-    const emerald = [16, 185, 129];     // --emerald: 142 71% 45%
-    const darkBg = [11, 17, 33];        // Dark background
+    const primaryBlue: [number, number, number] = [59, 130, 246];
+    const emerald: [number, number, number] = [16, 185, 129];
+    const darkBg: [number, number, number] = [11, 17, 33];
 
     // Header background
-    doc.setFillColor(...darkBg);
+    doc.setFillColor(darkBg[0], darkBg[1], darkBg[2]);
     doc.rect(0, 0, pageWidth, 35, 'F');
 
     // Logo/Brand text
     doc.setFontSize(22);
-    doc.setTextColor(...emerald);
+    doc.setTextColor(emerald[0], emerald[1], emerald[2]);
     doc.setFont('helvetica', 'bold');
     doc.text('FinControl', 14, 20);
 
@@ -161,13 +161,13 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     doc.text('Orçamento Profissional', 14, 28);
 
     // Decorative line
-    doc.setDrawColor(...emerald);
+    doc.setDrawColor(emerald[0], emerald[1], emerald[2]);
     doc.setLineWidth(0.5);
     doc.line(14, 32, pageWidth - 14, 32);
 
     // Orçamento title
     doc.setFontSize(16);
-    doc.setTextColor(...primaryBlue);
+    doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.setFont('helvetica', 'bold');
     doc.text('ORÇAMENTO', pageWidth - 14, 18, { align: 'right' });
 
@@ -248,7 +248,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
     // Footer branding
     const pageHeight = doc.internal.pageSize.height;
-    doc.setFillColor(11, 17, 33);
+    doc.setFillColor(darkBg[0], darkBg[1], darkBg[2]);
     doc.rect(0, pageHeight - 18, pageWidth, 18, 'F');
 
     doc.setFontSize(8);
@@ -256,7 +256,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     doc.setFont('helvetica', 'normal');
     doc.text('Gerado com', 14, pageHeight - 10);
 
-    doc.setTextColor(16, 185, 129);
+    doc.setTextColor(emerald[0], emerald[1], emerald[2]);
     doc.setFont('helvetica', 'bold');
     doc.text('FinControl', 42, pageHeight - 10);
 
