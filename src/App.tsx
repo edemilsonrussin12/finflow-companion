@@ -17,6 +17,7 @@ import Patrimonio from "@/pages/Patrimonio";
 import Relatorios from "@/pages/Relatorios";
 import EngenhariaRiqueza from "@/pages/EngenhariaRiqueza";
 import Convites from "@/pages/Convites";
+import Conquistas from "@/pages/Conquistas";
 import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
