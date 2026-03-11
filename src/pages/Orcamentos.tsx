@@ -12,11 +12,13 @@ import { format } from 'date-fns';
 export interface Budget {
   id: string;
   client_name: string;
+  client_contact: string;
   service_description: string;
   date: string;
   notes: string;
   status: string;
   total: number;
+  quote_number: number;
   created_at: string;
 }
 
@@ -122,9 +124,14 @@ export default function Orcamentos() {
             <div key={b.id} className="glass rounded-2xl p-4 space-y-2">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">
-                    {b.client_name || 'Sem cliente'}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold truncate">
+                      {b.client_name || 'Sem cliente'}
+                    </p>
+                    {b.quote_number > 0 && (
+                      <span className="text-[10px] text-muted-foreground font-mono">#{String(b.quote_number).padStart(5, '0')}</span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground truncate">
                     {b.service_description || 'Sem descrição'}
                   </p>

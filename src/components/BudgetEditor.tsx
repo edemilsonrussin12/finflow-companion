@@ -22,11 +22,13 @@ interface BudgetItem {
 
 interface BudgetData {
   client_name: string;
+  client_contact: string;
   service_description: string;
   date: string;
   notes: string;
   status: string;
   total: number;
+  quote_number: number;
 }
 
 interface Props {
@@ -41,8 +43,9 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const { addTransaction } = useFinance();
   const { toast } = useToast();
   const [budget, setBudget] = useState<BudgetData>({
-    client_name: '', service_description: '', date: new Date().toISOString().slice(0, 10),
-    notes: '', status: 'draft', total: 0,
+    client_name: '', client_contact: '', service_description: '',
+    date: new Date().toISOString().slice(0, 10),
+    notes: '', status: 'draft', total: 0, quote_number: 0,
   });
   const [items, setItems] = useState<BudgetItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,11 +62,13 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     if (bData) {
       setBudget({
         client_name: bData.client_name ?? '',
+        client_contact: (bData as any).client_contact ?? '',
         service_description: bData.service_description ?? '',
         date: bData.date ?? new Date().toISOString().slice(0, 10),
         notes: bData.notes ?? '',
         status: bData.status ?? 'draft',
         total: Number(bData.total) || 0,
+        quote_number: (bData as any).quote_number ?? 0,
       });
     }
     setItems((iData as BudgetItem[]) ?? []);
@@ -122,17 +127,22 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
   const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
 
+  const quoteLabel = budget.quote_number
+    ? String(budget.quote_number).padStart(5, '0')
+    : '—';
+
   async function saveToDb() {
     if (!user) return;
     await supabase.from('budgets').update({
       client_name: budget.client_name,
+      client_contact: budget.client_contact,
       service_description: budget.service_description,
       date: budget.date,
       notes: budget.notes,
       status: budget.status,
       total: grandTotal,
       updated_at: new Date().toISOString(),
-    }).eq('id', budgetId);
+    } as any).eq('id', budgetId);
 
     await supabase.from('budget_items').delete().eq('budget_id', budgetId);
 
@@ -157,146 +167,168 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     toast({ title: 'Orçamento salvo!' });
   }
 
+  function fmtBRL(v: number): string {
+    return `R$ ${v.toFixed(2).replace('.', ',')}`;
+  }
+
   function generatePDF() {
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
+    const pw = doc.internal.pageSize.width;
+    const ph = doc.internal.pageSize.height;
 
-    // Light theme PDF
-    const primaryBlue: [number, number, number] = [59, 130, 246];
+    // Colors
     const emerald: [number, number, number] = [16, 185, 129];
+    const darkText: [number, number, number] = [30, 30, 30];
+    const grayText: [number, number, number] = [100, 100, 100];
+    const lightGray: [number, number, number] = [230, 230, 230];
 
-    // White background header with brand
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, 35, 'F');
-
-    // Brand line
+    // ── Header ──
+    // Top accent line
     doc.setDrawColor(emerald[0], emerald[1], emerald[2]);
-    doc.setLineWidth(2);
-    doc.line(0, 0, pageWidth, 0);
+    doc.setLineWidth(2.5);
+    doc.line(0, 0, pw, 0);
 
-    // Logo/Brand text
-    doc.setFontSize(22);
+    // Brand name
+    doc.setFontSize(24);
     doc.setTextColor(emerald[0], emerald[1], emerald[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('FinControl', 14, 20);
+    doc.text('FinControl', 14, 18);
 
-    doc.setFontSize(9);
-    doc.setTextColor(120, 120, 120);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Orçamento Profissional', 14, 28);
+    // Title
+    doc.setFontSize(18);
+    doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+    doc.text('ORÇAMENTO DE SERVIÇO', pw - 14, 18, { align: 'right' });
 
-    doc.setDrawColor(220, 220, 220);
+    // Separator
+    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
     doc.setLineWidth(0.5);
-    doc.line(14, 32, pageWidth - 14, 32);
+    doc.line(14, 25, pw - 14, 25);
 
-    doc.setFontSize(16);
-    doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ORÇAMENTO', pageWidth - 14, 18, { align: 'right' });
+    // ── Quote info section ──
+    let y = 34;
+    const lh = 6;
 
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.setFont('helvetica', 'normal');
-
-    let yPos = 45;
-    const lineHeight = 7;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Cliente:', 14, yPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text(budget.client_name || '—', 35, yPos);
-    yPos += lineHeight;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Serviço:', 14, yPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text(budget.service_description || '—', 35, yPos);
-    yPos += lineHeight;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Data:', 14, yPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text(budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—', 35, yPos);
-    yPos += lineHeight + 3;
-
-    if (budget.notes) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Observações:', 14, yPos);
-      doc.setFont('helvetica', 'normal');
-      const splitNotes = doc.splitTextToSize(budget.notes, pageWidth - 48);
-      doc.text(splitNotes, 14, yPos + 5);
-      yPos += 5 + (splitNotes.length * 4);
+    const infoItems = [
+      ['Orçamento #', quoteLabel],
+      ['Data', budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'],
+      ['Cliente', budget.client_name || '—'],
+    ];
+    if (budget.client_contact) {
+      infoItems.push(['Contato', budget.client_contact]);
+    }
+    if (budget.service_description) {
+      infoItems.push(['Serviço', budget.service_description]);
     }
 
-    yPos += 5;
+    doc.setFontSize(10);
+    for (const [label, value] of infoItems) {
+      doc.setTextColor(grayText[0], grayText[1], grayText[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${label}:`, 14, y);
+      doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, 50, y);
+      y += lh;
+    }
 
+    if (budget.notes) {
+      y += 2;
+      doc.setTextColor(grayText[0], grayText[1], grayText[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Observações:', 14, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+      const splitNotes = doc.splitTextToSize(budget.notes, pw - 28);
+      doc.text(splitNotes, 14, y + 5);
+      y += 5 + (splitNotes.length * 4.5);
+    }
+
+    y += 6;
+
+    // ── Items table ──
     const tableData = items.map(i => [
       i.description || '—',
       String(i.quantity),
-      `R$ ${Number(i.unit_price).toFixed(2).replace('.', ',')}`,
-      `R$ ${(Number(i.quantity) * Number(i.unit_price)).toFixed(2).replace('.', ',')}`,
+      fmtBRL(Number(i.unit_price)),
+      fmtBRL(Number(i.quantity) * Number(i.unit_price)),
     ]);
 
     autoTable(doc, {
-      startY: yPos,
-      head: [['Serviço / Item', 'Qtd', 'Preço Unit.', 'Total']],
+      startY: y,
+      head: [['Serviço', 'Qtd', 'Valor Unitário', 'Total']],
       body: tableData,
-      foot: [['', '', 'TOTAL', `R$ ${grandTotal.toFixed(2).replace('.', ',')}`]],
-      theme: 'grid',
+      foot: [['', '', 'TOTAL', fmtBRL(grandTotal)]],
+      theme: 'plain',
+      styles: {
+        fontSize: 10,
+        cellPadding: 4,
+        textColor: darkText,
+        lineColor: lightGray,
+        lineWidth: 0.5,
+      },
       headStyles: {
-        fillColor: primaryBlue,
-        textColor: [255, 255, 255],
+        fillColor: [245, 245, 245],
+        textColor: darkText,
         fontStyle: 'bold',
         fontSize: 10,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.5,
       },
       footStyles: {
-        fillColor: emerald,
-        textColor: [255, 255, 255],
+        fillColor: [245, 245, 245],
+        textColor: darkText,
         fontStyle: 'bold',
-        fontSize: 10,
+        fontSize: 11,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.5,
       },
       bodyStyles: {
-        fontSize: 9,
-        textColor: [60, 60, 60],
+        fontSize: 10,
+        textColor: [50, 50, 50],
       },
       alternateRowStyles: {
-        fillColor: [245, 247, 250],
+        fillColor: [252, 252, 252],
       },
       columnStyles: {
         0: { cellWidth: 'auto' },
-        1: { cellWidth: 20, halign: 'center' },
-        2: { cellWidth: 35, halign: 'right' },
-        3: { cellWidth: 35, halign: 'right' },
+        1: { cellWidth: 22, halign: 'center' },
+        2: { cellWidth: 38, halign: 'right' },
+        3: { cellWidth: 38, halign: 'right' },
       },
       margin: { left: 14, right: 14 },
     });
 
-    // Footer
-    const pageHeight = doc.internal.pageSize.height;
-    doc.setDrawColor(220, 220, 220);
+    // ── Footer ──
+    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
     doc.setLineWidth(0.5);
-    doc.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20);
+    doc.line(14, ph - 28, pw - 14, ph - 28);
+
+    doc.setFontSize(10);
+    doc.setTextColor(emerald[0], emerald[1], emerald[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FinControl', pw / 2, ph - 20, { align: 'center' });
 
     doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
+    doc.setTextColor(grayText[0], grayText[1], grayText[2]);
     doc.setFont('helvetica', 'normal');
-    doc.text('FinControl – Controle inteligente do seu dinheiro', pageWidth / 2, pageHeight - 12, { align: 'center' });
+    doc.text('Controle inteligente do seu dinheiro', pw / 2, ph - 14, { align: 'center' });
+    doc.text('fincontrolapp.com', pw / 2, ph - 9, { align: 'center' });
 
     return doc;
   }
 
   function downloadPDF() {
     const doc = generatePDF();
-    doc.save(`orcamento-${budget.client_name || 'sem-nome'}.pdf`);
+    doc.save(`orcamento-${quoteLabel}-${budget.client_name || 'sem-nome'}.pdf`);
     toast({ title: 'PDF baixado!' });
   }
 
   function shareWhatsApp() {
     const lines = items.map(i =>
-      `• ${i.description || 'Item'} — ${i.quantity}x R$ ${Number(i.unit_price).toFixed(2).replace('.', ',')} = R$ ${(Number(i.quantity) * Number(i.unit_price)).toFixed(2).replace('.', ',')}`
+      `• ${i.description || 'Item'} — ${i.quantity}x ${fmtBRL(Number(i.unit_price))} = ${fmtBRL(Number(i.quantity) * Number(i.unit_price))}`
     );
     const text = encodeURIComponent(
-      `*Orçamento — FinControl*\n\nCliente: ${budget.client_name || '—'}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}\n\n${lines.join('\n')}\n\n*Total: R$ ${grandTotal.toFixed(2).replace('.', ',')}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl`
+      `*Orçamento #${quoteLabel} — FinControl*\n\nCliente: ${budget.client_name || '—'}${budget.client_contact ? `\nContato: ${budget.client_contact}` : ''}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}\n\n${lines.join('\n')}\n\n*Total: ${fmtBRL(grandTotal)}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
@@ -334,7 +366,10 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         <Button variant="ghost" size="icon" onClick={onClose}>
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="text-lg font-bold flex-1">Editar Orçamento</h1>
+        <div className="flex-1">
+          <h1 className="text-lg font-bold">Editar Orçamento</h1>
+          <p className="text-xs text-muted-foreground">#{quoteLabel}</p>
+        </div>
         <div className="flex items-center gap-2">
           {autoSaveStatus !== 'idle' && (
             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
@@ -356,8 +391,12 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
           <Input value={budget.client_name} onChange={e => updateField('client_name', e.target.value)} placeholder="Ex: João Silva" />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Descrição do serviço</label>
-          <Input value={budget.service_description} onChange={e => updateField('service_description', e.target.value)} placeholder="Ex: Instalação elétrica" />
+          <label className="text-xs font-medium text-muted-foreground">Contato do cliente (opcional)</label>
+          <Input value={budget.client_contact} onChange={e => updateField('client_contact', e.target.value)} placeholder="Ex: (11) 99999-0000" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Descrição do serviço (opcional)</label>
+          <Input value={budget.service_description} onChange={e => updateField('service_description', e.target.value)} placeholder="Ex: Manutenção automotiva" />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground">Data</label>
@@ -383,7 +422,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         ) : (
           <div className="space-y-2">
             <div className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 text-[10px] font-medium text-muted-foreground px-1">
-              <span>Item</span><span>Qtd</span><span>Preço</span><span>Total</span><span />
+              <span>Serviço</span><span>Qtd</span><span>Valor</span><span>Total</span><span />
             </div>
 
             {items.map(item => (
