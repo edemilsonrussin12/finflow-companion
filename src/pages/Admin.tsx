@@ -188,8 +188,8 @@ export default function Admin() {
       return d > now && d.getTime() - now.getTime() < 7 * 24 * 60 * 60 * 1000;
     });
 
-    const newUsers7d = profiles.filter(p => new Date(p.created_at) >= sevenDaysAgo).length;
-    const newUsers30d = profiles.filter(p => new Date(p.created_at) >= thirtyDaysAgo).length;
+    const newUsers7d = profiles.filter(p => p.created_at && new Date(p.created_at) >= sevenDaysAgo).length;
+    const newUsers30d = profiles.filter(p => p.created_at && new Date(p.created_at) >= thirtyDaysAgo).length;
 
     const mrr = (monthly.length * 19.90) + (annual.length * (167 / 12));
     const arr = mrr * 12;
