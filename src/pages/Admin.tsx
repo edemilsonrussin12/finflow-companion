@@ -510,7 +510,7 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
-                      <span>Cadastro: {format(new Date(p.created_at), 'dd/MM/yy')}</span>
+                      <span>Cadastro: {p.created_at ? format(new Date(p.created_at), 'dd/MM/yy') : '—'}</span>
                       {sub?.premium_expires_at && <span>· Expira: {format(new Date(sub.premium_expires_at), 'dd/MM/yy')}</span>}
                     </div>
                     <div className="flex flex-wrap gap-1">
