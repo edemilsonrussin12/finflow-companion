@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const ADMIN_EMAILS = ['edemilso-cardoso2@hotmail.com'];
 
-async function getAdminClient() {
+function getAdminClient() {
   return createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -16,14 +16,33 @@ async function getAdminClient() {
 
 async function verifyAdmin(req: Request) {
   const authHeader = req.headers.get('Authorization');
-  if (!authHeader) return null;
-  const userClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } },
-  );
-  const { data: { user }, error } = await userClient.auth.getUser();
-  if (error || !user?.email || !ADMIN_EMAILS.includes(user.email.toLowerCase())) return null;
+  if (!authHeader) {
+    console.error('[ADMIN] No Authorization header');
+    return null;
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const supabaseAdmin = getAdminClient();
+
+  // Use service role client to verify the token
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+
+  if (error) {
+    console.error('[ADMIN] Auth error:', error.message);
+    return null;
+  }
+
+  if (!user?.email) {
+    console.error('[ADMIN] No email on user');
+    return null;
+  }
+
+  if (!ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    console.error('[ADMIN] User is not admin:', user.email);
+    return null;
+  }
+
+  console.log('[ADMIN] Verified admin:', user.email);
   return user;
 }
 
@@ -51,23 +70,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseAdmin = await getAdminClient();
+    const supabaseAdmin = getAdminClient();
     const { action, ...params } = await req.json();
 
     // ─── LIST ───
     if (action === 'list') {
-      const [subsRes, profilesRes, paymentsRes, logsRes] = await Promise.all([
+      const [subsRes, profilesRes, paymentsRes, logsRes, referralsRes] = await Promise.all([
         supabaseAdmin.from('user_subscriptions').select('*').order('created_at', { ascending: false }),
         supabaseAdmin.from('profiles').select('id, email, display_name, created_at'),
         supabaseAdmin.from('payments').select('*').order('created_at', { ascending: false }),
         supabaseAdmin.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(100),
+        supabaseAdmin.from('referrals').select('*').order('created_at', { ascending: false }),
       ]);
 
       const { count: totalUsers } = await supabaseAdmin
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      // Check payment mode
       const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN') || '';
       const paymentMode = accessToken.startsWith('TEST-') ? 'test' : 'production';
 
@@ -76,6 +95,7 @@ Deno.serve(async (req) => {
         profiles: profilesRes.data || [],
         payments: paymentsRes.data || [],
         logs: logsRes.data || [],
+        referrals: referralsRes.data || [],
         totalUsers: totalUsers || 0,
         paymentMode,
       }), {
@@ -103,7 +123,6 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      // Find user email for log
       const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
       await addLog(admin, supabaseAdmin, 'premium_activated', user_id, profile?.email, `Plan: ${plan_type || 'monthly'}, Days: ${days || (plan_type === 'annual' ? 365 : 30)}`);
 
@@ -212,6 +231,52 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ success: true, expired_count: overdue?.length || 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ─── GRANT REFERRAL REWARD ───
+    if (action === 'grant_referral_reward') {
+      const { referral_id, referrer_id, reward_days } = params;
+      const days = reward_days || 30;
+
+      // Extend or activate premium for referrer
+      const { data: existing } = await supabaseAdmin
+        .from('user_subscriptions')
+        .select('premium_expires_at, is_premium')
+        .eq('user_id', referrer_id)
+        .single();
+
+      const baseDate = (existing?.is_premium && existing?.premium_expires_at)
+        ? new Date(existing.premium_expires_at)
+        : new Date();
+      baseDate.setDate(baseDate.getDate() + days);
+
+      await supabaseAdmin
+        .from('user_subscriptions')
+        .upsert({
+          user_id: referrer_id,
+          is_premium: true,
+          plan_type: existing?.is_premium ? undefined : 'monthly',
+          premium_expires_at: baseDate.toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      // Mark referral as rewarded
+      await supabaseAdmin
+        .from('referrals')
+        .update({
+          status: 'reward_granted',
+          reward_granted: true,
+          reward_granted_at: new Date().toISOString(),
+          reward_type: `${days}_days_premium`,
+        })
+        .eq('id', referral_id);
+
+      const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', referrer_id).single();
+      await addLog(admin, supabaseAdmin, 'referral_reward_granted', referrer_id, profile?.email, `+${days} days premium via referral`);
+
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

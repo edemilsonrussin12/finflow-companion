@@ -1,24 +1,23 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Shield, Users, Crown, DollarSign, TrendingUp, BarChart3, RefreshCw, Loader2,
   Search, ArrowUpRight, Clock, XCircle, CheckCircle2, Sparkles, AlertTriangle,
-  CreditCard, ScrollText, Activity
+  CreditCard, ScrollText, Activity, Gift, UserCheck
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, LineChart, Line, AreaChart, Area
+  CartesianGrid, Tooltip, AreaChart, Area
 } from 'recharts';
 
 // ─── Types ───
@@ -60,6 +59,19 @@ interface LogEntry {
   created_at: string;
 }
 
+interface ReferralRow {
+  id: string;
+  referrer_id: string;
+  referred_id: string;
+  status: string;
+  email_confirmed: boolean;
+  premium_converted: boolean;
+  reward_granted: boolean;
+  reward_granted_at: string | null;
+  reward_type: string | null;
+  created_at: string;
+}
+
 const COLORS = ['hsl(var(--primary))', 'hsl(153,60%,50%)', 'hsl(45,93%,58%)', 'hsl(200,70%,55%)'];
 const CHART_STYLE = { background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 
@@ -68,9 +80,11 @@ export default function Admin() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [referrals, setReferrals] = useState<ReferralRow[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [paymentMode, setPaymentMode] = useState<'test' | 'production'>('test');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Filters
@@ -85,18 +99,27 @@ export default function Admin() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke('admin-subscriptions', {
-      body: { action: 'list' },
-    });
-    if (error) {
-      toast.error('Erro ao carregar dados admin');
-    } else {
-      setSubs(data.subscriptions || []);
-      setProfiles(data.profiles || []);
-      setPayments(data.payments || []);
-      setLogs(data.logs || []);
-      setTotalUsers(data.totalUsers || 0);
-      setPaymentMode(data.paymentMode || 'test');
+    setLoadError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-subscriptions', {
+        body: { action: 'list' },
+      });
+      if (error) {
+        console.error('Admin load error:', error);
+        setLoadError('Erro ao carregar dados. Verifique suas permissões de admin.');
+        toast.error('Erro ao carregar dados admin');
+      } else {
+        setSubs(data.subscriptions || []);
+        setProfiles(data.profiles || []);
+        setPayments(data.payments || []);
+        setLogs(data.logs || []);
+        setReferrals(data.referrals || []);
+        setTotalUsers(data.totalUsers || 0);
+        setPaymentMode(data.paymentMode || 'test');
+      }
+    } catch (err: any) {
+      console.error('Admin load exception:', err);
+      setLoadError('Acesso negado ou erro de conexão.');
     }
     setLoading(false);
   };
@@ -132,6 +155,20 @@ export default function Admin() {
     setActionLoading(null);
   };
 
+  const handleGrantReward = async (referralId: string, referrerId: string) => {
+    setActionLoading(`reward-${referralId}`);
+    const { error } = await supabase.functions.invoke('admin-subscriptions', {
+      body: { action: 'grant_referral_reward', referral_id: referralId, referrer_id: referrerId, reward_days: 30 },
+    });
+    if (error) {
+      toast.error('Erro ao conceder recompensa');
+    } else {
+      toast.success('Recompensa concedida com sucesso');
+      await load();
+    }
+    setActionLoading(null);
+  };
+
   const getEmail = (userId: string) => profiles.find(p => p.id === userId)?.email || '—';
 
   // ─── Metrics ───
@@ -161,7 +198,6 @@ export default function Admin() {
     const conversionRate = totalUsers > 0 ? ((activeSubs.length / totalUsers) * 100) : 0;
     const freeUsers = totalUsers - activeSubs.length;
 
-    // Charts: revenue by month (last 6)
     const revenueByMonth: Record<string, number> = {};
     const newUsersByMonth: Record<string, number> = {};
     for (let i = 5; i >= 0; i--) {
@@ -187,20 +223,26 @@ export default function Admin() {
       { name: 'Gratuito', value: freeUsers > 0 ? freeUsers : 0 },
     ].filter(d => d.value > 0);
 
-    // Insights
     const insights: string[] = [];
     if (expiringSoon.length > 0) insights.push(`${expiringSoon.length} assinatura(s) vencendo nos próximos 7 dias`);
     if (annual.length > monthly.length) insights.push('Plano anual está convertendo melhor que o mensal');
     if (monthly.length > annual.length) insights.push('Considere promover mais o plano anual para aumentar retenção');
-    if (conversionRate > 10) insights.push(`Taxa de conversão de ${conversionRate.toFixed(1)}% — acima da média`);
+
+    // Referral metrics
+    const totalReferrals = referrals.length;
+    const confirmedReferrals = referrals.filter(r => r.email_confirmed).length;
+    const premiumConversions = referrals.filter(r => r.premium_converted).length;
+    const rewardsGranted = referrals.filter(r => r.reward_granted).length;
+    const pendingRewards = referrals.filter(r => r.premium_converted && !r.reward_granted).length;
 
     return {
       activeSubs: activeSubs.length, monthly: monthly.length, annual: annual.length,
       expired: expired.length, canceled: canceled.length, expiringSoon: expiringSoon.length,
       freeUsers, totalUsers, newUsers7d, newUsers30d, mrr, arr, totalRevenue,
       conversionRate, revenueChartData, usersChartData, planBreakdown, insights,
+      totalReferrals, confirmedReferrals, premiumConversions, rewardsGranted, pendingRewards,
     };
-  }, [subs, payments, profiles, totalUsers]);
+  }, [subs, payments, profiles, totalUsers, referrals]);
 
   // ─── Filtered users ───
   const filteredUsers = useMemo(() => {
@@ -252,6 +294,17 @@ export default function Admin() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <Shield className="h-12 w-12 text-destructive" />
+        <h2 className="text-lg font-bold text-foreground">Acesso Negado</h2>
+        <p className="text-sm text-muted-foreground text-center max-w-xs">{loadError}</p>
+        <Button variant="outline" onClick={load}>Tentar novamente</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 pb-24">
       {/* Header */}
@@ -274,11 +327,12 @@ export default function Admin() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-5 h-auto">
+        <TabsList className="w-full grid grid-cols-6 h-auto">
           <TabsTrigger value="overview" className="text-[10px] px-1 py-2">Visão Geral</TabsTrigger>
           <TabsTrigger value="users" className="text-[10px] px-1 py-2">Usuários</TabsTrigger>
           <TabsTrigger value="payments" className="text-[10px] px-1 py-2">Pagamentos</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-[10px] px-1 py-2">Assinaturas</TabsTrigger>
+          <TabsTrigger value="referrals" className="text-[10px] px-1 py-2">Convites</TabsTrigger>
           <TabsTrigger value="logs" className="text-[10px] px-1 py-2">Histórico</TabsTrigger>
         </TabsList>
 
@@ -405,7 +459,6 @@ export default function Admin() {
             </Card>
           )}
 
-          {/* Expire Overdue Button */}
           <Button variant="outline" className="w-full" onClick={handleExpireOverdue} disabled={actionLoading === 'expire_overdue'}>
             {actionLoading === 'expire_overdue' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
             Expirar assinaturas vencidas
@@ -586,6 +639,76 @@ export default function Admin() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </TabsContent>
+
+        {/* ═══════ REFERRALS TAB ═══════ */}
+        <TabsContent value="referrals" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[
+              { label: 'Total Convites', value: metrics.totalReferrals, icon: Gift, color: 'text-primary' },
+              { label: 'Email Confirmado', value: metrics.confirmedReferrals, icon: CheckCircle2, color: 'text-emerald-400' },
+              { label: 'Conversões Premium', value: metrics.premiumConversions, icon: Crown, color: 'text-yellow-400' },
+              { label: 'Recompensas', value: metrics.rewardsGranted, icon: UserCheck, color: 'text-primary' },
+              { label: 'Pendentes', value: metrics.pendingRewards, icon: Clock, color: 'text-muted-foreground' },
+            ].map((k, i) => (
+              <Card key={i} className="border-border/50">
+                <CardContent className="pt-3 pb-2 px-3">
+                  <k.icon className={`h-4 w-4 ${k.color} mb-1`} />
+                  <p className={`text-lg font-bold ${k.color}`}>{k.value}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">{k.label}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <h3 className="text-sm font-semibold text-foreground">Todos os Convites</h3>
+          <div className="space-y-2">
+            {referrals.map(r => {
+              const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+                signup_started: { label: 'Cadastro', variant: 'outline' },
+                email_confirmed: { label: 'Email OK', variant: 'secondary' },
+                premium_paid: { label: 'Premium Pago', variant: 'default' },
+                reward_granted: { label: 'Recompensado', variant: 'default' },
+                rejected: { label: 'Rejeitado', variant: 'destructive' },
+              };
+              const st = statusMap[r.status] || { label: r.status, variant: 'outline' as const };
+
+              return (
+                <Card key={r.id} className="border-border/50">
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-muted-foreground">Convidou: <span className="text-foreground font-medium">{getEmail(r.referrer_id)}</span></p>
+                        <p className="text-[10px] text-muted-foreground">Convidado: <span className="text-foreground font-medium">{getEmail(r.referred_id)}</span></p>
+                      </div>
+                      <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <span>{format(new Date(r.created_at), 'dd/MM/yy')}</span>
+                      {r.email_confirmed && <Badge variant="outline" className="text-[8px] px-1">✉️ Confirmado</Badge>}
+                      {r.premium_converted && <Badge variant="outline" className="text-[8px] px-1">💎 Premium</Badge>}
+                      {r.reward_granted && <Badge variant="default" className="text-[8px] px-1">🎁 Recompensado</Badge>}
+                    </div>
+                    {r.premium_converted && !r.reward_granted && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px] mt-2"
+                        disabled={actionLoading === `reward-${r.id}`}
+                        onClick={() => handleGrantReward(r.id, r.referrer_id)}
+                      >
+                        {actionLoading === `reward-${r.id}` ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Gift className="h-3 w-3 mr-1" />}
+                        Conceder recompensa (+30 dias)
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {referrals.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-8">Nenhum convite registrado</p>
+            )}
           </div>
         </TabsContent>
 
