@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,15 +9,50 @@ import { UserPlus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Cadastro() {
-  const { signup, isAuthenticated, loading } = useAuth();
+  const { signup, isAuthenticated, loading, user } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // After signup + auth, create referral record
+  useEffect(() => {
+    if (!user || !refCode) return;
+    createReferralRecord(user.id, refCode);
+  }, [user, refCode]);
+
+  async function createReferralRecord(userId: string, code: string) {
+    try {
+      // Find referrer by code
+      const { data: codeRow } = await supabase
+        .from('referral_codes')
+        .select('user_id')
+        .eq('code', code)
+        .maybeSingle();
+
+      if (!codeRow) return;
+
+      // Prevent self-referral
+      if (codeRow.user_id === userId) return;
+
+      // Create referral (unique constraint on referred_id prevents duplicates)
+      await supabase.from('referrals').insert({
+        referrer_id: codeRow.user_id,
+        referred_id: userId,
+        status: 'signup_started',
+      });
+    } catch (err) {
+      // Ignore duplicate constraint errors
+      console.log('Referral record:', err);
+    }
+  }
+
   if (loading) return null;
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated && !refCode) return <Navigate to="/" replace />;
+  if (isAuthenticated && refCode) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +74,9 @@ export default function Cadastro() {
             <UserPlus size={24} className="text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold">Criar conta</h1>
-          <p className="text-sm text-muted-foreground">Preencha os dados abaixo</p>
+          <p className="text-sm text-muted-foreground">
+            {refCode ? 'Você foi convidado! Crie sua conta abaixo.' : 'Preencha os dados abaixo'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

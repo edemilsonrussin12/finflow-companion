@@ -8,7 +8,7 @@ const PLANS: Record<string, { title: string; price: number }> = {
   annual: { title: 'FinControl Premium Anual', price: 167.00 },
 };
 
-const PRODUCTION_ORIGIN = 'https://money-grow-pal.lovable.app';
+const PRODUCTION_ORIGIN = 'https://fincontrolapp.com';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {

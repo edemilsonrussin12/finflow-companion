@@ -20,7 +20,7 @@ export default function Convites() {
 
   const referralLink = useMemo(() => {
     if (!data?.code) return '';
-    return `${window.location.origin}/cadastro?ref=${data.code}`;
+    return `https://fincontrolapp.com/cadastro?ref=${data.code}`;
   }, [data?.code]);
 
   useEffect(() => {
@@ -33,7 +33,6 @@ export default function Convites() {
     setLoading(true);
 
     try {
-      // Get or create referral code
       let { data: codeRow } = await supabase
         .from('referral_codes')
         .select('code')
@@ -50,7 +49,6 @@ export default function Convites() {
         codeRow = inserted;
       }
 
-      // Get subscription status
       let { data: subRow } = await supabase
         .from('user_subscriptions')
         .select('is_premium')
@@ -64,12 +62,11 @@ export default function Convites() {
         subRow = { is_premium: false };
       }
 
-      // Count successful referrals
       const { count } = await supabase
         .from('referrals')
         .select('*', { count: 'exact', head: true })
         .eq('referrer_id', user.id)
-        .eq('status', 'completed');
+        .eq('status', 'reward_granted');
 
       setData({
         code: codeRow?.code ?? '',
@@ -102,7 +99,9 @@ export default function Convites() {
   }
 
   function shareWhatsApp() {
-    const text = encodeURIComponent(`Organize suas finanças e construa patrimônio! Use meu convite: ${referralLink}`);
+    const text = encodeURIComponent(
+      `Conheça o FinControl, seu parceiro financeiro pessoal.\n\nOrganize seus gastos, acompanhe metas e tenha mais controle do seu dinheiro.\n\nAcesse: ${referralLink}`
+    );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
 
@@ -110,8 +109,8 @@ export default function Convites() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'FinControl - Engenharia da Riqueza',
-          text: 'Organize suas finanças e construa patrimônio!',
+          title: 'FinControl - Gestão Financeira Inteligente',
+          text: 'Conheça o FinControl, seu parceiro financeiro pessoal. Organize seus gastos, acompanhe metas e tenha mais controle do seu dinheiro.',
           url: referralLink,
         });
       } catch { /* user cancelled */ }
@@ -150,8 +149,8 @@ export default function Convites() {
           <p className="text-sm font-semibold">{data?.isPremium ? 'Usuário Premium' : 'Usuário Gratuito'}</p>
           <p className="text-xs text-muted-foreground">
             {data?.isPremium
-              ? 'Convide 3 amigos e ganhe +1 mês premium'
-              : 'Convide 5 amigos e desbloqueie 1 mês premium'}
+              ? 'Convide 3 amigos premium e ganhe +1 mês'
+              : 'Convide 5 amigos premium e desbloqueie 1 mês'}
           </p>
         </div>
       </div>
@@ -165,7 +164,7 @@ export default function Convites() {
 
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">{current} / {target} amigos convidados</span>
+            <span className="text-muted-foreground">{current} / {target} amigos convertidos</span>
             <span className="font-medium text-primary">{progress}%</span>
           </div>
           <Progress value={progress} className="h-2.5" />
@@ -196,6 +195,26 @@ export default function Convites() {
         </div>
       </div>
 
+      {/* How reward works */}
+      <div className="glass rounded-2xl p-5 space-y-3">
+        <p className="text-sm font-medium">Como a recompensa funciona</p>
+        <div className="space-y-3">
+          {[
+            { step: '1', text: 'Compartilhe seu link de convite com amigos' },
+            { step: '2', text: 'Seu amigo se cadastra e confirma o email' },
+            { step: '3', text: 'Seu amigo assina o plano Premium e paga' },
+            { step: '4', text: `Ao atingir ${target} amigos premium, você ganha 1 mês grátis` },
+          ].map(item => (
+            <div key={item.step} className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-primary">{item.step}</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Share actions */}
       <div className="glass rounded-2xl p-5 space-y-3">
         <p className="text-sm font-medium">Compartilhe seu convite</p>
@@ -218,25 +237,6 @@ export default function Convites() {
             <Share2 size={16} />
             Compartilhar
           </Button>
-        </div>
-      </div>
-
-      {/* Reward info */}
-      <div className="glass rounded-2xl p-5 space-y-3">
-        <p className="text-sm font-medium">Como funciona</p>
-        <div className="space-y-3">
-          {[
-            { step: '1', text: 'Compartilhe seu link de convite com amigos' },
-            { step: '2', text: 'Seu amigo se cadastra usando seu link' },
-            { step: '3', text: `Ao atingir ${target} convites, você ganha 1 mês premium` },
-          ].map(item => (
-            <div key={item.step} className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-primary">{item.step}</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{item.text}</p>
-            </div>
-          ))}
         </div>
       </div>
     </div>
