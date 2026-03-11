@@ -30,6 +30,7 @@ import PaymentPending from "@/pages/PaymentPending";
 import PaymentFailure from "@/pages/PaymentFailure";
 import MinhaAssinatura from "@/pages/MinhaAssinatura";
 import Suporte from "@/pages/Suporte";
+import Configuracoes from "@/pages/Configuracoes";
 import Admin from "@/pages/Admin";
 import AdminRoute from "@/components/AdminRoute";
 import NotFound from "./pages/NotFound";
