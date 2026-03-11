@@ -18,6 +18,8 @@ import Relatorios from "@/pages/Relatorios";
 import EngenhariaRiqueza from "@/pages/EngenhariaRiqueza";
 import Convites from "@/pages/Convites";
 import Conquistas from "@/pages/Conquistas";
+import Orcamentos from "@/pages/Orcamentos";
+import Planilha from "@/pages/Planilha";
 import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
