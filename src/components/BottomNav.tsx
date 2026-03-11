@@ -19,6 +19,8 @@ const moreTabs = [
   { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
   { path: '/convites', icon: Users, label: 'Convites' },
   { path: '/conquistas', icon: Trophy, label: 'Conquistas' },
+  { path: '/orcamentos', icon: ClipboardList, label: 'Orçamentos' },
+  { path: '/planilha', icon: Grid3X3, label: 'Planilha' },
   { path: '/suporte', icon: Headphones, label: 'Suporte' },
 ];
 
