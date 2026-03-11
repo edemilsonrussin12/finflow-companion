@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Shield, Users, Crown, DollarSign, TrendingUp, BarChart3, RefreshCw, Loader2,
   Search, ArrowUpRight, Clock, XCircle, CheckCircle2, Sparkles, AlertTriangle,
-  CreditCard, ScrollText, Activity, Gift, UserCheck
+  CreditCard, ScrollText, Activity, Gift, UserCheck, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -74,6 +74,7 @@ interface ReferralRow {
 
 const COLORS = ['hsl(var(--primary))', 'hsl(153,60%,50%)', 'hsl(45,93%,58%)', 'hsl(200,70%,55%)'];
 const CHART_STYLE = { background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
+const ADMIN_PAGE_SIZE = 20;
 
 export default function Admin() {
   const [subs, setSubs] = useState<Sub[]>([]);
@@ -92,6 +93,13 @@ export default function Admin() {
   const [userSearch, setUserSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [paymentSearch, setPaymentSearch] = useState('');
+
+  // Pagination
+  const [usersPage, setUsersPage] = useState(0);
+  const [paymentsPage, setPaymentsPage] = useState(0);
+  const [referralsPage, setReferralsPage] = useState(0);
+  const [subsPage, setSubsPage] = useState(0);
+  const [logsPage, setLogsPage] = useState(0);
 
   // Dialog
   const [dialog, setDialog] = useState<{ type: string; userId: string; email: string } | null>(null);
@@ -228,7 +236,6 @@ export default function Admin() {
     if (annual.length > monthly.length) insights.push('Plano anual está convertendo melhor que o mensal');
     if (monthly.length > annual.length) insights.push('Considere promover mais o plano anual para aumentar retenção');
 
-    // Referral metrics
     const totalReferrals = referrals.length;
     const confirmedReferrals = referrals.filter(r => r.email_confirmed).length;
     const premiumConversions = referrals.filter(r => r.premium_converted).length;
@@ -282,6 +289,34 @@ export default function Admin() {
     });
   }, [payments, paymentFilter, paymentSearch, profiles]);
 
+  // Reset pages when filters change
+  useEffect(() => { setUsersPage(0); }, [userFilter, userSearch]);
+  useEffect(() => { setPaymentsPage(0); }, [paymentFilter, paymentSearch]);
+
+  // Pagination helper
+  function paginate<T>(items: T[], page: number): { paged: T[]; totalPages: number } {
+    const totalPages = Math.max(1, Math.ceil(items.length / ADMIN_PAGE_SIZE));
+    const paged = items.slice(page * ADMIN_PAGE_SIZE, (page + 1) * ADMIN_PAGE_SIZE);
+    return { paged, totalPages };
+  }
+
+  function PaginationControls({ page, totalPages, setPage, total }: { page: number; totalPages: number; setPage: (p: number) => void; total: number }) {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex items-center justify-between pt-2">
+        <span className="text-[10px] text-muted-foreground">{total} registro(s) · Página {page + 1}/{totalPages}</span>
+        <div className="flex gap-1">
+          <Button size="sm" variant="outline" className="h-7 w-7 p-0" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            <ChevronLeft className="h-3 w-3" />
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 w-7 p-0" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+            <ChevronRight className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="space-y-4 pb-24">
@@ -304,6 +339,13 @@ export default function Admin() {
       </div>
     );
   }
+
+  const usersP = paginate(filteredUsers, usersPage);
+  const paymentsP = paginate(filteredPayments, paymentsPage);
+  const activeSubs = subs.filter(s => s.is_premium);
+  const subsP = paginate(activeSubs, subsPage);
+  const referralsP = paginate(referrals, referralsPage);
+  const logsP = paginate(logs, logsPage);
 
   return (
     <div className="space-y-4 pb-24">
@@ -486,10 +528,8 @@ export default function Admin() {
             </Select>
           </div>
 
-          <p className="text-xs text-muted-foreground">{filteredUsers.length} usuário(s)</p>
-
           <div className="space-y-2">
-            {filteredUsers.slice(0, 50).map(p => {
+            {usersP.paged.map(p => {
               const sub = subs.find(s => s.user_id === p.id);
               const now = new Date();
               const isActive = sub?.is_premium && (!sub.premium_expires_at || new Date(sub.premium_expires_at) > now);
@@ -540,6 +580,7 @@ export default function Admin() {
               );
             })}
           </div>
+          <PaginationControls page={usersPage} totalPages={usersP.totalPages} setPage={setUsersPage} total={filteredUsers.length} />
         </TabsContent>
 
         {/* ═══════ PAYMENTS TAB ═══════ */}
@@ -562,10 +603,8 @@ export default function Admin() {
             </Select>
           </div>
 
-          <p className="text-xs text-muted-foreground">{filteredPayments.length} pagamento(s)</p>
-
           <div className="space-y-2">
-            {filteredPayments.slice(0, 50).map(p => (
+            {paymentsP.paged.map(p => (
               <Card key={p.id} className="border-border/50">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center justify-between mb-1">
@@ -589,6 +628,7 @@ export default function Admin() {
               <p className="text-center text-sm text-muted-foreground py-8">Nenhum pagamento encontrado</p>
             )}
           </div>
+          <PaginationControls page={paymentsPage} totalPages={paymentsP.totalPages} setPage={setPaymentsPage} total={filteredPayments.length} />
         </TabsContent>
 
         {/* ═══════ SUBSCRIPTIONS TAB ═══════ */}
@@ -612,7 +652,7 @@ export default function Admin() {
 
           <h3 className="text-sm font-semibold text-foreground">Assinaturas Ativas</h3>
           <div className="space-y-2">
-            {subs.filter(s => s.is_premium).map(s => (
+            {subsP.paged.map(s => (
               <Card key={s.user_id} className="border-border/50">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center justify-between mb-1">
@@ -640,6 +680,7 @@ export default function Admin() {
               </Card>
             ))}
           </div>
+          <PaginationControls page={subsPage} totalPages={subsP.totalPages} setPage={setSubsPage} total={activeSubs.length} />
         </TabsContent>
 
         {/* ═══════ REFERRALS TAB ═══════ */}
@@ -664,7 +705,7 @@ export default function Admin() {
 
           <h3 className="text-sm font-semibold text-foreground">Todos os Convites</h3>
           <div className="space-y-2">
-            {referrals.map(r => {
+            {referralsP.paged.map(r => {
               const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
                 signup_started: { label: 'Cadastro', variant: 'outline' },
                 email_confirmed: { label: 'Email OK', variant: 'secondary' },
@@ -710,6 +751,7 @@ export default function Admin() {
               <p className="text-center text-sm text-muted-foreground py-8">Nenhum convite registrado</p>
             )}
           </div>
+          <PaginationControls page={referralsPage} totalPages={referralsP.totalPages} setPage={setReferralsPage} total={referrals.length} />
         </TabsContent>
 
         {/* ═══════ LOGS TAB ═══════ */}
@@ -719,7 +761,7 @@ export default function Admin() {
             Histórico de Ações ({logs.length})
           </h3>
           <div className="space-y-2">
-            {logs.map(log => (
+            {logsP.paged.map(log => (
               <Card key={log.id} className="border-border/50">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-center justify-between mb-1">
@@ -736,6 +778,7 @@ export default function Admin() {
               <p className="text-center text-sm text-muted-foreground py-8">Nenhum registro encontrado</p>
             )}
           </div>
+          <PaginationControls page={logsPage} totalPages={logsP.totalPages} setPage={setLogsPage} total={logs.length} />
         </TabsContent>
       </Tabs>
 

@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Grid3X3, Plus, Trash2, Save } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Grid3X3, Plus, Trash2, Save, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const MAX_ROWS = 30;
 const MAX_COLS = 10;
 const STORAGE_KEY = 'fincontrol_spreadsheet';
+const AUTO_SAVE_INTERVAL = 5000;
 
 type CellValue = string;
 type Grid = CellValue[][];
@@ -29,9 +31,36 @@ export default function Planilha() {
     } catch {}
     return createGrid(5, 4);
   });
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [deletingRow, setDeletingRow] = useState<number | null>(null);
+  const lastSavedRef = useRef<string>(JSON.stringify(grid));
 
   const rows = grid.length;
   const cols = grid[0]?.length ?? 4;
+
+  // Auto-save
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const current = JSON.stringify(grid);
+      if (current !== lastSavedRef.current) {
+        setAutoSaveStatus('saving');
+        localStorage.setItem(STORAGE_KEY, current);
+        lastSavedRef.current = current;
+        setTimeout(() => setAutoSaveStatus('saved'), 300);
+        setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      }
+    }, AUTO_SAVE_INTERVAL);
+    return () => clearInterval(interval);
+  }, [grid]);
+
+  // Save before leaving
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(grid));
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [grid]);
 
   function updateCell(r: number, c: number, val: string) {
     setGrid(prev => {
@@ -51,9 +80,10 @@ export default function Planilha() {
     setGrid(prev => prev.map(row => [...row, '']));
   }
 
-  function removeRow(r: number) {
-    if (rows <= 1) return;
-    setGrid(prev => prev.filter((_, i) => i !== r));
+  function confirmRemoveRow() {
+    if (deletingRow === null || rows <= 1) return;
+    setGrid(prev => prev.filter((_, i) => i !== deletingRow));
+    setDeletingRow(null);
   }
 
   function removeCol(c: number) {
@@ -63,17 +93,16 @@ export default function Planilha() {
 
   function saveGrid() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(grid));
+    lastSavedRef.current = JSON.stringify(grid);
     toast({ title: 'Planilha salva!' });
   }
 
-  // Column sums
   const colSums = useMemo(() => {
     return Array.from({ length: cols }, (_, c) =>
       grid.reduce((sum, row) => sum + parseNum(row[c] ?? ''), 0)
     );
   }, [grid, cols]);
 
-  // Row sums
   const rowSums = useMemo(() => {
     return grid.map(row => row.reduce((sum, cell) => sum + parseNum(cell), 0));
   }, [grid]);
@@ -93,7 +122,7 @@ export default function Planilha() {
         <p className="text-sm text-muted-foreground">Faça cálculos rápidos com até {MAX_ROWS} linhas e {MAX_COLS} colunas.</p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Button size="sm" variant="outline" onClick={addRow} disabled={rows >= MAX_ROWS} className="gap-1.5 text-xs flex-1">
           <Plus size={14} /> Linha
         </Button>
@@ -103,6 +132,12 @@ export default function Planilha() {
         <Button size="sm" onClick={saveGrid} className="gap-1.5 text-xs">
           <Save size={14} /> Salvar
         </Button>
+        {autoSaveStatus !== 'idle' && (
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1 shrink-0">
+            {autoSaveStatus === 'saving' && 'Salvando...'}
+            {autoSaveStatus === 'saved' && <><Check size={10} className="text-income" /> Salvo</>}
+          </span>
+        )}
       </div>
 
       <div className="glass rounded-2xl p-3 overflow-x-auto">
@@ -132,7 +167,7 @@ export default function Planilha() {
                   <div className="flex items-center gap-1">
                     <span>{r + 1}</span>
                     {rows > 1 && (
-                      <button onClick={() => removeRow(r)} className="text-destructive/50 hover:text-destructive">
+                      <button onClick={() => setDeletingRow(r)} className="text-destructive/50 hover:text-destructive">
                         <Trash2 size={10} />
                       </button>
                     )}
@@ -166,6 +201,14 @@ export default function Planilha() {
           </tfoot>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={deletingRow !== null}
+        onOpenChange={open => { if (!open) setDeletingRow(null); }}
+        onConfirm={confirmRemoveRow}
+        title="Excluir linha"
+        description="Tem certeza que deseja excluir esta linha? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

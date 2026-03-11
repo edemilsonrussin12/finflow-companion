@@ -12,16 +12,25 @@ interface ReferralData {
   successfulReferrals: number;
 }
 
+function generateSecureCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const array = new Uint8Array(8);
+  crypto.getRandomValues(array);
+  return Array.from(array, b => chars[b % chars.length]).join('');
+}
+
 export default function Convites() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
   const referralLink = useMemo(() => {
     if (!data?.code) return '';
-    return `https://fincontrolapp.com/cadastro?ref=${data.code}`;
-  }, [data?.code]);
+    return `${baseUrl}/cadastro?ref=${data.code}`;
+  }, [data?.code, baseUrl]);
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +49,7 @@ export default function Convites() {
         .maybeSingle();
 
       if (!codeRow) {
-        const code = generateCode(user.id);
+        const code = generateSecureCode();
         const { data: inserted } = await supabase
           .from('referral_codes')
           .insert({ user_id: user.id, code })
@@ -78,10 +87,6 @@ export default function Convites() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function generateCode(userId: string) {
-    return userId.slice(0, 8).toUpperCase();
   }
 
   const target = data?.isPremium ? 3 : 5;

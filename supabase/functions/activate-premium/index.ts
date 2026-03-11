@@ -16,13 +16,49 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── JWT Authentication ──
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized', activated: false }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Invalid token', activated: false }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const authenticatedUserId = claimsData.claims.sub as string;
+
     const { payment_id, user_id, plan } = await req.json();
     console.log('[ACTIVATE] ─── Request received ───');
     console.log('[ACTIVATE] payment_id:', payment_id, '| user_id:', user_id, '| plan:', plan);
+    console.log('[ACTIVATE] Authenticated user:', authenticatedUserId);
 
     if (!payment_id || !user_id) {
       return new Response(JSON.stringify({ error: 'payment_id and user_id required' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Ensure the authenticated user matches the requested user_id
+    if (authenticatedUserId !== user_id) {
+      console.error('[ACTIVATE] User mismatch! authenticated:', authenticatedUserId, 'requested:', user_id);
+      return new Response(JSON.stringify({ error: 'User mismatch', activated: false }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

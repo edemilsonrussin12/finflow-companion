@@ -6,6 +6,7 @@ import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import BudgetEditor from '@/components/BudgetEditor';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { format } from 'date-fns';
 
 export interface Budget {
@@ -26,6 +27,7 @@ export default function Orcamentos() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -56,10 +58,12 @@ export default function Orcamentos() {
     setCreating(true);
   }
 
-  async function deleteBudget(id: string) {
-    await supabase.from('budgets').delete().eq('id', id);
-    setBudgets(b => b.filter(x => x.id !== id));
+  async function confirmDeleteBudget() {
+    if (!deletingId) return;
+    await supabase.from('budgets').delete().eq('id', deletingId);
+    setBudgets(b => b.filter(x => x.id !== deletingId));
     toast({ title: 'Orçamento excluído' });
+    setDeletingId(null);
   }
 
   function handleClose() {
@@ -141,7 +145,7 @@ export default function Orcamentos() {
                 <Button size="sm" variant="outline" className="flex-1 gap-1.5 text-xs" onClick={() => setEditingId(b.id)}>
                   <Eye size={14} /> Abrir
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1.5 text-xs text-destructive hover:text-destructive" onClick={() => deleteBudget(b.id)}>
+                <Button size="sm" variant="outline" className="gap-1.5 text-xs text-destructive hover:text-destructive" onClick={() => setDeletingId(b.id)}>
                   <Trash2 size={14} />
                 </Button>
               </div>
@@ -149,6 +153,12 @@ export default function Orcamentos() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deletingId}
+        onOpenChange={open => { if (!open) setDeletingId(null); }}
+        onConfirm={confirmDeleteBudget}
+      />
     </div>
   );
 }
