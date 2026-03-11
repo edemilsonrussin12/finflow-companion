@@ -444,6 +444,9 @@ export type Database = {
           plan_type: string | null
           premium_expires_at: string | null
           premium_started_at: string | null
+          trial_end_at: string | null
+          trial_start_at: string | null
+          trial_used: boolean
           updated_at: string
           user_id: string
         }
@@ -455,6 +458,9 @@ export type Database = {
           plan_type?: string | null
           premium_expires_at?: string | null
           premium_started_at?: string | null
+          trial_end_at?: string | null
+          trial_start_at?: string | null
+          trial_used?: boolean
           updated_at?: string
           user_id: string
         }
@@ -466,6 +472,9 @@ export type Database = {
           plan_type?: string | null
           premium_expires_at?: string | null
           premium_started_at?: string | null
+          trial_end_at?: string | null
+          trial_start_at?: string | null
+          trial_used?: boolean
           updated_at?: string
           user_id?: string
         }
