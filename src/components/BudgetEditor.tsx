@@ -135,20 +135,78 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     toast({ title: 'Orçamento salvo!' });
   }
 
-  function generatePDF() {
+  async function generatePDF() {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
 
-    doc.setFontSize(18);
-    doc.text('Orçamento', 14, 22);
+    // FinControl Brand Colors (HSL to RGB)
+    const primaryBlue = [59, 130, 246]; // --primary: 217 91% 60%
+    const emerald = [16, 185, 129];     // --emerald: 142 71% 45%
+    const darkBg = [11, 17, 33];        // Dark background
 
+    // Header background
+    doc.setFillColor(...darkBg);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Logo/Brand text
+    doc.setFontSize(22);
+    doc.setTextColor(...emerald);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FinControl', 14, 20);
+
+    // Tagline
+    doc.setFontSize(9);
+    doc.setTextColor(200, 200, 200);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Orçamento Profissional', 14, 28);
+
+    // Decorative line
+    doc.setDrawColor(...emerald);
+    doc.setLineWidth(0.5);
+    doc.line(14, 32, pageWidth - 14, 32);
+
+    // Orçamento title
+    doc.setFontSize(16);
+    doc.setTextColor(...primaryBlue);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ORÇAMENTO', pageWidth - 14, 18, { align: 'right' });
+
+    // Budget details section
     doc.setFontSize(10);
-    doc.text(`Cliente: ${budget.client_name || '—'}`, 14, 35);
-    doc.text(`Serviço: ${budget.service_description || '—'}`, 14, 42);
-    doc.text(`Data: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}`, 14, 49);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont('helvetica', 'normal');
+
+    let yPos = 45;
+    const lineHeight = 7;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cliente:', 14, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(budget.client_name || '—', 35, yPos);
+    yPos += lineHeight;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Serviço:', 14, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(budget.service_description || '—', 35, yPos);
+    yPos += lineHeight;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Data:', 14, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—', 35, yPos);
+    yPos += lineHeight + 3;
 
     if (budget.notes) {
-      doc.text(`Observações: ${budget.notes}`, 14, 56);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Observações:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      const splitNotes = doc.splitTextToSize(budget.notes, pageWidth - 48);
+      doc.text(splitNotes, 14, yPos + 5);
+      yPos += 5 + (splitNotes.length * 4);
     }
+
+    yPos += 5;
 
     const tableData = items.map(i => [
       i.description || '—',
@@ -158,19 +216,53 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     ]);
 
     autoTable(doc, {
-      startY: budget.notes ? 64 : 57,
+      startY: yPos,
       head: [['Serviço / Item', 'Qtd', 'Preço Unit.', 'Total']],
       body: tableData,
       foot: [['', '', 'TOTAL', `R$ ${grandTotal.toFixed(2).replace('.', ',')}`]],
-      theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246] },
-      footStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255] },
+      theme: 'grid',
+      headStyles: {
+        fillColor: primaryBlue,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      footStyles: {
+        fillColor: emerald,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [60, 60, 60],
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 20, halign: 'center' },
+        2: { cellWidth: 35, halign: 'right' },
+        3: { cellWidth: 35, halign: 'right' },
+      },
+      margin: { left: 14, right: 14 },
     });
 
+    // Footer branding
     const pageHeight = doc.internal.pageSize.height;
+    doc.setFillColor(11, 17, 33);
+    doc.rect(0, pageHeight - 18, pageWidth, 18, 'F');
+
     doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text('Gerado com FinControl — fincontrolapp.com', 14, pageHeight - 10);
+    doc.setTextColor(150, 150, 150);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Gerado com', 14, pageHeight - 10);
+
+    doc.setTextColor(16, 185, 129);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FinControl', 42, pageHeight - 10);
+
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'normal');
+    doc.text('fincontrolapp.com', pageWidth - 14, pageHeight - 10, { align: 'right' });
 
     return doc;
   }
