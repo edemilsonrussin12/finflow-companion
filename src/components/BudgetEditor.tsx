@@ -1,0 +1,331 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useFinance } from '@/contexts/FinanceContext';
+import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+interface BudgetItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  sort_order: number;
+  isNew?: boolean;
+}
+
+interface BudgetData {
+  client_name: string;
+  service_description: string;
+  date: string;
+  notes: string;
+  status: string;
+  total: number;
+}
+
+interface Props {
+  budgetId: string;
+  onClose: () => void;
+}
+
+export default function BudgetEditor({ budgetId, onClose }: Props) {
+  const { user } = useAuth();
+  const { addTransaction } = useFinance();
+  const { toast } = useToast();
+  const [budget, setBudget] = useState<BudgetData>({
+    client_name: '', service_description: '', date: new Date().toISOString().slice(0, 10),
+    notes: '', status: 'draft', total: 0,
+  });
+  const [items, setItems] = useState<BudgetItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data: bData }, { data: iData }] = await Promise.all([
+      supabase.from('budgets').select('*').eq('id', budgetId).single(),
+      supabase.from('budget_items').select('*').eq('budget_id', budgetId).order('sort_order'),
+    ]);
+    if (bData) {
+      setBudget({
+        client_name: bData.client_name ?? '',
+        service_description: bData.service_description ?? '',
+        date: bData.date ?? new Date().toISOString().slice(0, 10),
+        notes: bData.notes ?? '',
+        status: bData.status ?? 'draft',
+        total: Number(bData.total) || 0,
+      });
+    }
+    setItems((iData as BudgetItem[]) ?? []);
+    setLoading(false);
+  }, [budgetId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  function updateField(field: keyof BudgetData, value: string) {
+    setBudget(b => ({ ...b, [field]: value }));
+  }
+
+  function addItem() {
+    const newItem: BudgetItem = {
+      id: crypto.randomUUID(),
+      description: '',
+      quantity: 1,
+      unit_price: 0,
+      total: 0,
+      sort_order: items.length,
+      isNew: true,
+    };
+    setItems([...items, newItem]);
+  }
+
+  function updateItem(id: string, field: keyof BudgetItem, value: string | number) {
+    setItems(prev => prev.map(item => {
+      if (item.id !== id) return item;
+      const updated = { ...item, [field]: value };
+      if (field === 'quantity' || field === 'unit_price') {
+        updated.total = Number(updated.quantity) * Number(updated.unit_price);
+      }
+      return updated;
+    }));
+  }
+
+  function removeItem(id: string) {
+    setItems(prev => prev.filter(i => i.id !== id));
+  }
+
+  const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
+
+  async function save() {
+    if (!user) return;
+    setSaving(true);
+
+    await supabase.from('budgets').update({
+      client_name: budget.client_name,
+      service_description: budget.service_description,
+      date: budget.date,
+      notes: budget.notes,
+      status: budget.status,
+      total: grandTotal,
+      updated_at: new Date().toISOString(),
+    }).eq('id', budgetId);
+
+    // Delete existing items and re-insert
+    await supabase.from('budget_items').delete().eq('budget_id', budgetId);
+
+    if (items.length > 0) {
+      const rows = items.map((item, idx) => ({
+        budget_id: budgetId,
+        description: item.description,
+        quantity: Number(item.quantity),
+        unit_price: Number(item.unit_price),
+        total: Number(item.quantity) * Number(item.unit_price),
+        sort_order: idx,
+      }));
+      await supabase.from('budget_items').insert(rows);
+    }
+
+    setSaving(false);
+    toast({ title: 'Orçamento salvo!' });
+  }
+
+  function generatePDF() {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text('Orçamento', 14, 22);
+
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${budget.client_name || '—'}`, 14, 35);
+    doc.text(`Serviço: ${budget.service_description || '—'}`, 14, 42);
+    doc.text(`Data: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}`, 14, 49);
+
+    if (budget.notes) {
+      doc.text(`Observações: ${budget.notes}`, 14, 56);
+    }
+
+    const tableData = items.map(i => [
+      i.description || '—',
+      String(i.quantity),
+      `R$ ${Number(i.unit_price).toFixed(2).replace('.', ',')}`,
+      `R$ ${(Number(i.quantity) * Number(i.unit_price)).toFixed(2).replace('.', ',')}`,
+    ]);
+
+    autoTable(doc, {
+      startY: budget.notes ? 64 : 57,
+      head: [['Serviço / Item', 'Qtd', 'Preço Unit.', 'Total']],
+      body: tableData,
+      foot: [['', '', 'TOTAL', `R$ ${grandTotal.toFixed(2).replace('.', ',')}`]],
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+      footStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255] },
+    });
+
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text('Gerado com FinControl — fincontrolapp.com', 14, pageHeight - 10);
+
+    return doc;
+  }
+
+  function downloadPDF() {
+    const doc = generatePDF();
+    doc.save(`orcamento-${budget.client_name || 'sem-nome'}.pdf`);
+    toast({ title: 'PDF baixado!' });
+  }
+
+  function shareWhatsApp() {
+    const lines = items.map(i =>
+      `• ${i.description || 'Item'} — ${i.quantity}x R$ ${Number(i.unit_price).toFixed(2).replace('.', ',')} = R$ ${(Number(i.quantity) * Number(i.unit_price)).toFixed(2).replace('.', ',')}`
+    );
+    const text = encodeURIComponent(
+      `*Orçamento — FinControl*\n\nCliente: ${budget.client_name || '—'}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}\n\n${lines.join('\n')}\n\n*Total: R$ ${grandTotal.toFixed(2).replace('.', ',')}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
+    );
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  }
+
+  function registerPayment() {
+    if (!user) return;
+    addTransaction({
+      type: 'income',
+      amount: grandTotal,
+      category: 'servicos',
+      description: `Pagamento: ${budget.client_name} — ${budget.service_description}`.slice(0, 100),
+      date: new Date().toISOString().slice(0, 10),
+      isRecurring: false,
+    });
+
+    supabase.from('budgets').update({ status: 'paid', updated_at: new Date().toISOString() }).eq('id', budgetId).then(() => {
+      setBudget(b => ({ ...b, status: 'paid' }));
+    });
+
+    toast({ title: 'Pagamento registrado como receita!' });
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <ArrowLeft size={20} />
+        </Button>
+        <h1 className="text-lg font-bold flex-1">Editar Orçamento</h1>
+        <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          Salvar
+        </Button>
+      </div>
+
+      {/* Fields */}
+      <div className="glass rounded-2xl p-4 space-y-3">
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Nome do cliente</label>
+          <Input value={budget.client_name} onChange={e => updateField('client_name', e.target.value)} placeholder="Ex: João Silva" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Descrição do serviço</label>
+          <Input value={budget.service_description} onChange={e => updateField('service_description', e.target.value)} placeholder="Ex: Instalação elétrica" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Data</label>
+          <Input type="date" value={budget.date} onChange={e => updateField('date', e.target.value)} />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Observações</label>
+          <Textarea value={budget.notes} onChange={e => updateField('notes', e.target.value)} placeholder="Notas adicionais..." rows={2} />
+        </div>
+      </div>
+
+      {/* Items table */}
+      <div className="glass rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold">Itens do orçamento</p>
+          <Button size="sm" variant="outline" onClick={addItem} className="gap-1.5 text-xs">
+            <Plus size={14} /> Adicionar
+          </Button>
+        </div>
+
+        {items.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Nenhum item adicionado.</p>
+        ) : (
+          <div className="space-y-2">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 text-[10px] font-medium text-muted-foreground px-1">
+              <span>Item</span><span>Qtd</span><span>Preço</span><span>Total</span><span />
+            </div>
+
+            {items.map(item => (
+              <div key={item.id} className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 items-center">
+                <Input
+                  className="h-8 text-xs"
+                  value={item.description}
+                  onChange={e => updateItem(item.id, 'description', e.target.value)}
+                  placeholder="Serviço..."
+                />
+                <Input
+                  className="h-8 text-xs text-center"
+                  type="number"
+                  min={1}
+                  value={item.quantity}
+                  onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))}
+                />
+                <Input
+                  className="h-8 text-xs"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={item.unit_price}
+                  onChange={e => updateItem(item.id, 'unit_price', Number(e.target.value))}
+                />
+                <div className="text-xs font-medium text-primary text-right pr-1">
+                  {(Number(item.quantity) * Number(item.unit_price)).toFixed(2).replace('.', ',')}
+                </div>
+                <button onClick={() => removeItem(item.id)} className="text-destructive hover:text-destructive/80">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+
+            {/* Grand total */}
+            <div className="flex justify-between items-center pt-3 border-t border-border/50">
+              <span className="text-sm font-semibold">Total</span>
+              <span className="text-lg font-bold text-primary">
+                R$ {grandTotal.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="space-y-2">
+        <Button onClick={downloadPDF} variant="outline" className="w-full gap-2 justify-start">
+          <Download size={16} /> Baixar PDF
+        </Button>
+        <Button onClick={shareWhatsApp} className="w-full gap-2 justify-start bg-income hover:bg-income/90 text-income-foreground">
+          <MessageCircle size={16} /> Enviar no WhatsApp
+        </Button>
+        {budget.status !== 'paid' && (
+          <Button onClick={registerPayment} variant="outline" className="w-full gap-2 justify-start">
+            <DollarSign size={16} /> Registrar Pagamento
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
