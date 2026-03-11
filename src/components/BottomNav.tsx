@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users, Crown, Headphones } from 'lucide-react';
+import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users, Crown, Headphones, Shield } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useAdmin } from '@/hooks/useAdmin';
 
 const mainTabs = [
   { path: '/', icon: LayoutDashboard, label: 'Início' },
@@ -20,12 +21,16 @@ const moreTabs = [
   { path: '/suporte', icon: Headphones, label: 'Suporte' },
 ];
 
+const adminTab = { path: '/admin', icon: Shield, label: 'Painel Admin' };
+
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { isAdmin } = useAdmin();
 
-  const isMoreActive = moreTabs.some(t => t.path === location.pathname);
+  const allMoreTabs = isAdmin ? [...moreTabs, adminTab] : moreTabs;
+  const isMoreActive = allMoreTabs.some(t => location.pathname.startsWith(t.path));
 
   return (
     <>
@@ -64,8 +69,8 @@ export default function BottomNav() {
             <SheetTitle className="text-sm font-semibold text-center">Mais opções</SheetTitle>
           </SheetHeader>
           <div className="grid grid-cols-2 gap-3">
-            {moreTabs.map(tab => {
-              const active = location.pathname === tab.path;
+            {allMoreTabs.map(tab => {
+              const active = location.pathname.startsWith(tab.path);
               return (
                 <button
                   key={tab.path}
