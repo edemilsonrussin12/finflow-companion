@@ -685,7 +685,7 @@ export default function Admin() {
                       <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
                     </div>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                      <span>{format(new Date(r.created_at), 'dd/MM/yy')}</span>
+                      <span>{r.created_at ? format(new Date(r.created_at), 'dd/MM/yy') : '—'}</span>
                       {r.email_confirmed && <Badge variant="outline" className="text-[8px] px-1">✉️ Confirmado</Badge>}
                       {r.premium_converted && <Badge variant="outline" className="text-[8px] px-1">💎 Premium</Badge>}
                       {r.reward_granted && <Badge variant="default" className="text-[8px] px-1">🎁 Recompensado</Badge>}
