@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users, Crown, Headphones, Shield, Trophy, ClipboardList, Grid3X3 } from 'lucide-react';
+import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users, Crown, Headphones, Shield, Trophy, ClipboardList, Grid3X3, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAdmin } from '@/hooks/useAdmin';
