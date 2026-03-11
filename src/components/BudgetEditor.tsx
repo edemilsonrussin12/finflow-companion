@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
-import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,6 +34,8 @@ interface Props {
   onClose: () => void;
 }
 
+const AUTO_SAVE_INTERVAL = 5000;
+
 export default function BudgetEditor({ budgetId, onClose }: Props) {
   const { user } = useAuth();
   const { addTransaction } = useFinance();
@@ -45,6 +47,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const [items, setItems] = useState<BudgetItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const lastSavedRef = useRef<string>('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,6 +71,22 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   }, [budgetId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Auto-save
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!user) return;
+      const snapshot = JSON.stringify({ budget, items });
+      if (snapshot !== lastSavedRef.current && !loading) {
+        setAutoSaveStatus('saving');
+        await saveToDb();
+        lastSavedRef.current = snapshot;
+        setTimeout(() => setAutoSaveStatus('saved'), 300);
+        setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      }
+    }, AUTO_SAVE_INTERVAL);
+    return () => clearInterval(interval);
+  }, [budget, items, user, loading]);
 
   function updateField(field: keyof BudgetData, value: string) {
     setBudget(b => ({ ...b, [field]: value }));
@@ -102,10 +122,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
   const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
 
-  async function save() {
+  async function saveToDb() {
     if (!user) return;
-    setSaving(true);
-
     await supabase.from('budgets').update({
       client_name: budget.client_name,
       service_description: budget.service_description,
@@ -116,7 +134,6 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       updated_at: new Date().toISOString(),
     }).eq('id', budgetId);
 
-    // Delete existing items and re-insert
     await supabase.from('budget_items').delete().eq('budget_id', budgetId);
 
     if (items.length > 0) {
@@ -130,7 +147,12 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       }));
       await supabase.from('budget_items').insert(rows);
     }
+  }
 
+  async function save() {
+    setSaving(true);
+    await saveToDb();
+    lastSavedRef.current = JSON.stringify({ budget, items });
     setSaving(false);
     toast({ title: 'Orçamento salvo!' });
   }
@@ -139,14 +161,18 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
-    // FinControl Brand Colors (HSL to RGB)
+    // Light theme PDF
     const primaryBlue: [number, number, number] = [59, 130, 246];
     const emerald: [number, number, number] = [16, 185, 129];
-    const darkBg: [number, number, number] = [11, 17, 33];
 
-    // Header background
-    doc.setFillColor(darkBg[0], darkBg[1], darkBg[2]);
+    // White background header with brand
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Brand line
+    doc.setDrawColor(emerald[0], emerald[1], emerald[2]);
+    doc.setLineWidth(2);
+    doc.line(0, 0, pageWidth, 0);
 
     // Logo/Brand text
     doc.setFontSize(22);
@@ -154,24 +180,20 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     doc.setFont('helvetica', 'bold');
     doc.text('FinControl', 14, 20);
 
-    // Tagline
     doc.setFontSize(9);
-    doc.setTextColor(200, 200, 200);
+    doc.setTextColor(120, 120, 120);
     doc.setFont('helvetica', 'normal');
     doc.text('Orçamento Profissional', 14, 28);
 
-    // Decorative line
-    doc.setDrawColor(emerald[0], emerald[1], emerald[2]);
+    doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.5);
     doc.line(14, 32, pageWidth - 14, 32);
 
-    // Orçamento title
     doc.setFontSize(16);
     doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.setFont('helvetica', 'bold');
     doc.text('ORÇAMENTO', pageWidth - 14, 18, { align: 'right' });
 
-    // Budget details section
     doc.setFontSize(10);
     doc.setTextColor(60, 60, 60);
     doc.setFont('helvetica', 'normal');
@@ -237,6 +259,9 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         fontSize: 9,
         textColor: [60, 60, 60],
       },
+      alternateRowStyles: {
+        fillColor: [245, 247, 250],
+      },
       columnStyles: {
         0: { cellWidth: 'auto' },
         1: { cellWidth: 20, halign: 'center' },
@@ -246,23 +271,16 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       margin: { left: 14, right: 14 },
     });
 
-    // Footer branding
+    // Footer
     const pageHeight = doc.internal.pageSize.height;
-    doc.setFillColor(darkBg[0], darkBg[1], darkBg[2]);
-    doc.rect(0, pageHeight - 18, pageWidth, 18, 'F');
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.5);
+    doc.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20);
 
     doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
+    doc.setTextColor(120, 120, 120);
     doc.setFont('helvetica', 'normal');
-    doc.text('Gerado com', 14, pageHeight - 10);
-
-    doc.setTextColor(emerald[0], emerald[1], emerald[2]);
-    doc.setFont('helvetica', 'bold');
-    doc.text('FinControl', 42, pageHeight - 10);
-
-    doc.setTextColor(100, 100, 100);
-    doc.setFont('helvetica', 'normal');
-    doc.text('fincontrolapp.com', pageWidth - 14, pageHeight - 10, { align: 'right' });
+    doc.text('FinControl – Controle inteligente do seu dinheiro', pageWidth / 2, pageHeight - 12, { align: 'center' });
 
     return doc;
   }
@@ -278,7 +296,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       `• ${i.description || 'Item'} — ${i.quantity}x R$ ${Number(i.unit_price).toFixed(2).replace('.', ',')} = R$ ${(Number(i.quantity) * Number(i.unit_price)).toFixed(2).replace('.', ',')}`
     );
     const text = encodeURIComponent(
-      `*Orçamento — FinControl*\n\nCliente: ${budget.client_name || '—'}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}\n\n${lines.join('\n')}\n\n*Total: R$ ${grandTotal.toFixed(2).replace('.', ',')}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
+      `*Orçamento — FinControl*\n\nCliente: ${budget.client_name || '—'}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}\n\n${lines.join('\n')}\n\n*Total: R$ ${grandTotal.toFixed(2).replace('.', ',')}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
@@ -317,10 +335,18 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
           <ArrowLeft size={20} />
         </Button>
         <h1 className="text-lg font-bold flex-1">Editar Orçamento</h1>
-        <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Salvar
-        </Button>
+        <div className="flex items-center gap-2">
+          {autoSaveStatus !== 'idle' && (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              {autoSaveStatus === 'saving' && 'Salvando...'}
+              {autoSaveStatus === 'saved' && <><Check size={10} className="text-income" /> Salvo</>}
+            </span>
+          )}
+          <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Salvar
+          </Button>
+        </div>
       </div>
 
       {/* Fields */}
@@ -356,7 +382,6 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
           <p className="text-xs text-muted-foreground text-center py-4">Nenhum item adicionado.</p>
         ) : (
           <div className="space-y-2">
-            {/* Header */}
             <div className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 text-[10px] font-medium text-muted-foreground px-1">
               <span>Item</span><span>Qtd</span><span>Preço</span><span>Total</span><span />
             </div>
@@ -393,7 +418,6 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
               </div>
             ))}
 
-            {/* Grand total */}
             <div className="flex justify-between items-center pt-3 border-t border-border/50">
               <span className="text-sm font-semibold">Total</span>
               <span className="text-lg font-bold text-primary">

@@ -5,11 +5,13 @@ import { Sale } from '@/types/finance';
 import { Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SaleForm from '@/components/SaleForm';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function Vendas() {
   const { sales, deleteSale, updateSale, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
 
   const monthSales = useMemo(
     () => sales.filter(s => s.date.startsWith(selectedMonth)),
@@ -30,6 +32,13 @@ export default function Vendas() {
     () => [...monthSales].sort((a, b) => b.date.localeCompare(a.date)),
     [monthSales]
   );
+
+  const handleConfirmDelete = () => {
+    if (deletingSaleId) {
+      deleteSale(deletingSaleId);
+      setDeletingSaleId(null);
+    }
+  };
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
@@ -105,7 +114,7 @@ export default function Vendas() {
                   <button onClick={() => { setEditingSale(s); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-muted-foreground">
                     <Pencil size={14} />
                   </button>
-                  <button onClick={() => deleteSale(s.id)} className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-expense">
+                  <button onClick={() => setDeletingSaleId(s.id)} className="p-1.5 rounded-lg hover:bg-accent active:bg-accent text-expense">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -121,6 +130,12 @@ export default function Vendas() {
           onClose={() => { setShowForm(false); setEditingSale(null); }}
         />
       )}
+
+      <ConfirmDialog
+        open={!!deletingSaleId}
+        onOpenChange={open => { if (!open) setDeletingSaleId(null); }}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

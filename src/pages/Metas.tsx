@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Target, Plus, Pencil, Trash2, PlusCircle } from 'lucide-react';
 import GoalForm from '@/components/GoalForm';
 import ContributionForm from '@/components/ContributionForm';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { FinancialGoal } from '@/types/goals';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import PremiumGate from '@/components/PremiumGate';
@@ -17,11 +18,11 @@ export default function Metas() {
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState<FinancialGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<FinancialGoal | null>(null);
+  const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null);
   const { isPremium } = usePremiumStatus();
 
   const activeGoals = goals.filter(g => g.status === 'active');
   const completedGoals = goals.filter(g => g.status === 'completed');
-
   const canAddGoal = isPremium || goals.length < FREE_GOAL_LIMIT;
 
   const handleNewGoal = () => {
@@ -30,6 +31,13 @@ export default function Metas() {
       return;
     }
     setShowForm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingGoalId) {
+      deleteGoal(deletingGoalId);
+      setDeletingGoalId(null);
+    }
   };
 
   return (
@@ -79,7 +87,7 @@ export default function Metas() {
                     <button onClick={() => setEditingGoal(g)} className="p-1.5 rounded-lg hover:bg-accent transition-colors" title="Editar">
                       <Pencil size={14} className="text-muted-foreground" />
                     </button>
-                    <button onClick={() => deleteGoal(g.id)} className="p-1.5 rounded-lg hover:bg-accent transition-colors" title="Excluir">
+                    <button onClick={() => setDeletingGoalId(g.id)} className="p-1.5 rounded-lg hover:bg-accent transition-colors" title="Excluir">
                       <Trash2 size={14} className="text-destructive" />
                     </button>
                   </div>
@@ -101,7 +109,6 @@ export default function Metas() {
         </div>
       )}
 
-      {/* Premium gate when limit reached */}
       {!isPremium && goals.length >= FREE_GOAL_LIMIT && (
         <PremiumGate isPremium={false} label="No plano gratuito você pode ter apenas 1 meta. Desbloqueie o Premium para metas ilimitadas." />
       )}
@@ -113,7 +120,7 @@ export default function Metas() {
             <div key={g.id} className="glass rounded-2xl p-4 opacity-70 space-y-2">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-sm">{g.title}</p>
-                <button onClick={() => deleteGoal(g.id)} className="p-1.5 rounded-lg hover:bg-accent transition-colors">
+                <button onClick={() => setDeletingGoalId(g.id)} className="p-1.5 rounded-lg hover:bg-accent transition-colors">
                   <Trash2 size={14} className="text-muted-foreground" />
                 </button>
               </div>
@@ -146,6 +153,12 @@ export default function Metas() {
           onClose={() => setContributingGoal(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!deletingGoalId}
+        onOpenChange={open => { if (!open) setDeletingGoalId(null); }}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

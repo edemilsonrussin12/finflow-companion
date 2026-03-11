@@ -26,7 +26,6 @@ export default function Cadastro() {
 
   async function createReferralRecord(userId: string, code: string) {
     try {
-      // Find referrer by code
       const { data: codeRow } = await supabase
         .from('referral_codes')
         .select('user_id')
@@ -34,18 +33,14 @@ export default function Cadastro() {
         .maybeSingle();
 
       if (!codeRow) return;
-
-      // Prevent self-referral
       if (codeRow.user_id === userId) return;
 
-      // Create referral (unique constraint on referred_id prevents duplicates)
       await supabase.from('referrals').insert({
         referrer_id: codeRow.user_id,
         referred_id: userId,
         status: 'signup_started',
       });
     } catch (err) {
-      // Ignore duplicate constraint errors
       console.log('Referral record:', err);
     }
   }
@@ -61,7 +56,7 @@ export default function Cadastro() {
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Erro', description: result.error });
     } else {
-      toast({ title: 'Conta criada!', description: 'Verifique seu email para confirmar o cadastro.' });
+      toast({ title: 'Conta criada com sucesso!', description: 'Você já pode começar a usar o FinControl.' });
     }
     setSubmitting(false);
   };
