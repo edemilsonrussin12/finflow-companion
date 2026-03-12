@@ -64,10 +64,12 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const lastSavedRef = useRef<string>('');
 
   const load = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
-    const [{ data: bData }, { data: iData }] = await Promise.all([
+    const [{ data: bData }, { data: iData }, { data: bpData }] = await Promise.all([
       supabase.from('budgets').select('*').eq('id', budgetId).single(),
       supabase.from('budget_items').select('*').eq('budget_id', budgetId).order('sort_order'),
+      supabase.from('business_profile').select('*').eq('user_id', user.id).maybeSingle(),
     ]);
     if (bData) {
       setBudget({
@@ -81,9 +83,19 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         quote_number: (bData as any).quote_number ?? 0,
       });
     }
+    if (bpData) {
+      setBizProfile({
+        business_name: (bpData as any).business_name ?? '',
+        phone: (bpData as any).phone ?? '',
+        email: (bpData as any).email ?? '',
+        address: (bpData as any).address ?? '',
+        logo_url: (bpData as any).logo_url ?? '',
+        signature_url: (bpData as any).signature_url ?? '',
+      });
+    }
     setItems((iData as BudgetItem[]) ?? []);
     setLoading(false);
-  }, [budgetId]);
+  }, [budgetId, user]);
 
   useEffect(() => { load(); }, [load]);
 
