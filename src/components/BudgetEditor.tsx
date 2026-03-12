@@ -198,36 +198,68 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     const pw = doc.internal.pageSize.width;
     const ph = doc.internal.pageSize.height;
 
-    // Colors
     const emerald: [number, number, number] = [16, 185, 129];
     const darkText: [number, number, number] = [30, 30, 30];
     const grayText: [number, number, number] = [100, 100, 100];
     const lightGray: [number, number, number] = [230, 230, 230];
 
+    const bp = bizProfile;
+
     // ── Header ──
-    // Top accent line
     doc.setDrawColor(emerald[0], emerald[1], emerald[2]);
     doc.setLineWidth(2.5);
     doc.line(0, 0, pw, 0);
 
-    // Brand name
-    doc.setFontSize(24);
+    let headerY = 14;
+    let logoEndX = 14;
+
+    // Logo (if available)
+    if (bp?.logo_url) {
+      try {
+        doc.addImage(bp.logo_url, 'PNG', 14, 6, 22, 22);
+        logoEndX = 40;
+      } catch { /* skip logo on error */ }
+    }
+
+    // Business name or FinControl
+    const headerName = bp?.business_name || 'FinControl';
+    doc.setFontSize(bp?.business_name ? 16 : 24);
     doc.setTextColor(emerald[0], emerald[1], emerald[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('FinControl', 14, 18);
+    doc.text(headerName, logoEndX, headerY + 4);
 
-    // Title
+    // Business contact info below name
+    if (bp && (bp.phone || bp.email || bp.address)) {
+      doc.setFontSize(7);
+      doc.setTextColor(grayText[0], grayText[1], grayText[2]);
+      doc.setFont('helvetica', 'normal');
+      let infoY = headerY + 9;
+      const contactParts: string[] = [];
+      if (bp.phone) contactParts.push(bp.phone);
+      if (bp.email) contactParts.push(bp.email);
+      if (contactParts.length > 0) {
+        doc.text(contactParts.join('  •  '), logoEndX, infoY);
+        infoY += 4;
+      }
+      if (bp.address) {
+        doc.text(bp.address, logoEndX, infoY);
+      }
+    }
+
+    // Title on the right
     doc.setFontSize(18);
     doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+    doc.setFont('helvetica', 'bold');
     doc.text('ORÇAMENTO DE SERVIÇO', pw - 14, 18, { align: 'right' });
 
     // Separator
+    const sepY = bp?.logo_url ? 32 : 25;
     doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
     doc.setLineWidth(0.5);
-    doc.line(14, 25, pw - 14, 25);
+    doc.line(14, sepY, pw - 14, sepY);
 
     // ── Quote info section ──
-    let y = 34;
+    let y = sepY + 9;
     const lh = 6;
 
     const infoItems = [
@@ -235,12 +267,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       ['Data', budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'],
       ['Cliente', budget.client_name || '—'],
     ];
-    if (budget.client_contact) {
-      infoItems.push(['Contato', budget.client_contact]);
-    }
-    if (budget.service_description) {
-      infoItems.push(['Serviço', budget.service_description]);
-    }
+    if (budget.client_contact) infoItems.push(['Contato', budget.client_contact]);
+    if (budget.service_description) infoItems.push(['Serviço', budget.service_description]);
 
     doc.setFontSize(10);
     for (const [label, value] of infoItems) {
@@ -281,46 +309,30 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       body: tableData,
       foot: [['', '', 'TOTAL', fmtBRL(grandTotal)]],
       theme: 'plain',
-      styles: {
-        fontSize: 10,
-        cellPadding: 4,
-        textColor: darkText,
-        lineColor: lightGray,
-        lineWidth: 0.5,
-      },
-      headStyles: {
-        fillColor: [245, 245, 245],
-        textColor: darkText,
-        fontStyle: 'bold',
-        fontSize: 10,
-        lineColor: [200, 200, 200],
-        lineWidth: 0.5,
-      },
-      footStyles: {
-        fillColor: [245, 245, 245],
-        textColor: darkText,
-        fontStyle: 'bold',
-        fontSize: 11,
-        lineColor: [200, 200, 200],
-        lineWidth: 0.5,
-      },
-      bodyStyles: {
-        fontSize: 10,
-        textColor: [50, 50, 50],
-      },
-      alternateRowStyles: {
-        fillColor: [252, 252, 252],
-      },
-      columnStyles: {
-        0: { cellWidth: 'auto' },
-        1: { cellWidth: 22, halign: 'center' },
-        2: { cellWidth: 38, halign: 'right' },
-        3: { cellWidth: 38, halign: 'right' },
-      },
+      styles: { fontSize: 10, cellPadding: 4, textColor: darkText, lineColor: lightGray, lineWidth: 0.5 },
+      headStyles: { fillColor: [245, 245, 245], textColor: darkText, fontStyle: 'bold', fontSize: 10, lineColor: [200, 200, 200], lineWidth: 0.5 },
+      footStyles: { fillColor: [245, 245, 245], textColor: darkText, fontStyle: 'bold', fontSize: 11, lineColor: [200, 200, 200], lineWidth: 0.5 },
+      bodyStyles: { fontSize: 10, textColor: [50, 50, 50] },
+      alternateRowStyles: { fillColor: [252, 252, 252] },
+      columnStyles: { 0: { cellWidth: 'auto' }, 1: { cellWidth: 22, halign: 'center' }, 2: { cellWidth: 38, halign: 'right' }, 3: { cellWidth: 38, halign: 'right' } },
       margin: { left: 14, right: 14 },
     });
 
-    // ── Footer ──
+    // ── Footer with signature ──
+    const footerTop = ph - 48;
+
+    // Digital signature
+    if (bp?.signature_url) {
+      try {
+        doc.addImage(bp.signature_url, 'PNG', 14, footerTop - 10, 40, 20);
+        doc.setFontSize(8);
+        doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+        doc.setFont('helvetica', 'normal');
+        doc.text(bp.business_name || '', 14, footerTop + 14);
+      } catch { /* skip signature on error */ }
+    }
+
+    // Footer line
     doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
     doc.setLineWidth(0.5);
     doc.line(14, ph - 28, pw - 14, ph - 28);
@@ -328,7 +340,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     doc.setFontSize(10);
     doc.setTextColor(emerald[0], emerald[1], emerald[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('FinControl', pw / 2, ph - 20, { align: 'center' });
+    doc.text(bp?.business_name || 'FinControl', pw / 2, ph - 20, { align: 'center' });
 
     doc.setFontSize(8);
     doc.setTextColor(grayText[0], grayText[1], grayText[2]);
