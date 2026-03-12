@@ -535,6 +535,12 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
           </Button>
         )}
       </div>
+
+      <CatalogPicker
+        open={catalogOpen}
+        onOpenChange={setCatalogOpen}
+        onSelect={addFromCatalog}
+      />
     </div>
   );
 }
