@@ -31,6 +31,7 @@ import PaymentFailure from "@/pages/PaymentFailure";
 import MinhaAssinatura from "@/pages/MinhaAssinatura";
 import Suporte from "@/pages/Suporte";
 import Configuracoes from "@/pages/Configuracoes";
+import PerfilProfissional from "@/pages/PerfilProfissional";
 import Admin from "@/pages/Admin";
 import AdminRoute from "@/components/AdminRoute";
 import NotFound from "./pages/NotFound";
@@ -75,6 +76,7 @@ const App = () => (
                   <Route path="/minha-assinatura" element={<MinhaAssinatura />} />
                   <Route path="/suporte" element={<Suporte />} />
                   <Route path="/configuracoes" element={<Configuracoes />} />
+                  <Route path="/perfil-profissional" element={<PerfilProfissional />} />
 
                   {/* Admin routes */}
                   <Route element={<AdminRoute />}>
