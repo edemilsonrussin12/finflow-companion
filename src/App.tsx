@@ -76,6 +76,7 @@ const App = () => (
                   <Route path="/minha-assinatura" element={<MinhaAssinatura />} />
                   <Route path="/suporte" element={<Suporte />} />
                   <Route path="/configuracoes" element={<Configuracoes />} />
+                  <Route path="/perfil-profissional" element={<PerfilProfissional />} />
 
                   {/* Admin routes */}
                   <Route element={<AdminRoute />}>

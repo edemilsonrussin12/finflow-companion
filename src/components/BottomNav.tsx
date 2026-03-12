@@ -20,6 +20,7 @@ const moreTabs = [
   { path: '/convites', icon: Users, label: 'Convites' },
   { path: '/conquistas', icon: Trophy, label: 'Conquistas' },
   { path: '/orcamentos', icon: ClipboardList, label: 'Orçamentos' },
+  { path: '/perfil-profissional', icon: Building2, label: 'Perfil Profissional' },
   { path: '/planilha', icon: Grid3X3, label: 'Planilha' },
   { path: '/suporte', icon: Headphones, label: 'Suporte' },
   { path: '/configuracoes', icon: Settings, label: 'Configurações' },
