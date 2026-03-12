@@ -57,6 +57,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     notes: '', status: 'draft', total: 0, quote_number: 0,
   });
   const [items, setItems] = useState<BudgetItem[]>([]);
+  const [bizProfile, setBizProfile] = useState<BusinessProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
