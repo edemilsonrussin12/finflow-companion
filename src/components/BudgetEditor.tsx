@@ -62,6 +62,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const lastSavedRef = useRef<string>('');
 
   const load = useCallback(async () => {
