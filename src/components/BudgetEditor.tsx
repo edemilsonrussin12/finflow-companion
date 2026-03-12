@@ -149,6 +149,19 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     setItems(prev => prev.filter(i => i.id !== id));
   }
 
+  function addFromCatalog(catalogItem: { description: string; quantity: number; unit_price: number }) {
+    const newItem: BudgetItem = {
+      id: crypto.randomUUID(),
+      description: catalogItem.description,
+      quantity: catalogItem.quantity,
+      unit_price: catalogItem.unit_price,
+      total: catalogItem.quantity * catalogItem.unit_price,
+      sort_order: items.length,
+      isNew: true,
+    };
+    setItems(prev => [...prev, newItem]);
+  }
+
   const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
 
   const quoteLabel = budget.quote_number
