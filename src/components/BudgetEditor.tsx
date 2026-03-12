@@ -461,9 +461,14 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       <div className="glass rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">Itens do orçamento</p>
-          <Button size="sm" variant="outline" onClick={addItem} className="gap-1.5 text-xs">
-            <Plus size={14} /> Adicionar
-          </Button>
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => setCatalogOpen(true)} className="gap-1.5 text-xs">
+              <Package size={14} /> Catálogo
+            </Button>
+            <Button size="sm" variant="outline" onClick={addItem} className="gap-1.5 text-xs">
+              <Plus size={14} /> Manual
+            </Button>
+          </div>
         </div>
 
         {items.length === 0 ? (
