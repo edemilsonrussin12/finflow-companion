@@ -31,6 +31,15 @@ interface BudgetData {
   quote_number: number;
 }
 
+interface BusinessProfileData {
+  business_name: string;
+  phone: string;
+  email: string;
+  address: string;
+  logo_url: string;
+  signature_url: string;
+}
+
 interface Props {
   budgetId: string;
   onClose: () => void;
