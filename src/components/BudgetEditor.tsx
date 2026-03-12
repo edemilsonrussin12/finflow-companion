@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
-import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loader2, Check, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import CatalogPicker from '@/components/CatalogPicker';
 
 interface BudgetItem {
   id: string;
@@ -61,6 +62,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const lastSavedRef = useRef<string>('');
 
   const load = useCallback(async () => {
@@ -145,6 +147,19 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
   function removeItem(id: string) {
     setItems(prev => prev.filter(i => i.id !== id));
+  }
+
+  function addFromCatalog(catalogItem: { description: string; quantity: number; unit_price: number }) {
+    const newItem: BudgetItem = {
+      id: crypto.randomUUID(),
+      description: catalogItem.description,
+      quantity: catalogItem.quantity,
+      unit_price: catalogItem.unit_price,
+      total: catalogItem.quantity * catalogItem.unit_price,
+      sort_order: items.length,
+      isNew: true,
+    };
+    setItems(prev => [...prev, newItem]);
   }
 
   const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
@@ -446,9 +461,14 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       <div className="glass rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">Itens do orçamento</p>
-          <Button size="sm" variant="outline" onClick={addItem} className="gap-1.5 text-xs">
-            <Plus size={14} /> Adicionar
-          </Button>
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => setCatalogOpen(true)} className="gap-1.5 text-xs">
+              <Package size={14} /> Catálogo
+            </Button>
+            <Button size="sm" variant="outline" onClick={addItem} className="gap-1.5 text-xs">
+              <Plus size={14} /> Manual
+            </Button>
+          </div>
         </div>
 
         {items.length === 0 ? (
@@ -515,6 +535,12 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
           </Button>
         )}
       </div>
+
+      <CatalogPicker
+        open={catalogOpen}
+        onOpenChange={setCatalogOpen}
+        onSelect={addFromCatalog}
+      />
     </div>
   );
 }

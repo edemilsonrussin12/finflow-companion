@@ -169,6 +169,45 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_items: {
+        Row: {
+          category: string
+          created_at: string
+          default_price: number
+          default_quantity: number
+          description: string | null
+          id: string
+          item_name: string
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          default_price?: number
+          default_quantity?: number
+          description?: string | null
+          id?: string
+          item_name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_price?: number
+          default_quantity?: number
+          description?: string | null
+          id?: string
+          item_name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financial_goals: {
         Row: {
           created_at: string
