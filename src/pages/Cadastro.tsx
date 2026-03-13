@@ -44,7 +44,18 @@ export default function Cadastro() {
       });
     } catch (err) {
       console.log('Referral record:', err);
+  }
+
+  async function saveSignupSource(userId: string, source: string) {
+    try {
+      await supabase
+        .from('profiles')
+        .update({ signup_source: source } as any)
+        .eq('id', userId);
+    } catch (err) {
+      console.log('Signup source:', err);
     }
+  }
   }
 
   if (loading) return null;
