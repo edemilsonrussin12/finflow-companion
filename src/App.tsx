@@ -53,6 +53,8 @@ const App = () => (
               {/* Public routes */}
               <Route path="/landing" element={<Aterrissagem />} />
               <Route path="/tiktok" element={<TikTokLanding />} />
+              <Route path="/instagram" element={<InstagramLanding />} />
+              <Route path="/ads" element={<AdsLanding />} />
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/reset-senha" element={<ResetSenha />} />
