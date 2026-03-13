@@ -37,6 +37,7 @@ interface Profile {
   email: string | null;
   display_name: string | null;
   created_at: string;
+  signup_source: string | null;
 }
 
 interface PaymentRow {
