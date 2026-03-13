@@ -44,6 +44,7 @@ export default function Cadastro() {
       });
     } catch (err) {
       console.log('Referral record:', err);
+    }
   }
 
   async function saveSignupSource(userId: string, source: string) {
@@ -55,7 +56,6 @@ export default function Cadastro() {
     } catch (err) {
       console.log('Signup source:', err);
     }
-  }
   }
 
   if (loading) return null;
