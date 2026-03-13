@@ -756,7 +756,72 @@ export default function Admin() {
           <PaginationControls page={referralsPage} totalPages={referralsP.totalPages} setPage={setReferralsPage} total={referrals.length} />
         </TabsContent>
 
-        {/* ═══════ LOGS TAB ═══════ */}
+        {/* ═══════ ACQUISITION TAB ═══════ */}
+        <TabsContent value="acquisition" className="space-y-4 mt-4">
+          {(() => {
+            const sourceCount = (src: string) => profiles.filter(p => (p.signup_source || 'organic') === src).length;
+            const sources = ['tiktok', 'instagram', 'ads', 'organic', 'unknown'] as const;
+            const sourceColors: Record<string, string> = {
+              tiktok: 'text-pink-400', instagram: 'text-purple-400', ads: 'text-yellow-400', organic: 'text-emerald-400', unknown: 'text-muted-foreground',
+            };
+            const sourceLabels: Record<string, string> = {
+              tiktok: 'TikTok', instagram: 'Instagram', ads: 'Ads', organic: 'Orgânico', unknown: 'Desconhecido',
+            };
+            const acqProfiles = profiles
+              .filter(p => p.signup_source && p.signup_source !== 'organic')
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const allSorted = [...profiles].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            return (
+              <>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  Aquisição de Usuários
+                </h3>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {sources.map(src => (
+                    <Card key={src} className="border-border/50">
+                      <CardContent className="pt-4 pb-3 px-4">
+                        <span className={`text-xs font-medium ${sourceColors[src]}`}>{sourceLabels[src]}</span>
+                        <p className="text-xl font-bold text-foreground mt-1">{sourceCount(src)}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <h4 className="text-xs font-semibold text-muted-foreground mt-4">Todos os usuários por fonte</h4>
+                <div className="rounded-xl border border-border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-muted/30">
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Email</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Data</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Fonte</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allSorted.slice(0, 50).map(p => (
+                          <tr key={p.id} className="border-t border-border/50">
+                            <td className="px-3 py-2 text-foreground">{p.email || '—'}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{p.created_at ? format(new Date(p.created_at), 'dd/MM/yy') : '—'}</td>
+                            <td className="px-3 py-2">
+                              <Badge variant="outline" className={`text-[10px] ${sourceColors[p.signup_source || 'organic']}`}>
+                                {sourceLabels[p.signup_source || 'organic'] || p.signup_source}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </TabsContent>
+
         <TabsContent value="logs" className="space-y-4 mt-4">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <ScrollText className="h-4 w-4 text-primary" />
