@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Wallet, TrendingUp, FileText, ArrowRight, Shield } from 'lucide-react';
