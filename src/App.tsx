@@ -26,6 +26,8 @@ import ResetSenha from "@/pages/ResetSenha";
 import ResetPassword from "@/pages/ResetPassword";
 import Aterrissagem from "@/pages/Aterrissagem";
 import TikTokLanding from "@/pages/TikTokLanding";
+import InstagramLanding from "@/pages/InstagramLanding";
+import AdsLanding from "@/pages/AdsLanding";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentPending from "@/pages/PaymentPending";
 import PaymentFailure from "@/pages/PaymentFailure";
