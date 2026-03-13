@@ -24,6 +24,12 @@ const benefits = [
 ];
 
 export default function TikTokLanding() {
+  useEffect(() => {
+    document.title = 'FinControl — Controle inteligente do seu dinheiro';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', 'Organize suas finanças, acompanhe investimentos e crie orçamentos profissionais com o FinControl.');
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
