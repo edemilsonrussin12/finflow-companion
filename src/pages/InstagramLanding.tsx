@@ -1,10 +1,10 @@
 import SocialLandingPage from '@/components/landing/SocialLandingPage';
 
-export default function TikTokLanding() {
+export default function InstagramLanding() {
   return (
     <SocialLandingPage
-      source="tiktok"
-      seoTitle="FinControl | Controle financeiro vindo do TikTok"
+      source="instagram"
+      seoTitle="FinControl | Controle financeiro vindo do Instagram"
       seoDescription="Organize suas finanças, acompanhe investimentos e crie orçamentos profissionais com o FinControl."
     />
   );

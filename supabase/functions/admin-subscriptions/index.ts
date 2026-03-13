@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     if (action === 'list') {
       const [subsRes, profilesRes, paymentsRes, logsRes, referralsRes] = await Promise.all([
         supabaseAdmin.from('user_subscriptions').select('*').order('created_at', { ascending: false }),
-        supabaseAdmin.from('profiles').select('id, email, display_name, created_at'),
+        supabaseAdmin.from('profiles').select('id, email, display_name, created_at, signup_source'),
         supabaseAdmin.from('payments').select('*').order('created_at', { ascending: false }),
         supabaseAdmin.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(100),
         supabaseAdmin.from('referrals').select('*').order('created_at', { ascending: false }),
