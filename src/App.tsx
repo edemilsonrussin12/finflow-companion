@@ -25,6 +25,7 @@ import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
 import ResetPassword from "@/pages/ResetPassword";
 import Aterrissagem from "@/pages/Aterrissagem";
+import TikTokLanding from "@/pages/TikTokLanding";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentPending from "@/pages/PaymentPending";
 import PaymentFailure from "@/pages/PaymentFailure";
@@ -51,6 +52,7 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/landing" element={<Aterrissagem />} />
+              <Route path="/tiktok" element={<TikTokLanding />} />
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/reset-senha" element={<ResetSenha />} />

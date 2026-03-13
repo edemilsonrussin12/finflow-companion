@@ -13,16 +13,18 @@ export default function Cadastro() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get('ref');
+  const utmSource = searchParams.get('utm_source');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // After signup + auth, create referral record
+  // After signup + auth, create referral record and save signup source
   useEffect(() => {
-    if (!user || !refCode) return;
-    createReferralRecord(user.id, refCode);
-  }, [user, refCode]);
+    if (!user) return;
+    if (refCode) createReferralRecord(user.id, refCode);
+    if (utmSource) saveSignupSource(user.id, utmSource);
+  }, [user, refCode, utmSource]);
 
   async function createReferralRecord(userId: string, code: string) {
     try {
@@ -42,6 +44,17 @@ export default function Cadastro() {
       });
     } catch (err) {
       console.log('Referral record:', err);
+    }
+  }
+
+  async function saveSignupSource(userId: string, source: string) {
+    try {
+      await supabase
+        .from('profiles')
+        .update({ signup_source: source } as any)
+        .eq('id', userId);
+    } catch (err) {
+      console.log('Signup source:', err);
     }
   }
 
