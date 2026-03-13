@@ -370,12 +370,13 @@ export default function Admin() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-6 h-auto">
+        <TabsList className="w-full grid grid-cols-7 h-auto">
           <TabsTrigger value="overview" className="text-[10px] px-1 py-2">Visão Geral</TabsTrigger>
           <TabsTrigger value="users" className="text-[10px] px-1 py-2">Usuários</TabsTrigger>
           <TabsTrigger value="payments" className="text-[10px] px-1 py-2">Pagamentos</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-[10px] px-1 py-2">Assinaturas</TabsTrigger>
           <TabsTrigger value="referrals" className="text-[10px] px-1 py-2">Convites</TabsTrigger>
+          <TabsTrigger value="acquisition" className="text-[10px] px-1 py-2">Aquisição</TabsTrigger>
           <TabsTrigger value="logs" className="text-[10px] px-1 py-2">Histórico</TabsTrigger>
         </TabsList>
 
