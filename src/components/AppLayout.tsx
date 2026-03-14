@@ -15,7 +15,7 @@ import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { getCurrentMonth } from '@/lib/format';
 import type { TransactionType } from '@/types/finance';
 import { toast } from 'sonner';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Bot } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,10 +25,17 @@ import {
 
 const FREE_MONTHLY_LIMIT = 50;
 
+// Pages where the assistant FAB should show (instead of inline button)
+const ASSISTANT_FAB_PAGES = ['/engenharia'];
+
+// Pages where the FAB (+) action button exists
+const FAB_PAGES = ['/', '/financas', '/gastos', '/investimentos', '/vendas', '/metas', '/patrimonio', '/relatorios', '/planilha'];
+
 export default function AppLayout() {
   const [formType, setFormType] = useState<TransactionType | null>(null);
   const [showPlans, setShowPlans] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
   const { addTransaction, transactions } = useFinance();
   const { user, logout } = useAuth();
   const { isPremium, trial } = usePremiumStatus();
@@ -58,6 +65,11 @@ export default function AppLayout() {
     navigate('/login');
   };
 
+  // Determine visibility rules
+  const path = location.pathname;
+  const showAssistantFAB = ASSISTANT_FAB_PAGES.some(p => path === p || path.startsWith(p + '/'));
+  const hasFAB = FAB_PAGES.some(p => path === p);
+
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
@@ -86,10 +98,24 @@ export default function AppLayout() {
 
       <InstallPWA />
       <TrialBanner trial={trial} />
-      <Outlet />
+      <Outlet context={{ openAssistant: () => setChatOpen(true) }} />
       <FloatingActionButton onClick={handleFabClick} />
       <SupportFAB />
-      <AssistantChat />
+
+      {/* Assistant FAB - only on Engenharia da Riqueza */}
+      {showAssistantFAB && !chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className={`fixed z-40 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-cyan shadow-xl flex items-center justify-center hover:scale-105 transition-transform ${
+            hasFAB ? 'bottom-36 right-4' : 'bottom-20 right-4'
+          }`}
+          aria-label="Assistente FinControl"
+        >
+          <Bot size={26} className="text-primary-foreground" />
+        </button>
+      )}
+
+      <AssistantChat open={chatOpen} onClose={() => setChatOpen(false)} />
       <BottomNav />
       {formType && (
         <TransactionForm
