@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
-import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loader2, Check, Package } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loader2, Check, Package, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +25,7 @@ interface BudgetItem {
 interface BudgetData {
   client_name: string;
   client_contact: string;
+  client_id: string | null;
   service_description: string;
   date: string;
   notes: string;
@@ -42,6 +43,13 @@ interface BusinessProfileData {
   address: string;
   logo_url: string;
   signature_url: string;
+}
+
+interface ClientOption {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
 }
 
 interface Props {
@@ -65,13 +73,14 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const { addTransaction } = useFinance();
   const { toast } = useToast();
   const [budget, setBudget] = useState<BudgetData>({
-    client_name: '', client_contact: '', service_description: '',
+    client_name: '', client_contact: '', client_id: null, service_description: '',
     date: new Date().toISOString().slice(0, 10),
     notes: '', status: 'draft', total: 0, quote_number: 0,
     validity_days: 30, payment_method: '',
   });
   const [items, setItems] = useState<BudgetItem[]>([]);
   const [bizProfile, setBizProfile] = useState<BusinessProfileData | null>(null);
+  const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -81,15 +90,17 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [{ data: bData }, { data: iData }, { data: bpData }] = await Promise.all([
+    const [{ data: bData }, { data: iData }, { data: bpData }, { data: cData }] = await Promise.all([
       supabase.from('budgets').select('*').eq('id', budgetId).single(),
       supabase.from('budget_items').select('*').eq('budget_id', budgetId).order('sort_order'),
       supabase.from('business_profile').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('clients').select('id, name, phone, email').eq('user_id', user.id).order('name'),
     ]);
     if (bData) {
       setBudget({
         client_name: bData.client_name ?? '',
         client_contact: (bData as any).client_contact ?? '',
+        client_id: (bData as any).client_id ?? null,
         service_description: bData.service_description ?? '',
         date: bData.date ?? new Date().toISOString().slice(0, 10),
         notes: bData.notes ?? '',
@@ -110,6 +121,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         signature_url: (bpData as any).signature_url ?? '',
       });
     }
+    setClients((cData as ClientOption[]) ?? []);
     setItems((iData as BudgetItem[]) ?? []);
     setLoading(false);
   }, [budgetId, user]);
@@ -131,8 +143,24 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     return () => clearInterval(interval);
   }, [budget, items, user, loading]);
 
-  function updateField(field: keyof BudgetData, value: string | number) {
+  function updateField(field: keyof BudgetData, value: string | number | null) {
     setBudget(b => ({ ...b, [field]: value }));
+  }
+
+  function selectClient(clientId: string) {
+    if (clientId === 'none') {
+      updateField('client_id', null);
+      return;
+    }
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setBudget(b => ({
+        ...b,
+        client_id: client.id,
+        client_name: client.name,
+        client_contact: client.phone || client.email || '',
+      }));
+    }
   }
 
   function addItem() {
@@ -176,6 +204,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     await supabase.from('budgets').update({
       client_name: budget.client_name,
       client_contact: budget.client_contact,
+      client_id: budget.client_id,
       service_description: budget.service_description,
       date: budget.date,
       notes: budget.notes,
@@ -216,14 +245,15 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     const doc = new jsPDF();
     const pw = doc.internal.pageSize.width;
     const ph = doc.internal.pageSize.height;
-    const emerald: [number, number, number] = [16, 185, 129];
+    // Neutral professional colors (graphite/dark gray)
+    const accentColor: [number, number, number] = [55, 55, 65];
     const darkText: [number, number, number] = [30, 30, 30];
     const grayText: [number, number, number] = [100, 100, 100];
-    const lightGray: [number, number, number] = [230, 230, 230];
+    const lightGray: [number, number, number] = [220, 220, 220];
     const bp = bizProfile;
 
-    // Header line
-    doc.setDrawColor(emerald[0], emerald[1], emerald[2]);
+    // Header line - neutral dark
+    doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
     doc.setLineWidth(2.5);
     doc.line(0, 0, pw, 0);
 
@@ -235,7 +265,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
     const headerName = bp?.business_name || 'FinControl';
     doc.setFontSize(bp?.business_name ? 16 : 20);
-    doc.setTextColor(emerald[0], emerald[1], emerald[2]);
+    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
     doc.setFont('helvetica', 'bold');
     doc.text(headerName, logoEndX, headerY + 4);
 
@@ -312,10 +342,10 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       foot: [['', '', 'TOTAL', fmtBRL(grandTotal)]],
       theme: 'plain',
       styles: { fontSize: 10, cellPadding: 4, textColor: darkText, lineColor: lightGray, lineWidth: 0.5 },
-      headStyles: { fillColor: [245, 245, 245], textColor: darkText, fontStyle: 'bold', fontSize: 10, lineColor: [200, 200, 200], lineWidth: 0.5 },
-      footStyles: { fillColor: [245, 245, 245], textColor: darkText, fontStyle: 'bold', fontSize: 11, lineColor: [200, 200, 200], lineWidth: 0.5 },
+      headStyles: { fillColor: [240, 240, 242], textColor: accentColor, fontStyle: 'bold', fontSize: 10, lineColor: [200, 200, 200], lineWidth: 0.5 },
+      footStyles: { fillColor: [240, 240, 242], textColor: darkText, fontStyle: 'bold', fontSize: 11, lineColor: [200, 200, 200], lineWidth: 0.5 },
       bodyStyles: { fontSize: 10, textColor: [50, 50, 50] },
-      alternateRowStyles: { fillColor: [252, 252, 252] },
+      alternateRowStyles: { fillColor: [250, 250, 252] },
       columnStyles: { 0: { cellWidth: 'auto' }, 1: { cellWidth: 22, halign: 'center' }, 2: { cellWidth: 38, halign: 'right' }, 3: { cellWidth: 38, halign: 'right' } },
       margin: { left: 14, right: 14 },
     });
@@ -337,7 +367,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     doc.line(14, ph - 28, pw - 14, ph - 28);
 
     doc.setFontSize(10);
-    doc.setTextColor(emerald[0], emerald[1], emerald[2]);
+    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
     doc.setFont('helvetica', 'bold');
     doc.text(bp?.business_name || 'FinControl', pw / 2, ph - 20, { align: 'center' });
 
@@ -419,6 +449,23 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
       {/* Fields */}
       <div className="glass rounded-2xl p-4 space-y-3">
+        {/* Client selector */}
+        {clients.length > 0 && (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <Users size={12} /> Selecionar cliente
+            </label>
+            <Select value={budget.client_id || 'none'} onValueChange={selectClient}>
+              <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Digitar manualmente</SelectItem>
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div>
           <label className="text-xs font-medium text-muted-foreground">Nome do cliente</label>
           <Input value={budget.client_name} onChange={e => updateField('client_name', e.target.value)} placeholder="Ex: João Silva" />
