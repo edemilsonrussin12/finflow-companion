@@ -15,6 +15,7 @@ import WealthSimulator from '@/components/WealthSimulator';
 import PremiumGate from '@/components/PremiumGate';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import type { Transaction } from '@/types/finance';
+import AIInsights from '@/components/AIInsights';
 
 export default function Investimentos() {
   const { transactions, sales, addTransaction, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
