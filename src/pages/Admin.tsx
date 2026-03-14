@@ -104,7 +104,7 @@ export default function Admin() {
 
   // Dialog
   const [dialog, setDialog] = useState<{ type: string; userId: string; email: string } | null>(null);
-  const [dialogDays, setDialogDays] = useState(30);
+  const [dialogDays, setDialogDays] = useState(7);
 
   const load = async () => {
     setLoading(true);
@@ -866,12 +866,24 @@ export default function Admin() {
           {(dialog?.type === 'activate' || dialog?.type === 'extend') && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">Dias para {dialog?.type === 'activate' ? 'ativar' : 'estender'}:</p>
-              <div className="flex gap-2">
-                {[30, 90, 180, 365].map(d => (
+              <div className="flex flex-wrap gap-2">
+                {[2, 3, 7, 15, 30, 90, 365].map(d => (
                   <Button key={d} size="sm" variant={dialogDays === d ? 'default' : 'outline'} onClick={() => setDialogDays(d)}>
                     {d}d
                   </Button>
                 ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Personalizado:</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={3650}
+                  value={dialogDays}
+                  onChange={e => setDialogDays(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-24 h-8 text-sm"
+                />
+                <span className="text-sm text-muted-foreground">dias</span>
               </div>
             </div>
           )}
