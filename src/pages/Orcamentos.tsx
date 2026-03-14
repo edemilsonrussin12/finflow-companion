@@ -69,8 +69,17 @@ export default function Orcamentos() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Count budgets this month
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthBudgetCount = budgets.filter(b => b.created_at?.startsWith(currentMonth)).length;
+  const reachedBudgetLimit = !isPremium && monthBudgetCount >= FREE_BUDGET_LIMIT;
+
   async function createBudget() {
     if (!user) return;
+    if (reachedBudgetLimit) {
+      toast({ variant: 'destructive', title: 'Limite atingido', description: `O plano gratuito permite até ${FREE_BUDGET_LIMIT} orçamentos por mês.` });
+      return;
+    }
     const { data, error } = await supabase
       .from('budgets')
       .insert({ user_id: user.id, client_name: '', service_description: '', notes: '' })
