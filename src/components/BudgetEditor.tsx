@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Trash2, Download, MessageCircle, DollarSign, Save, Loa
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -30,6 +31,8 @@ interface BudgetData {
   status: string;
   total: number;
   quote_number: number;
+  validity_days: number;
+  payment_method: string;
 }
 
 interface BusinessProfileData {
@@ -47,6 +50,15 @@ interface Props {
 }
 
 const AUTO_SAVE_INTERVAL = 5000;
+const PAYMENT_METHODS = ['Pix', 'Dinheiro', 'Cartão', 'Transferência', 'Outros'];
+const STATUSES = [
+  { value: 'draft', label: 'Rascunho' },
+  { value: 'sent', label: 'Enviado' },
+  { value: 'waiting', label: 'Aguardando resposta' },
+  { value: 'approved', label: 'Aprovado' },
+  { value: 'rejected', label: 'Rejeitado' },
+  { value: 'paid', label: 'Pago' },
+];
 
 export default function BudgetEditor({ budgetId, onClose }: Props) {
   const { user } = useAuth();
@@ -56,6 +68,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     client_name: '', client_contact: '', service_description: '',
     date: new Date().toISOString().slice(0, 10),
     notes: '', status: 'draft', total: 0, quote_number: 0,
+    validity_days: 30, payment_method: '',
   });
   const [items, setItems] = useState<BudgetItem[]>([]);
   const [bizProfile, setBizProfile] = useState<BusinessProfileData | null>(null);
@@ -83,6 +96,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         status: bData.status ?? 'draft',
         total: Number(bData.total) || 0,
         quote_number: (bData as any).quote_number ?? 0,
+        validity_days: (bData as any).validity_days ?? 30,
+        payment_method: (bData as any).payment_method ?? '',
       });
     }
     if (bpData) {
@@ -101,7 +116,6 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
   useEffect(() => { load(); }, [load]);
 
-  // Auto-save
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!user) return;
@@ -117,21 +131,15 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     return () => clearInterval(interval);
   }, [budget, items, user, loading]);
 
-  function updateField(field: keyof BudgetData, value: string) {
+  function updateField(field: keyof BudgetData, value: string | number) {
     setBudget(b => ({ ...b, [field]: value }));
   }
 
   function addItem() {
-    const newItem: BudgetItem = {
-      id: crypto.randomUUID(),
-      description: '',
-      quantity: 1,
-      unit_price: 0,
-      total: 0,
-      sort_order: items.length,
-      isNew: true,
-    };
-    setItems([...items, newItem]);
+    setItems([...items, {
+      id: crypto.randomUUID(), description: '', quantity: 1,
+      unit_price: 0, total: 0, sort_order: items.length, isNew: true,
+    }]);
   }
 
   function updateItem(id: string, field: keyof BudgetItem, value: string | number) {
@@ -150,23 +158,18 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   }
 
   function addFromCatalog(catalogItem: { description: string; quantity: number; unit_price: number }) {
-    const newItem: BudgetItem = {
+    setItems(prev => [...prev, {
       id: crypto.randomUUID(),
       description: catalogItem.description,
       quantity: catalogItem.quantity,
       unit_price: catalogItem.unit_price,
       total: catalogItem.quantity * catalogItem.unit_price,
-      sort_order: items.length,
-      isNew: true,
-    };
-    setItems(prev => [...prev, newItem]);
+      sort_order: prev.length, isNew: true,
+    }]);
   }
 
   const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
-
-  const quoteLabel = budget.quote_number
-    ? String(budget.quote_number).padStart(5, '0')
-    : '—';
+  const quoteLabel = budget.quote_number ? String(budget.quote_number).padStart(5, '0') : '—';
 
   async function saveToDb() {
     if (!user) return;
@@ -178,11 +181,12 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       notes: budget.notes,
       status: budget.status,
       total: grandTotal,
+      validity_days: budget.validity_days,
+      payment_method: budget.payment_method,
       updated_at: new Date().toISOString(),
     } as any).eq('id', budgetId);
 
     await supabase.from('budget_items').delete().eq('budget_id', budgetId);
-
     if (items.length > 0) {
       const rows = items.map((item, idx) => ({
         budget_id: budgetId,
@@ -212,78 +216,62 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     const doc = new jsPDF();
     const pw = doc.internal.pageSize.width;
     const ph = doc.internal.pageSize.height;
-
     const emerald: [number, number, number] = [16, 185, 129];
     const darkText: [number, number, number] = [30, 30, 30];
     const grayText: [number, number, number] = [100, 100, 100];
     const lightGray: [number, number, number] = [230, 230, 230];
-
     const bp = bizProfile;
 
-    // ── Header ──
+    // Header line
     doc.setDrawColor(emerald[0], emerald[1], emerald[2]);
     doc.setLineWidth(2.5);
     doc.line(0, 0, pw, 0);
 
     let headerY = 14;
     let logoEndX = 14;
-
-    // Logo (if available)
     if (bp?.logo_url) {
-      try {
-        doc.addImage(bp.logo_url, 'PNG', 14, 6, 22, 22);
-        logoEndX = 40;
-      } catch { /* skip logo on error */ }
+      try { doc.addImage(bp.logo_url, 'PNG', 14, 6, 22, 22); logoEndX = 40; } catch {}
     }
 
-    // Business name or FinControl
     const headerName = bp?.business_name || 'FinControl';
-    doc.setFontSize(bp?.business_name ? 16 : 24);
+    doc.setFontSize(bp?.business_name ? 16 : 20);
     doc.setTextColor(emerald[0], emerald[1], emerald[2]);
     doc.setFont('helvetica', 'bold');
     doc.text(headerName, logoEndX, headerY + 4);
 
-    // Business contact info below name
     if (bp && (bp.phone || bp.email || bp.address)) {
       doc.setFontSize(7);
       doc.setTextColor(grayText[0], grayText[1], grayText[2]);
       doc.setFont('helvetica', 'normal');
       let infoY = headerY + 9;
-      const contactParts: string[] = [];
-      if (bp.phone) contactParts.push(bp.phone);
-      if (bp.email) contactParts.push(bp.email);
-      if (contactParts.length > 0) {
-        doc.text(contactParts.join('  •  '), logoEndX, infoY);
-        infoY += 4;
-      }
-      if (bp.address) {
-        doc.text(bp.address, logoEndX, infoY);
-      }
+      const parts: string[] = [];
+      if (bp.phone) parts.push(bp.phone);
+      if (bp.email) parts.push(bp.email);
+      if (parts.length > 0) { doc.text(parts.join('  •  '), logoEndX, infoY); infoY += 4; }
+      if (bp.address) doc.text(bp.address, logoEndX, infoY);
     }
 
-    // Title on the right
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setTextColor(darkText[0], darkText[1], darkText[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text('ORÇAMENTO DE SERVIÇO', pw - 14, 18, { align: 'right' });
+    doc.text('ORÇAMENTO', pw - 14, 18, { align: 'right' });
 
-    // Separator
     const sepY = bp?.logo_url ? 32 : 25;
     doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
     doc.setLineWidth(0.5);
     doc.line(14, sepY, pw - 14, sepY);
 
-    // ── Quote info section ──
     let y = sepY + 9;
     const lh = 6;
-
     const infoItems = [
       ['Orçamento #', quoteLabel],
       ['Data', budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'],
+      ['Validade', `${budget.validity_days} dias`],
       ['Cliente', budget.client_name || '—'],
     ];
     if (budget.client_contact) infoItems.push(['Contato', budget.client_contact]);
     if (budget.service_description) infoItems.push(['Serviço', budget.service_description]);
+    if (budget.payment_method) infoItems.push(['Pagamento', budget.payment_method]);
 
     doc.setFontSize(10);
     for (const [label, value] of infoItems) {
@@ -292,7 +280,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       doc.text(`${label}:`, 14, y);
       doc.setTextColor(darkText[0], darkText[1], darkText[2]);
       doc.setFont('helvetica', 'normal');
-      doc.text(value, 50, y);
+      doc.text(value, 55, y);
       y += lh;
     }
 
@@ -310,7 +298,6 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
     y += 6;
 
-    // ── Items table ──
     const tableData = items.map(i => [
       i.description || '—',
       String(i.quantity),
@@ -320,7 +307,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
     autoTable(doc, {
       startY: y,
-      head: [['Serviço', 'Qtd', 'Valor Unitário', 'Total']],
+      head: [['Descrição', 'Qtd', 'Valor Unit.', 'Total']],
       body: tableData,
       foot: [['', '', 'TOTAL', fmtBRL(grandTotal)]],
       theme: 'plain',
@@ -333,10 +320,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       margin: { left: 14, right: 14 },
     });
 
-    // ── Footer with signature ──
+    // Footer
     const footerTop = ph - 48;
-
-    // Digital signature
     if (bp?.signature_url) {
       try {
         doc.addImage(bp.signature_url, 'PNG', 14, footerTop - 10, 40, 20);
@@ -344,10 +329,9 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         doc.setTextColor(darkText[0], darkText[1], darkText[2]);
         doc.setFont('helvetica', 'normal');
         doc.text(bp.business_name || '', 14, footerTop + 14);
-      } catch { /* skip signature on error */ }
+      } catch {}
     }
 
-    // Footer line
     doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
     doc.setLineWidth(0.5);
     doc.line(14, ph - 28, pw - 14, ph - 28);
@@ -376,8 +360,10 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     const lines = items.map(i =>
       `• ${i.description || 'Item'} — ${i.quantity}x ${fmtBRL(Number(i.unit_price))} = ${fmtBRL(Number(i.quantity) * Number(i.unit_price))}`
     );
+    const paymentLine = budget.payment_method ? `\nForma de pagamento: ${budget.payment_method}` : '';
+    const validityLine = `\nValidade: ${budget.validity_days} dias`;
     const text = encodeURIComponent(
-      `*Orçamento #${quoteLabel} — FinControl*\n\nCliente: ${budget.client_name || '—'}${budget.client_contact ? `\nContato: ${budget.client_contact}` : ''}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}\n\n${lines.join('\n')}\n\n*Total: ${fmtBRL(grandTotal)}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
+      `*Orçamento #${quoteLabel} — ${bizProfile?.business_name || 'FinControl'}*\n\nCliente: ${budget.client_name || '—'}${budget.client_contact ? `\nContato: ${budget.client_contact}` : ''}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}${validityLine}${paymentLine}\n\n${lines.join('\n')}\n\n*Total: ${fmtBRL(grandTotal)}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
@@ -392,11 +378,9 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       date: new Date().toISOString().slice(0, 10),
       isRecurring: false,
     });
-
-    supabase.from('budgets').update({ status: 'paid', updated_at: new Date().toISOString() }).eq('id', budgetId).then(() => {
+    supabase.from('budgets').update({ status: 'paid', updated_at: new Date().toISOString() } as any).eq('id', budgetId).then(() => {
       setBudget(b => ({ ...b, status: 'paid' }));
     });
-
     toast({ title: 'Pagamento registrado como receita!' });
   }
 
@@ -440,16 +424,47 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
           <Input value={budget.client_name} onChange={e => updateField('client_name', e.target.value)} placeholder="Ex: João Silva" />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Contato do cliente (opcional)</label>
+          <label className="text-xs font-medium text-muted-foreground">Contato do cliente</label>
           <Input value={budget.client_contact} onChange={e => updateField('client_contact', e.target.value)} placeholder="Ex: (11) 99999-0000" />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Descrição do serviço (opcional)</label>
+          <label className="text-xs font-medium text-muted-foreground">Descrição do serviço</label>
           <Input value={budget.service_description} onChange={e => updateField('service_description', e.target.value)} placeholder="Ex: Manutenção automotiva" />
         </div>
-        <div>
-          <label className="text-xs font-medium text-muted-foreground">Data</label>
-          <Input type="date" value={budget.date} onChange={e => updateField('date', e.target.value)} />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Data</label>
+            <Input type="date" value={budget.date} onChange={e => updateField('date', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Validade (dias)</label>
+            <Input type="number" min={1} value={budget.validity_days} onChange={e => updateField('validity_days', Number(e.target.value))} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Status</label>
+            <Select value={budget.status} onValueChange={v => updateField('status', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STATUSES.map(s => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Pagamento</label>
+            <Select value={budget.payment_method || 'none'} onValueChange={v => updateField('payment_method', v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Selecionar</SelectItem>
+                {PAYMENT_METHODS.map(m => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground">Observações</label>
@@ -457,7 +472,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         </div>
       </div>
 
-      {/* Items table */}
+      {/* Items */}
       <div className="glass rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">Itens do orçamento</p>
@@ -476,32 +491,13 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         ) : (
           <div className="space-y-2">
             <div className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 text-[10px] font-medium text-muted-foreground px-1">
-              <span>Serviço</span><span>Qtd</span><span>Valor</span><span>Total</span><span />
+              <span>Descrição</span><span>Qtd</span><span>Valor</span><span>Total</span><span />
             </div>
-
             {items.map(item => (
               <div key={item.id} className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 items-center">
-                <Input
-                  className="h-8 text-xs"
-                  value={item.description}
-                  onChange={e => updateItem(item.id, 'description', e.target.value)}
-                  placeholder="Serviço..."
-                />
-                <Input
-                  className="h-8 text-xs text-center"
-                  type="number"
-                  min={1}
-                  value={item.quantity}
-                  onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))}
-                />
-                <Input
-                  className="h-8 text-xs"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={item.unit_price}
-                  onChange={e => updateItem(item.id, 'unit_price', Number(e.target.value))}
-                />
+                <Input className="h-8 text-xs" value={item.description} onChange={e => updateItem(item.id, 'description', e.target.value)} placeholder="Descrição..." />
+                <Input className="h-8 text-xs text-center" type="number" min={1} value={item.quantity} onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))} />
+                <Input className="h-8 text-xs" type="number" min={0} step={0.01} value={item.unit_price} onChange={e => updateItem(item.id, 'unit_price', Number(e.target.value))} />
                 <div className="text-xs font-medium text-primary text-right pr-1">
                   {(Number(item.quantity) * Number(item.unit_price)).toFixed(2).replace('.', ',')}
                 </div>
@@ -510,12 +506,9 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
                 </button>
               </div>
             ))}
-
             <div className="flex justify-between items-center pt-3 border-t border-border/50">
               <span className="text-sm font-semibold">Total</span>
-              <span className="text-lg font-bold text-primary">
-                R$ {grandTotal.toFixed(2).replace('.', ',')}
-              </span>
+              <span className="text-lg font-bold text-primary">R$ {grandTotal.toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
         )}
@@ -536,11 +529,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         )}
       </div>
 
-      <CatalogPicker
-        open={catalogOpen}
-        onOpenChange={setCatalogOpen}
-        onSelect={addFromCatalog}
-      />
+      <CatalogPicker open={catalogOpen} onOpenChange={setCatalogOpen} onSelect={addFromCatalog} />
     </div>
   );
 }

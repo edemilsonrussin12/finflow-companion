@@ -7,19 +7,14 @@ interface Props {
   onClick: (type: TransactionType) => void;
 }
 
-/** Map routes to their primary action, or null for the full menu */
-function getRouteActions(pathname: string): { type: TransactionType; label: string; icon: typeof Plus; className: string }[] | null {
-  switch (pathname) {
-    case '/gastos':
-      return [{ type: 'expense', label: 'Adicionar Despesa', icon: ArrowDownLeft, className: 'bg-expense/90 text-white' }];
-    case '/vendas':
-      return [{ type: 'income', label: 'Adicionar Receita', icon: ArrowUpRight, className: 'bg-income/90 text-white' }];
-    case '/investimentos':
-      return [{ type: 'investment', label: 'Adicionar Investimento', icon: TrendingUp, className: 'bg-emerald/90 text-white' }];
-    default:
-      return null; // show full menu
-  }
-}
+/** Only show FAB on financial pages where adding transactions makes sense */
+const FAB_ROUTES: Record<string, { type: TransactionType; label: string; icon: typeof Plus; className: string }[]> = {
+  '/': [], // full menu on home
+  '/financas': [], // full menu
+  '/gastos': [{ type: 'expense', label: 'Adicionar Despesa', icon: ArrowDownLeft, className: 'bg-expense/90 text-white' }],
+  '/vendas': [{ type: 'income', label: 'Adicionar Receita', icon: ArrowUpRight, className: 'bg-income/90 text-white' }],
+  '/investimentos': [{ type: 'investment', label: 'Adicionar Investimento', icon: TrendingUp, className: 'bg-emerald/90 text-white' }],
+};
 
 const ALL_ACTIONS = [
   { type: 'expense' as TransactionType, label: 'Adicionar Despesa', icon: ArrowDownLeft, className: 'bg-expense/90 text-white' },
@@ -30,11 +25,13 @@ const ALL_ACTIONS = [
 export default function FloatingActionButton({ onClick }: Props) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const routeActions = getRouteActions(location.pathname);
+
+  // Only show FAB on routes that need it
+  const routeActions = FAB_ROUTES[location.pathname];
+  if (routeActions === undefined) return null; // Don't show on orcamentos, engenharia, etc.
 
   const handleClick = () => {
-    // If the route has a single default action, trigger it directly
-    if (routeActions && routeActions.length === 1) {
+    if (routeActions.length === 1) {
       onClick(routeActions[0].type);
       return;
     }
@@ -46,16 +43,13 @@ export default function FloatingActionButton({ onClick }: Props) {
     onClick(type);
   };
 
-  const actions = routeActions ?? ALL_ACTIONS;
+  const actions = routeActions.length > 0 ? routeActions : ALL_ACTIONS;
 
   return (
     <>
-      {/* Overlay */}
       {open && (
         <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
       )}
-
-      {/* Options */}
       {open && (
         <div className="fixed bottom-36 right-4 z-50 flex flex-col gap-3 animate-fade-in">
           {actions.map(a => (
@@ -70,8 +64,6 @@ export default function FloatingActionButton({ onClick }: Props) {
           ))}
         </div>
       )}
-
-      {/* Premium FAB */}
       <button
         onClick={handleClick}
         className="fixed bottom-20 right-4 z-50 w-16 h-16 rounded-full fab-glow flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"

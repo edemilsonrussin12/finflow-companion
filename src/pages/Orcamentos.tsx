@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, FileText, Loader2, Trash2, Eye } from 'lucide-react';
+import { Plus, FileText, Loader2, Trash2, Eye, Filter } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import BudgetEditor from '@/components/BudgetEditor';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -20,6 +21,8 @@ export interface Budget {
   total: number;
   quote_number: number;
   created_at: string;
+  validity_days: number;
+  payment_method: string;
 }
 
 export default function Orcamentos() {
@@ -28,8 +31,8 @@ export default function Orcamentos() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -57,7 +60,6 @@ export default function Orcamentos() {
       return;
     }
     setEditingId(data.id);
-    setCreating(true);
   }
 
   async function confirmDeleteBudget() {
@@ -70,21 +72,26 @@ export default function Orcamentos() {
 
   function handleClose() {
     setEditingId(null);
-    setCreating(false);
     load();
   }
 
   const statusLabel: Record<string, string> = {
-    draft: 'Rascunho',
-    sent: 'Enviado',
-    paid: 'Pago',
+    draft: 'Rascunho', sent: 'Enviado', approved: 'Aprovado',
+    rejected: 'Rejeitado', paid: 'Pago', waiting: 'Aguardando',
   };
 
   const statusColor: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
     sent: 'bg-primary/10 text-primary',
+    waiting: 'bg-gold/10 text-gold',
+    approved: 'bg-emerald-500/10 text-emerald-400',
+    rejected: 'bg-expense/10 text-expense',
     paid: 'bg-emerald-500/10 text-emerald-400',
   };
+
+  const filtered = statusFilter === 'all'
+    ? budgets
+    : budgets.filter(b => b.status === statusFilter);
 
   if (editingId) {
     return <BudgetEditor budgetId={editingId} onClose={handleClose} />;
@@ -102,25 +109,42 @@ export default function Orcamentos() {
         </p>
       </div>
 
-      <Button onClick={createBudget} className="w-full gap-2">
-        <Plus size={16} /> Novo Orçamento
-      </Button>
+      <div className="flex gap-2">
+        <Button onClick={createBudget} className="flex-1 gap-2">
+          <Plus size={16} /> Novo Orçamento
+        </Button>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[130px]">
+            <Filter size={14} className="mr-1" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="draft">Rascunho</SelectItem>
+            <SelectItem value="sent">Enviado</SelectItem>
+            <SelectItem value="waiting">Aguardando</SelectItem>
+            <SelectItem value="approved">Aprovado</SelectItem>
+            <SelectItem value="rejected">Rejeitado</SelectItem>
+            <SelectItem value="paid">Pago</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="animate-spin text-primary" size={28} />
         </div>
-      ) : budgets.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="Crie seu primeiro orçamento profissional"
+          title={statusFilter === 'all' ? 'Crie seu primeiro orçamento profissional' : 'Nenhum orçamento com esse status'}
           message="Organize seus serviços, gere PDFs e envie para clientes pelo WhatsApp."
           actionLabel="Criar orçamento"
           onAction={createBudget}
         />
       ) : (
         <div className="space-y-3">
-          {budgets.map(b => (
+          {filtered.map(b => (
             <div key={b.id} className="glass rounded-2xl p-4 space-y-2">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">

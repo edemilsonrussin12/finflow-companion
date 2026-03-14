@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
+import Financas from "@/pages/Financas";
 import Gastos from "@/pages/Gastos";
 import Vendas from "@/pages/Vendas";
 import Investimentos from "@/pages/Investimentos";
@@ -20,6 +21,7 @@ import Convites from "@/pages/Convites";
 import Conquistas from "@/pages/Conquistas";
 import Orcamentos from "@/pages/Orcamentos";
 import Planilha from "@/pages/Planilha";
+import Clientes from "@/pages/Clientes";
 import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import ResetSenha from "@/pages/ResetSenha";
@@ -69,6 +71,7 @@ const App = () => (
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/financas" element={<Financas />} />
                   <Route path="/gastos" element={<Gastos />} />
                   <Route path="/vendas" element={<Vendas />} />
                   <Route path="/investimentos" element={<Investimentos />} />
@@ -80,6 +83,7 @@ const App = () => (
                   <Route path="/conquistas" element={<Conquistas />} />
                   <Route path="/orcamentos" element={<Orcamentos />} />
                   <Route path="/planilha" element={<Planilha />} />
+                  <Route path="/clientes" element={<Clientes />} />
                   <Route path="/minha-assinatura" element={<MinhaAssinatura />} />
                   <Route path="/suporte" element={<Suporte />} />
                   <Route path="/configuracoes" element={<Configuracoes />} />

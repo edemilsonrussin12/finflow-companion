@@ -88,47 +88,64 @@ export type Database = {
       budgets: {
         Row: {
           client_contact: string | null
+          client_id: string | null
           client_name: string
           created_at: string
           date: string
           id: string
           notes: string | null
+          payment_method: string | null
           quote_number: number
           service_description: string | null
           status: string
           total: number
           updated_at: string
           user_id: string
+          validity_days: number | null
         }
         Insert: {
           client_contact?: string | null
+          client_id?: string | null
           client_name?: string
           created_at?: string
           date?: string
           id?: string
           notes?: string | null
+          payment_method?: string | null
           quote_number?: number
           service_description?: string | null
           status?: string
           total?: number
           updated_at?: string
           user_id: string
+          validity_days?: number | null
         }
         Update: {
           client_contact?: string | null
+          client_id?: string | null
           client_name?: string
           created_at?: string
           date?: string
           id?: string
           notes?: string | null
+          payment_method?: string | null
           quote_number?: number
           service_description?: string | null
           status?: string
           total?: number
           updated_at?: string
           user_id?: string
+          validity_days?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budgets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_profile: {
         Row: {
@@ -203,6 +220,42 @@ export type Database = {
           id?: string
           item_name?: string
           photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
