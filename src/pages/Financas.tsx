@@ -26,6 +26,7 @@ export default function Financas() {
   const navigate = useNavigate();
   const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const { transactions, sales, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const { isPremium } = usePremiumStatus();
 
   const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
