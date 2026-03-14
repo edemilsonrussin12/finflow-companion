@@ -3,7 +3,10 @@ import { X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { getCategoryById } from '@/lib/categories';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import ReactMarkdown from 'react-markdown';
+
+const FREE_DAILY_QUESTIONS = 5;
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
