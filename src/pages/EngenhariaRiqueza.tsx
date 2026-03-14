@@ -194,9 +194,13 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShow
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pl-9">
-                    <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setViewingPdf({ url: lesson.pdfUrl, title: lesson.title })}>
-                      <FileText size={12} /> Abrir Aula
-                    </Button>
+                    {lesson.pdfUrl ? (
+                      <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setViewingPdf({ url: lesson.pdfUrl, title: lesson.title })}>
+                        <FileText size={12} /> Abrir Aula
+                      </Button>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground italic">Em breve</span>
+                    )}
                     <Button variant={completed ? 'ghost' : 'default'} size="sm" className="h-7 text-[11px]" onClick={() => onToggleLesson(mod.id, i)}>
                       {completed ? 'Concluída ✓' : 'Concluir'}
                     </Button>
