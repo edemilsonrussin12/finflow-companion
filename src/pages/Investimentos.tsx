@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { calculateInvestment } from '@/lib/investment';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
@@ -16,9 +17,11 @@ import PremiumGate from '@/components/PremiumGate';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import type { Transaction } from '@/types/finance';
 import AIInsights from '@/components/AIInsights';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 export default function Investimentos() {
   const { transactions, sales, addTransaction, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [showForm, setShowForm] = useState(false);
   const { isPremium } = usePremiumStatus();
@@ -231,6 +234,10 @@ export default function Investimentos() {
       )}
 
       <AIInsights page="investimentos" />
+
+      <div className="px-4 pb-24">
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
+      </div>
     </div>
   );
 }

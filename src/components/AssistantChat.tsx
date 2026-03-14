@@ -1,15 +1,26 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageSquare, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
+import { getCategoryById } from '@/lib/categories';
 import ReactMarkdown from 'react-markdown';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fincontrol-chat`;
 
-export default function AssistantChat() {
-  const [open, setOpen] = useState(false);
+const QUICK_QUESTIONS = [
+  'Como montar uma reserva de emergência?',
+  'Analise meus gastos deste mês',
+  'O que são juros compostos?',
+];
+
+interface AssistantChatProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function AssistantChat({ open, onClose }: AssistantChatProps) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,12 +47,38 @@ export default function AssistantChat() {
     const investment = monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
     const revenue = sales.filter(s => s.date.startsWith(selectedMonth)).reduce((s, v) => s + v.totalValue, 0);
 
+    // Top expense categories
+    const catMap: Record<string, number> = {};
+    monthTx.filter(t => t.type === 'expense').forEach(t => {
+      const cat = getCategoryById(t.category);
+      const name = cat?.name ?? t.category;
+      catMap[name] = (catMap[name] || 0) + t.amount;
+    });
+    const topCategories = Object.entries(catMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, value]) => ({ name, value }));
+
     const activeGoals = goals.filter(g => g.status === 'active').map(g => ({
       title: g.title,
       target: g.targetAmount,
       current: g.currentAmount,
       pct: Math.round((g.currentAmount / g.targetAmount) * 100),
     }));
+
+    // Patrimony (all-time accumulation)
+    const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const allInvestment = transactions.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0);
+    const allRevenue = sales.reduce((s, v) => s + v.totalValue, 0);
+    const patrimonio = allIncome + allRevenue - allExpense;
+
+    // Course progress from localStorage
+    let courseProgress: any = null;
+    try {
+      const raw = localStorage.getItem('fincontrol_lesson_progress');
+      if (raw) courseProgress = JSON.parse(raw);
+    } catch { /* ignore */ }
 
     return {
       mes: selectedMonth,
@@ -51,15 +88,19 @@ export default function AssistantChat() {
       investimentos: investment,
       saldoLivre: income + revenue - expense - investment,
       totalTransacoes: monthTx.length,
+      topCategoriasDespesa: topCategories,
       metas: activeGoals,
+      patrimonioEstimado: patrimonio,
+      totalInvestidoHistorico: allInvestment,
+      progressoCurso: courseProgress,
     };
   }, [transactions, sales, goals, selectedMonth]);
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || isLoading) return;
+  const send = async (text?: string) => {
+    const msg = text || input.trim();
+    if (!msg || isLoading) return;
 
-    const userMsg: Msg = { role: 'user', content: text };
+    const userMsg: Msg = { role: 'user', content: msg };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
@@ -127,7 +168,6 @@ export default function AssistantChat() {
         }
       }
 
-      // flush
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split('\n')) {
           if (!raw) continue;
@@ -155,17 +195,7 @@ export default function AssistantChat() {
     }
   };
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-cyan shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-        aria-label="Assistente FinControl"
-      >
-        <Bot size={26} className="text-primary-foreground" />
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background animate-fade-in sm:inset-auto sm:bottom-4 sm:right-4 sm:w-96 sm:h-[32rem] sm:rounded-2xl sm:shadow-2xl sm:border sm:border-border overflow-hidden">
@@ -178,7 +208,7 @@ export default function AssistantChat() {
           <p className="text-sm font-semibold text-foreground">Assistente FinControl</p>
           <p className="text-[10px] text-muted-foreground">Mentor financeiro digital</p>
         </div>
-        <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-accent/10 transition-colors">
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-accent/10 transition-colors">
           <X size={18} className="text-muted-foreground" />
         </button>
       </div>
@@ -192,17 +222,13 @@ export default function AssistantChat() {
             </div>
             <p className="text-sm font-medium text-foreground">Olá! Sou seu mentor financeiro.</p>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[260px] mx-auto">
-              Posso ajudar com dúvidas sobre finanças, investimentos, orçamento e educação financeira.
+              Posso ajudar com dúvidas sobre finanças, analisar seus dados e sugerir estratégias personalizadas.
             </p>
             <div className="flex flex-wrap justify-center gap-1.5 pt-2">
-              {[
-                'Como montar uma reserva de emergência?',
-                'Analise meus gastos deste mês',
-                'O que são juros compostos?',
-              ].map(q => (
+              {QUICK_QUESTIONS.map(q => (
                 <button
                   key={q}
-                  onClick={() => { setInput(q); }}
+                  onClick={() => send(q)}
                   className="text-[10px] px-2.5 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 >
                   {q}

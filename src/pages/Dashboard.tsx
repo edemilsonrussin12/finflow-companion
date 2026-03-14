@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import EmptyState from '@/components/EmptyState';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import AIInsights from '@/components/AIInsights';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 function getGreeting(firstName: string) {
   const h = new Date().getHours();
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const { goals } = useGoals();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const { recheck: recheckPremium } = usePremiumStatus();
   const [recentBudgets, setRecentBudgets] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState('');
@@ -216,6 +218,11 @@ export default function Dashboard() {
 
       {/* AI Insights */}
       {hasData && <AIInsights page="dashboard" />}
+
+      {/* Ask Assistant */}
+      {hasData && <div className="px-4 pb-24">
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
+      </div>}
     </div>
   );
 }

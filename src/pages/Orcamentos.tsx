@@ -9,7 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import BudgetEditor from '@/components/BudgetEditor';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { format } from 'date-fns';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 export interface Budget {
   id: string;
@@ -31,6 +32,7 @@ export default function Orcamentos() {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
+  const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -213,6 +215,10 @@ export default function Orcamentos() {
         onOpenChange={open => { if (!open) setDeletingId(null); }}
         onConfirm={confirmDeleteBudget}
       />
+
+      <div className="px-4 pb-24 pt-4">
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
 import { getCategoryById } from '@/lib/categories';
@@ -13,6 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from 'recharts';
 import AIInsights from '@/components/AIInsights';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)', 'hsl(200, 70%, 55%)', 'hsl(280, 60%, 60%)',
@@ -21,6 +22,7 @@ const CHART_COLORS = [
 
 export default function Financas() {
   const navigate = useNavigate();
+  const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const { transactions, sales, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
 
   const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);
@@ -226,6 +228,10 @@ export default function Financas() {
       </div>
 
       <AIInsights page="financas" />
+
+      <div className="px-4 pb-24">
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
+      </div>
     </div>
   );
 }
