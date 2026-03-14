@@ -215,6 +215,10 @@ export default function Orcamentos() {
         onOpenChange={open => { if (!open) setDeletingId(null); }}
         onConfirm={confirmDeleteBudget}
       />
+
+      <div className="px-4 pb-24 pt-4">
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
+      </div>
     </div>
   );
 }
