@@ -634,6 +634,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      referrer_code_exists: { Args: { _referrer_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
