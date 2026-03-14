@@ -53,6 +53,16 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/, /\.pdf$/],
         runtimeCaching: [
           {
+            urlPattern: /\/cursos\/.*\.pdf$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "pdf-cache",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+            },
+          },
+          {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
             options: {
