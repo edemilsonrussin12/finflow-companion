@@ -70,6 +70,10 @@ export default function Cadastro() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fullName.trim()) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Informe seu nome completo' });
+      return;
+    }
     setSubmitting(true);
     const result = await signup(email, password, confirm);
     if (!result.success) {
