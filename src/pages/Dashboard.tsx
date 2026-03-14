@@ -83,21 +83,28 @@ export default function Dashboard() {
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
       <OnboardingFlow />
 
-      {/* Header */}
+      {/* Greeting + Month */}
+      {displayName && (() => {
+        const { greeting, subtitle } = getGreeting(displayName);
+        return (
+          <div className="space-y-0.5">
+            <h2 className="text-xl font-bold text-foreground">{greeting}</h2>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          </div>
+        );
+      })()}
+
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">FinControl</p>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="text-xl font-bold border-none p-0 h-auto shadow-none focus:ring-0 w-auto gap-2">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableMonths.map(m => (
-                <SelectItem key={m} value={m}>{getMonthLabel(m)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <SelectTrigger className="text-lg font-bold border-none p-0 h-auto shadow-none focus:ring-0 w-auto gap-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {availableMonths.map(m => (
+              <SelectItem key={m} value={m}>{getMonthLabel(m)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {!hasData && (

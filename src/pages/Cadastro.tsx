@@ -99,16 +99,30 @@ export default function Cadastro() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <Label htmlFor="fullName">Nome completo</Label>
+            <Input id="fullName" type="text" placeholder="Seu nome completo" value={fullName} onChange={e => setFullName(e.target.value)} className="mt-1" required />
+          </div>
+          <div>
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" required />
           </div>
           <div>
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} className="mt-1" required />
+            <div className="relative mt-1">
+              <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} className="pr-10" required />
+              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <Label htmlFor="confirm">Confirmar senha</Label>
-            <Input id="confirm" type="password" placeholder="Repita a senha" value={confirm} onChange={e => setConfirm(e.target.value)} className="mt-1" required />
+            <div className="relative mt-1">
+              <Input id="confirm" type={showConfirm ? 'text' : 'password'} placeholder="Repita a senha" value={confirm} onChange={e => setConfirm(e.target.value)} className="pr-10" required />
+              <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold" disabled={submitting}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar conta'}
