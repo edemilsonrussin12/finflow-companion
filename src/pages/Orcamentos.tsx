@@ -11,6 +11,11 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import { format } from 'date-fns';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import AskAssistantButton from '@/components/AskAssistantButton';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import PremiumGate from '@/components/PremiumGate';
+import { AlertTriangle } from 'lucide-react';
+
+const FREE_BUDGET_LIMIT = 3;
 
 export interface Budget {
   id: string;
