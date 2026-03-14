@@ -121,6 +121,17 @@ export default function AssistantChat({ open, onClose }: AssistantChatProps) {
     const msg = text || input.trim();
     if (!msg || isLoading) return;
 
+    if (!isPremium && getDailyCount() >= FREE_DAILY_QUESTIONS) {
+      setMessages(prev => [...prev,
+        { role: 'user', content: msg },
+        { role: 'assistant', content: `Você atingiu o limite de ${FREE_DAILY_QUESTIONS} perguntas diárias do plano gratuito. Desbloqueie o Premium para uso ilimitado do assistente.` },
+      ]);
+      setInput('');
+      return;
+    }
+
+    incrementDailyCount();
+
     const userMsg: Msg = { role: 'user', content: msg };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
