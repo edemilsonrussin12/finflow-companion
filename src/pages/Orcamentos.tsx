@@ -149,8 +149,15 @@ export default function Orcamentos() {
         </Button>
       </div>
 
+      {!isPremium && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 text-xs text-muted-foreground">
+          <AlertTriangle size={14} className="text-primary shrink-0" />
+          <span>{monthBudgetCount}/{FREE_BUDGET_LIMIT} orçamentos usados neste mês.{reachedBudgetLimit && ' Desbloqueie o Premium para orçamentos ilimitados.'}</span>
+        </div>
+      )}
+
       <div className="flex gap-2">
-        <Button onClick={createBudget} className="flex-1 gap-2">
+        <Button onClick={createBudget} className="flex-1 gap-2" disabled={reachedBudgetLimit}>
           <Plus size={16} /> Novo Orçamento
         </Button>
         <Select value={statusFilter} onValueChange={setStatusFilter}>

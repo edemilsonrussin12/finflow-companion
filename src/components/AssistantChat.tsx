@@ -322,10 +322,13 @@ export default function AssistantChat({ open, onClose }: AssistantChatProps) {
             ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Pergunte sobre finanças..."
+            placeholder={reachedDailyLimit ? 'Limite diário atingido' : 'Pergunte sobre finanças...'}
             className="flex-1 bg-muted/50 rounded-xl px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-            disabled={isLoading}
+            disabled={isLoading || reachedDailyLimit}
           />
+          {!isPremium && (
+            <span className="text-[9px] text-muted-foreground shrink-0">{getDailyCount()}/{FREE_DAILY_QUESTIONS}</span>
+          )}
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
