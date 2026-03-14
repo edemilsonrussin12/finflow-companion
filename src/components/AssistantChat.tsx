@@ -144,9 +144,11 @@ export default function AssistantChat() {
         }
       }
     } catch (e: any) {
+      console.error('[AssistantChat] fetch error:', e);
+      const fallback = 'Não foi possível conectar ao assistente agora. Tente novamente em instantes.';
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: e.message || 'Erro ao processar sua mensagem. Tente novamente.' },
+        { role: 'assistant', content: e.message || fallback },
       ]);
     } finally {
       setIsLoading(false);
