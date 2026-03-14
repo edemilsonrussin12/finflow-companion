@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -16,13 +18,49 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── JWT Authentication ──
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const authenticatedUserId = claimsData.claims.sub as string;
+
     const { user_id, plan } = await req.json();
     console.log('[CHECKOUT] ─── Request received ───');
     console.log('[CHECKOUT] user_id:', user_id, '| plan:', plan);
+    console.log('[CHECKOUT] Authenticated user:', authenticatedUserId);
 
     if (!user_id || !plan) {
       return new Response(JSON.stringify({ error: 'user_id and plan are required' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Ensure the authenticated user matches the requested user_id
+    if (authenticatedUserId !== user_id) {
+      console.error('[CHECKOUT] User mismatch! authenticated:', authenticatedUserId, 'requested:', user_id);
+      return new Response(JSON.stringify({ error: 'User mismatch' }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -44,19 +82,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Detect mode
     const isTestMode = accessToken.startsWith('TEST-');
     console.log('[CHECKOUT] Mode:', isTestMode ? 'TEST' : 'PRODUCTION');
 
-    // Use request origin or fallback to production URL
     const origin = req.headers.get('origin') || PRODUCTION_ORIGIN;
     console.log('[CHECKOUT] Origin:', origin);
 
-    // Build notification URL
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const notificationUrl = `${supabaseUrl}/functions/v1/mercadopago-webhook`;
 
-    // Safety checks
     if (!supabaseUrl) {
       console.error('[CHECKOUT] ⚠️ SUPABASE_URL not configured — webhook will not work');
     }
@@ -104,8 +138,6 @@ Deno.serve(async (req) => {
     }
 
     const mpData = await mpResponse.json();
-
-    // In production, use init_point; in test, use sandbox_init_point
     const checkoutUrl = isTestMode ? (mpData.sandbox_init_point || mpData.init_point) : mpData.init_point;
 
     console.log('[CHECKOUT] ✅ Preference created | id:', mpData.id);
