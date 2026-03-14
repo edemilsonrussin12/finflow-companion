@@ -5,6 +5,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { formatCurrency } from '@/lib/format';
 import { getCategoryById } from '@/lib/categories';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface AIInsight {
   text: string;
