@@ -12,6 +12,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from 'recharts';
+import AIInsights from '@/components/AIInsights';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)', 'hsl(200, 70%, 55%)', 'hsl(280, 60%, 60%)',
@@ -223,6 +224,8 @@ export default function Financas() {
           ))}
         </div>
       </div>
+
+      <AIInsights page="financas" />
     </div>
   );
 }
