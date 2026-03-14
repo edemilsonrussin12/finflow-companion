@@ -22,6 +22,7 @@ const CHART_COLORS = [
 
 export default function Financas() {
   const navigate = useNavigate();
+  const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const { transactions, sales, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
 
   const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);
