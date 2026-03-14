@@ -14,6 +14,8 @@ import {
 } from 'recharts';
 import AIInsights from '@/components/AIInsights';
 import AskAssistantButton from '@/components/AskAssistantButton';
+import PremiumGate from '@/components/PremiumGate';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)', 'hsl(200, 70%, 55%)', 'hsl(280, 60%, 60%)',
