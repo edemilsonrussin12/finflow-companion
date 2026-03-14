@@ -29,6 +29,7 @@ export default function Dashboard() {
   const { goals } = useGoals();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const { recheck: recheckPremium } = usePremiumStatus();
   const [recentBudgets, setRecentBudgets] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState('');
