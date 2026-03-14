@@ -104,7 +104,7 @@ export default function Admin() {
 
   // Dialog
   const [dialog, setDialog] = useState<{ type: string; userId: string; email: string } | null>(null);
-  const [dialogDays, setDialogDays] = useState(30);
+  const [dialogDays, setDialogDays] = useState(7);
 
   const load = async () => {
     setLoading(true);
