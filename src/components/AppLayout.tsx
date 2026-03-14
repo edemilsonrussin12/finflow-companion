@@ -89,6 +89,7 @@ export default function AppLayout() {
       <Outlet />
       <FloatingActionButton onClick={handleFabClick} />
       <SupportFAB />
+      <AssistantChat />
       <BottomNav />
       {formType && (
         <TransactionForm

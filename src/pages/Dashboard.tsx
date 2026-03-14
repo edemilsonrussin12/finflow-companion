@@ -213,6 +213,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* AI Insights */}
+      {hasData && <AIInsights page="dashboard" />}
     </div>
   );
 }
