@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, ZoomIn, ZoomOut, ExternalLink, Download } from 'lucide-react';
+import { X, ExternalLink, Download, Loader2 } from 'lucide-react';
 
 interface PdfViewerProps {
   url: string;
@@ -9,22 +9,33 @@ interface PdfViewerProps {
 }
 
 export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
-  const [zoom, setZoom] = useState(100);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
-  const zoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
-  const zoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
-  const resetZoom = () => setZoom(100);
-
-  // Build absolute URL, handle both relative and absolute paths
+  // Build absolute URL
   const absoluteUrl = url.startsWith('http') ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
 
   const openInNewTab = () => {
     window.open(absoluteUrl, '_blank', 'noopener,noreferrer');
   };
 
-  // Use Google Docs viewer as fallback for mobile compatibility
-  const googleViewerUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(absoluteUrl)}`;
+  const downloadPdf = () => {
+    const a = document.createElement('a');
+    a.href = absoluteUrl;
+    a.download = title + '.pdf';
+    a.click();
+  };
+
+  // Auto-timeout: if iframe hasn't loaded in 8s, show error
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setLoadError(true);
+        setLoading(false);
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   return (
     <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col animate-fade-in">
@@ -34,17 +45,11 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
           <h3 className="text-sm font-semibold text-foreground truncate">{title}</h3>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={downloadPdf} title="Baixar PDF">
+            <Download className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={openInNewTab} title="Abrir em nova aba">
             <ExternalLink className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut} disabled={zoom <= 50}>
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs min-w-[3rem]" onClick={resetZoom}>
-            {zoom}%
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn} disabled={zoom >= 200}>
-            <ZoomIn className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -53,7 +58,14 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
       </div>
 
       {/* PDF Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative">
+        {loading && !loadError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Carregando PDF...</p>
+          </div>
+        )}
+
         {loadError ? (
           <div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
             <p className="text-sm text-muted-foreground">Não foi possível carregar o PDF no app.</p>
@@ -62,26 +74,24 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
                 <ExternalLink className="h-4 w-4" />
                 Abrir PDF em nova aba
               </Button>
-              <Button variant="outline" onClick={() => setLoadError(false)} className="gap-2 w-full">
+              <Button variant="outline" onClick={downloadPdf} className="gap-2 w-full">
+                <Download className="h-4 w-4" />
+                Baixar PDF
+              </Button>
+              <Button variant="ghost" onClick={() => { setLoadError(false); setLoading(true); }} className="gap-2 w-full">
                 Tentar novamente
               </Button>
             </div>
           </div>
         ) : (
-          <div
-            className="min-h-full flex justify-center p-4"
-            style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
-          >
+          <div className="min-h-full flex justify-center p-2">
             <iframe
               src={`${absoluteUrl}#toolbar=0&navpanes=0`}
               className="w-full max-w-3xl rounded-lg border border-border bg-white"
               style={{ height: '100vh', minHeight: '600px' }}
               title={title}
-              onError={() => setLoadError(true)}
-              onLoad={(e) => {
-                // If iframe loads but content is an error page, we can't detect it easily
-                // So we just let it render
-              }}
+              onLoad={() => setLoading(false)}
+              onError={() => { setLoadError(true); setLoading(false); }}
             />
           </div>
         )}
