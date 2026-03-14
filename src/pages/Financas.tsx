@@ -1,5 +1,5 @@
 import { useMemo, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
 import { getCategoryById } from '@/lib/categories';
