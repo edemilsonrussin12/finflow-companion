@@ -619,6 +619,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_own_subscription: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       expire_subscription_if_needed: {
         Args: { _user_id: string }
         Returns: undefined
