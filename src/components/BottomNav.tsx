@@ -1,30 +1,29 @@
 import { useState } from 'react';
-import { LayoutDashboard, Receipt, Target, FileText, MoreHorizontal, LineChart, TrendingUp, ShoppingBag, Sparkles, Users, Crown, Headphones, Shield, Trophy, ClipboardList, Grid3X3, Settings, Building2, Package } from 'lucide-react';
+import {
+  LayoutDashboard, Wallet, ClipboardList, User,
+  MoreHorizontal, Sparkles, Package, Users, Trophy,
+  Gift, Headphones, Shield, Settings, Building2, Crown
+} from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAdmin } from '@/hooks/useAdmin';
 
 const mainTabs = [
   { path: '/', icon: LayoutDashboard, label: 'Início' },
-  { path: '/gastos', icon: Receipt, label: 'Gastos' },
-  { path: '/metas', icon: Target, label: 'Metas' },
-  { path: '/relatorios', icon: FileText, label: 'Relatórios' },
+  { path: '/financas', icon: Wallet, label: 'Finanças' },
+  { path: '/orcamentos', icon: ClipboardList, label: 'Orçamentos' },
+  { path: '/perfil-profissional', icon: User, label: 'Perfil' },
 ];
 
 const moreTabs = [
-  { path: '/patrimonio', icon: LineChart, label: 'Patrimônio' },
-  { path: '/investimentos', icon: TrendingUp, label: 'Investimentos' },
-  { path: '/vendas', icon: ShoppingBag, label: 'Vendas' },
   { path: '/engenharia', icon: Sparkles, label: 'Engenharia da Riqueza' },
-  { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
-  { path: '/convites', icon: Users, label: 'Convites' },
+  { path: '/catalogo', icon: Package, label: 'Catálogo' },
+  { path: '/clientes', icon: Users, label: 'Clientes' },
   { path: '/conquistas', icon: Trophy, label: 'Conquistas' },
-  { path: '/orcamentos', icon: ClipboardList, label: 'Orçamentos' },
-  { path: '/catalogo', icon: Package, label: 'Catálogo de Itens' },
-  { path: '/perfil-profissional', icon: Building2, label: 'Perfil Profissional' },
-  { path: '/planilha', icon: Grid3X3, label: 'Planilha' },
-  { path: '/suporte', icon: Headphones, label: 'Suporte' },
+  { path: '/convites', icon: Gift, label: 'Indicações' },
+  { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
   { path: '/configuracoes', icon: Settings, label: 'Configurações' },
+  { path: '/suporte', icon: Headphones, label: 'Suporte' },
 ];
 
 const adminTab = { path: '/admin', icon: Shield, label: 'Painel Admin' };
@@ -36,6 +35,10 @@ export default function BottomNav() {
   const { isAdmin } = useAdmin();
 
   const allMoreTabs = isAdmin ? [...moreTabs, adminTab] : moreTabs;
+
+  // Check if current path matches any tab (including sub-paths for finanças)
+  const financePaths = ['/financas', '/gastos', '/investimentos', '/patrimonio', '/vendas', '/metas', '/relatorios', '/planilha'];
+  const isFinanceActive = financePaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
   const isMoreActive = allMoreTabs.some(t => location.pathname.startsWith(t.path));
 
   return (
@@ -43,7 +46,9 @@ export default function BottomNav() {
       <nav className="fixed bottom-0 left-0 right-0 z-40 glass border-t border-border/50">
         <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
           {mainTabs.map(tab => {
-            const active = location.pathname === tab.path;
+            const active = tab.path === '/financas'
+              ? isFinanceActive
+              : location.pathname === tab.path;
             return (
               <button
                 key={tab.path}
