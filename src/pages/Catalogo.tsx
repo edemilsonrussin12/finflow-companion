@@ -14,8 +14,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import PremiumGate from '@/components/PremiumGate';
+import { AlertTriangle } from 'lucide-react';
 
 const CATEGORIES = ['Serviços', 'Produtos', 'Peças', 'Materiais'] as const;
+const FREE_CATALOG_LIMIT = 10;
 
 interface CatalogItem {
   id: string;
