@@ -32,6 +32,24 @@ export default function AssistantChat({ open, onClose }: AssistantChatProps) {
 
   const { transactions, sales, selectedMonth } = useFinance();
   const { goals } = useGoals();
+  const { isPremium } = usePremiumStatus();
+
+  // Daily question limiter for free users
+  const getDailyCount = useCallback(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `fincontrol_chat_${today}`;
+    return parseInt(localStorage.getItem(key) || '0', 10);
+  }, []);
+
+  const incrementDailyCount = useCallback(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `fincontrol_chat_${today}`;
+    const current = parseInt(localStorage.getItem(key) || '0', 10);
+    localStorage.setItem(key, String(current + 1));
+  }, []);
+
+  const dailyCount = getDailyCount();
+  const reachedDailyLimit = !isPremium && dailyCount >= FREE_DAILY_QUESTIONS;
 
   useEffect(() => {
     if (scrollRef.current) {
