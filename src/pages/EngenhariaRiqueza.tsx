@@ -94,10 +94,10 @@ const modules: Module[] = [
     icon: Rocket,
     section: 'Evolução e Projeções',
     lessons: [
-      { title: 'Calculando seu número de independência', description: 'Descubra quanto precisa para viver de renda.', pdfUrl: '/content/modules/modulo5-aula1.pdf' },
-      { title: 'Fontes de renda passiva', description: 'Explore diferentes fontes de renda passiva.', pdfUrl: '/content/modules/modulo5-aula2.pdf' },
-      { title: 'Estratégias FIRE', description: 'Conheça o movimento de independência financeira antecipada.', pdfUrl: '/content/modules/modulo5-aula3.pdf' },
-      { title: 'Vivendo de renda: o plano definitivo', description: 'Monte seu plano para viver de renda com segurança.', pdfUrl: '/content/modules/modulo5-aula4.pdf' },
+      { title: 'Calculando seu número de independência', description: 'Descubra quanto precisa para viver de renda.', pdfUrl: '' },
+      { title: 'Fontes de renda passiva', description: 'Explore diferentes fontes de renda passiva.', pdfUrl: '' },
+      { title: 'Estratégias FIRE', description: 'Conheça o movimento de independência financeira antecipada.', pdfUrl: '' },
+      { title: 'Vivendo de renda: o plano definitivo', description: 'Monte seu plano para viver de renda com segurança.', pdfUrl: '' },
     ],
   },
 ];
