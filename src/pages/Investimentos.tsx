@@ -21,6 +21,7 @@ import AskAssistantButton from '@/components/AskAssistantButton';
 
 export default function Investimentos() {
   const { transactions, sales, addTransaction, updateTransaction, deleteTransaction, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
+  const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [showForm, setShowForm] = useState(false);
   const { isPremium } = usePremiumStatus();
