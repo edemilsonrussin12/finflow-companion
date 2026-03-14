@@ -73,6 +73,10 @@ export default function Catalogo() {
   useEffect(() => { load(); }, [load]);
 
   function openNew() {
+    if (reachedCatalogLimit) {
+      toast({ title: 'Limite atingido', description: `O plano gratuito permite até ${FREE_CATALOG_LIMIT} itens. Desbloqueie o Premium para itens ilimitados.` });
+      return;
+    }
     setEditItem({ ...emptyCatalogItem });
     setEditOpen(true);
   }
