@@ -20,12 +20,12 @@ export default function AIInsights({ page = 'dashboard' }: AIInsightsProps) {
   const { transactions, sales, selectedMonth } = useFinance();
   const { goals } = useGoals();
   const { isPremium } = usePremiumStatus();
-
-  // AI insights are premium-only; free users see FinancialInsights instead
-  if (!isPremium) return null;
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
+
+  // AI insights are premium-only; free users see FinancialInsights instead
+  // (early return after all hooks)
 
   const financialData = useMemo(() => {
     const monthTx = transactions.filter(t => t.date.startsWith(selectedMonth));
