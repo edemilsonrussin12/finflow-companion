@@ -228,6 +228,10 @@ export default function Financas() {
       </div>
 
       <AIInsights page="financas" />
+
+      <div className="px-4 pb-24">
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
+      </div>
     </div>
   );
 }

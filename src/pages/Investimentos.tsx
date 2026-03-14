@@ -234,6 +234,10 @@ export default function Investimentos() {
       )}
 
       <AIInsights page="investimentos" />
+
+      <div className="px-4 pb-24">
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
+      </div>
     </div>
   );
 }

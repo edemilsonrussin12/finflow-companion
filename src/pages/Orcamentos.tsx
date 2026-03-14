@@ -9,7 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import BudgetEditor from '@/components/BudgetEditor';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { format } from 'date-fns';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 export interface Budget {
   id: string;
