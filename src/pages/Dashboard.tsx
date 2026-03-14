@@ -221,7 +221,7 @@ export default function Dashboard() {
 
       {/* Ask Assistant */}
       {hasData && <div className="px-4 pb-24">
-        <AskAssistantButton onClick={() => (useOutletContext as any)?.openAssistant?.()} />
+        <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
       </div>}
     </div>
   );
