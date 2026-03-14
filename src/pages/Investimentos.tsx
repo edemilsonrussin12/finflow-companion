@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { calculateInvestment } from '@/lib/investment';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
