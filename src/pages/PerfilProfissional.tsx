@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/hooks/useAdmin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Upload, Building2, Trash2 } from 'lucide-react';
+import {
+  Loader2, Save, Upload, Building2, Trash2,
+  Trophy, Gift, Crown, Settings, Shield, ChevronRight,
+} from 'lucide-react';
 import SignaturePad from '@/components/SignaturePad';
 
 interface BusinessProfile {
@@ -17,9 +22,20 @@ interface BusinessProfile {
   signature_url: string;
 }
 
+const menuItems = [
+  { path: '/conquistas', icon: Trophy, label: 'Conquistas', description: 'Suas conquistas financeiras' },
+  { path: '/convites', icon: Gift, label: 'Indicações', description: 'Convide amigos e ganhe recompensas' },
+  { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura', description: 'Gerencie seu plano' },
+  { path: '/configuracoes', icon: Settings, label: 'Configurações', description: 'Preferências do app' },
+];
+
+const adminItem = { path: '/admin', icon: Shield, label: 'Painel Admin', description: 'Gerenciar usuários e sistema' };
+
 export default function PerfilProfissional() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<BusinessProfile>({
     business_name: '', phone: '', email: '', address: '', logo_url: '', signature_url: '',
   });
@@ -27,6 +43,8 @@ export default function PerfilProfissional() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [exists, setExists] = useState(false);
+
+  const allMenuItems = isAdmin ? [...menuItems, adminItem] : menuItems;
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -75,7 +93,6 @@ export default function PerfilProfissional() {
     }
 
     const { data: urlData } = supabase.storage.from('business-assets').getPublicUrl(path);
-    // Add cache buster
     const url = `${urlData.publicUrl}?t=${Date.now()}`;
     update('logo_url', url);
     setUploadingLogo(false);
@@ -84,7 +101,6 @@ export default function PerfilProfissional() {
 
   async function removeLogo() {
     if (!user) return;
-    // Try to delete from storage
     await supabase.storage.from('business-assets').remove([`${user.id}/logo.png`, `${user.id}/logo.jpg`, `${user.id}/logo.jpeg`, `${user.id}/logo.webp`]);
     update('logo_url', '');
     toast({ title: 'Logo removido' });
@@ -92,7 +108,6 @@ export default function PerfilProfissional() {
 
   async function saveSignature(dataUrl: string) {
     if (!user) return;
-    // Convert data URL to blob
     const res = await fetch(dataUrl);
     const blob = await res.blob();
     const path = `${user.id}/signature.png`;
@@ -152,6 +167,27 @@ export default function PerfilProfissional() {
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+      {/* Quick Menu */}
+      <div className="glass rounded-2xl overflow-hidden divide-y divide-border/50">
+        {allMenuItems.map(item => (
+          <button
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-accent/50 transition-colors text-left"
+          >
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <item.icon size={18} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">{item.label}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{item.description}</p>
+            </div>
+            <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+          </button>
+        ))}
+      </div>
+
+      {/* Business Profile Header */}
       <div className="flex items-center gap-3">
         <Building2 size={24} className="text-primary" />
         <div>

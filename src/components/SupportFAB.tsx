@@ -8,7 +8,7 @@ export default function SupportFAB() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-2">
+    <div className="fixed bottom-20 left-4 z-40 flex flex-col items-start gap-2">
       {open && (
         <div className="flex flex-col gap-2 animate-fade-in">
           <a
