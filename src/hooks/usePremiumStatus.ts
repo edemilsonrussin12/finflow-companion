@@ -37,6 +37,9 @@ export function usePremiumStatus() {
       return;
     }
 
+    // Call server-side function to expire if needed (instead of client-side UPDATE)
+    await supabase.rpc('expire_subscription_if_needed', { _user_id: user.id });
+
     const { data } = await supabase
       .from('user_subscriptions')
       .select('is_premium, premium_expires_at, plan_type, trial_start_at, trial_end_at, trial_used')
@@ -52,7 +55,7 @@ export function usePremiumStatus() {
 
     const now = new Date();
 
-    // Check paid premium first (paid always takes priority over trial)
+    // Check paid premium first
     if (data.is_premium && data.plan_type && data.plan_type !== 'trial') {
       if (!data.premium_expires_at || new Date(data.premium_expires_at) > now) {
         setIsPremium(true);
@@ -60,30 +63,17 @@ export function usePremiumStatus() {
         setLoading(false);
         return;
       }
-      // Paid premium expired
-      setIsPremium(false);
-      await supabase
-        .from('user_subscriptions')
-        .update({ is_premium: false, updated_at: now.toISOString() })
-        .eq('user_id', user.id);
     }
 
     // Check trial
     if (data.trial_used && data.trial_end_at) {
       const trialEnd = new Date(data.trial_end_at);
-      if (trialEnd > now) {
+      if (trialEnd > now && data.is_premium) {
         const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         setIsPremium(true);
         setTrial({ isOnTrial: true, trialEndAt: trialEnd, daysRemaining });
         setLoading(false);
         return;
-      }
-      // Trial expired — ensure is_premium is false if plan_type is trial
-      if (data.plan_type === 'trial' && data.is_premium) {
-        await supabase
-          .from('user_subscriptions')
-          .update({ is_premium: false, updated_at: now.toISOString() })
-          .eq('user_id', user.id);
       }
     }
 
@@ -95,10 +85,6 @@ export function usePremiumStatus() {
         setLoading(false);
         return;
       }
-      await supabase
-        .from('user_subscriptions')
-        .update({ is_premium: false, updated_at: now.toISOString() })
-        .eq('user_id', user.id);
     }
 
     setIsPremium(false);
