@@ -217,6 +217,11 @@ export default function Dashboard() {
 
       {/* AI Insights */}
       {hasData && <AIInsights page="dashboard" />}
+
+      {/* Ask Assistant */}
+      {hasData && <div className="px-4 pb-24">
+        <AskAssistantButton onClick={() => (useOutletContext as any)?.openAssistant?.()} />
+      </div>}
     </div>
   );
 }
