@@ -226,9 +226,11 @@ export default function Investimentos() {
         <TransactionForm
           initialType="investment"
           onSubmit={t => addTransaction({ ...t, type: 'investment' })}
-          onClose={() => setShowForm(false)}
+        onClose={() => setShowForm(false)}
         />
       )}
+
+      <AIInsights page="investimentos" />
     </div>
   );
 }

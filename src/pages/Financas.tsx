@@ -223,6 +223,8 @@ export default function Financas() {
           ))}
         </div>
       </div>
+
+      <AIInsights page="financas" />
     </div>
   );
 }
