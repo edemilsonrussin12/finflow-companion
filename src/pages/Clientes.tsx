@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Users, Loader2, Trash2, Pencil, Phone, Mail, MapPin, FileText } from 'lucide-react';
+import { Plus, Users, Loader2, Trash2, Pencil, Phone, Mail, MapPin, FileText, Eye } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrency } from '@/lib/format';
+import { format } from 'date-fns';
 
 interface Client {
   id: string;
@@ -21,7 +23,26 @@ interface Client {
   created_at: string;
 }
 
+interface ClientBudget {
+  id: string;
+  client_name: string;
+  total: number;
+  status: string;
+  quote_number: number;
+  created_at: string;
+}
+
 const emptyClient = { name: '', phone: '', email: '', address: '', notes: '' };
+
+const statusLabel: Record<string, string> = {
+  draft: 'Rascunho', sent: 'Enviado', approved: 'Aprovado',
+  rejected: 'Rejeitado', paid: 'Pago', waiting: 'Aguardando',
+};
+const statusColor: Record<string, string> = {
+  draft: 'bg-muted text-muted-foreground', sent: 'bg-primary/10 text-primary',
+  waiting: 'bg-gold/10 text-gold', approved: 'bg-emerald-500/10 text-emerald-400',
+  rejected: 'bg-expense/10 text-expense', paid: 'bg-emerald-500/10 text-emerald-400',
+};
 
 export default function Clientes() {
   const { user } = useAuth();
@@ -35,16 +56,32 @@ export default function Clientes() {
   const [isNew, setIsNew] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [clientBudgets, setClientBudgets] = useState<Record<string, ClientBudget[]>>({});
+  const [clientTotals, setClientTotals] = useState<Record<string, number>>({});
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('name');
-    setClients((data as Client[]) ?? []);
+    const [{ data: cData }, { data: bData }] = await Promise.all([
+      supabase.from('clients').select('*').eq('user_id', user.id).order('name'),
+      supabase.from('budgets').select('id, client_id, client_name, total, status, quote_number, created_at')
+        .eq('user_id', user.id).order('created_at', { ascending: false }),
+    ]);
+    setClients((cData as Client[]) ?? []);
+
+    // Map budgets to clients
+    const budgetMap: Record<string, ClientBudget[]> = {};
+    const totalMap: Record<string, number> = {};
+    ((bData as any[]) ?? []).forEach(b => {
+      if (b.client_id) {
+        if (!budgetMap[b.client_id]) budgetMap[b.client_id] = [];
+        budgetMap[b.client_id].push(b);
+        totalMap[b.client_id] = (totalMap[b.client_id] || 0) + Number(b.total);
+      }
+    });
+    setClientBudgets(budgetMap);
+    setClientTotals(totalMap);
     setLoading(false);
   }, [user]);
 
@@ -98,10 +135,31 @@ export default function Clientes() {
     setDeletingId(null);
   }
 
+  async function createBudgetForClient(client: Client) {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('budgets')
+      .insert({
+        user_id: user.id,
+        client_name: client.name,
+        client_contact: client.phone || client.email || '',
+        client_id: client.id,
+        service_description: '',
+        notes: '',
+      } as any)
+      .select('id')
+      .single();
+    if (error) {
+      toast({ variant: 'destructive', title: 'Erro ao criar orçamento' });
+      return;
+    }
+    navigate('/orcamentos', { state: { editBudgetId: data.id } });
+  }
+
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search)
+    (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.phone || '').includes(search)
   );
 
   return (
@@ -142,46 +200,92 @@ export default function Clientes() {
         />
       ) : (
         <div className="space-y-3">
-          {filtered.map(c => (
-            <div key={c.id} className="glass rounded-2xl p-4 space-y-2">
-              <div className="flex items-start justify-between">
-                <p className="text-sm font-semibold">{c.name}</p>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(c)}>
-                    <Pencil size={14} />
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => setDeletingId(c.id)}>
-                    <Trash2 size={14} />
-                  </Button>
+          {filtered.map(c => {
+            const budgets = clientBudgets[c.id] || [];
+            const totalNegociado = clientTotals[c.id] || 0;
+            const isExpanded = expandedClient === c.id;
+
+            return (
+              <div key={c.id} className="glass rounded-2xl p-4 space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold">{c.name}</p>
+                    {totalNegociado > 0 && (
+                      <p className="text-[10px] text-primary font-medium">
+                        Total negociado: {formatCurrency(totalNegociado)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(c)}>
+                      <Pencil size={14} />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => setDeletingId(c.id)}>
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
                 </div>
+                <div className="space-y-1">
+                  {c.phone && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Phone size={12} /> {c.phone}
+                    </div>
+                  )}
+                  {c.email && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Mail size={12} /> {c.email}
+                    </div>
+                  )}
+                  {c.address && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin size={12} /> {c.address}
+                    </div>
+                  )}
+                </div>
+
+                {/* Budget history */}
+                {budgets.length > 0 && (
+                  <div className="pt-1">
+                    <button
+                      onClick={() => setExpandedClient(isExpanded ? null : c.id)}
+                      className="text-[11px] text-primary hover:underline"
+                    >
+                      {isExpanded ? 'Ocultar' : `Ver ${budgets.length} orçamento${budgets.length > 1 ? 's' : ''}`}
+                    </button>
+                    {isExpanded && (
+                      <div className="mt-2 space-y-1.5">
+                        {budgets.slice(0, 5).map(b => (
+                          <div key={b.id} className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-medium">#{String(b.quote_number).padStart(5, '0')}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {b.created_at ? format(new Date(b.created_at), 'dd/MM/yyyy') : '—'}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${statusColor[b.status] || statusColor.draft}`}>
+                                {statusLabel[b.status] || b.status}
+                              </span>
+                              <span className="text-[11px] font-bold text-primary">{formatCurrency(Number(b.total))}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs w-full"
+                  onClick={() => createBudgetForClient(c)}
+                >
+                  <FileText size={14} /> Criar orçamento
+                </Button>
               </div>
-              <div className="space-y-1">
-                {c.phone && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Phone size={12} /> {c.phone}
-                  </div>
-                )}
-                {c.email && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Mail size={12} /> {c.email}
-                  </div>
-                )}
-                {c.address && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin size={12} /> {c.address}
-                  </div>
-                )}
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5 text-xs w-full"
-                onClick={() => navigate('/orcamentos')}
-              >
-                <FileText size={14} /> Criar orçamento
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

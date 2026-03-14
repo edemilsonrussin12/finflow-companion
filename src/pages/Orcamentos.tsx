@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, FileText, Loader2, Trash2, Eye, Filter } from 'lucide-react';
+import { Plus, FileText, Loader2, Trash2, Eye, Filter, Users, Package } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import BudgetEditor from '@/components/BudgetEditor';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { format } from 'date-fns';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export interface Budget {
   id: string;
@@ -28,11 +29,23 @@ export interface Budget {
 export default function Orcamentos() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Check if navigated with editBudgetId from Clientes
+  useEffect(() => {
+    const state = location.state as { editBudgetId?: string } | null;
+    if (state?.editBudgetId) {
+      setEditingId(state.editBudgetId);
+      // Clear the state so it doesn't re-open on re-render
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -107,6 +120,16 @@ export default function Orcamentos() {
         <p className="text-sm text-muted-foreground">
           Crie orçamentos profissionais para seus serviços.
         </p>
+      </div>
+
+      {/* Quick access to Clientes and Catálogo */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" className="gap-2 text-xs" onClick={() => navigate('/clientes')}>
+          <Users size={14} /> Clientes
+        </Button>
+        <Button variant="outline" className="gap-2 text-xs" onClick={() => navigate('/catalogo')}>
+          <Package size={14} /> Catálogo
+        </Button>
       </div>
 
       <div className="flex gap-2">

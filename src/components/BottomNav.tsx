@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import {
   LayoutDashboard, Wallet, ClipboardList, User,
-  MoreHorizontal, Sparkles, Package, Users, Trophy,
-  Gift, Headphones, Shield, Settings, Building2, Crown
+  MoreHorizontal, Sparkles, Trophy,
+  Gift, Headphones, Shield, Settings, Crown
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -17,12 +17,10 @@ const mainTabs = [
 
 const moreTabs = [
   { path: '/engenharia', icon: Sparkles, label: 'Engenharia da Riqueza' },
-  { path: '/catalogo', icon: Package, label: 'Catálogo' },
-  { path: '/clientes', icon: Users, label: 'Clientes' },
   { path: '/conquistas', icon: Trophy, label: 'Conquistas' },
   { path: '/convites', icon: Gift, label: 'Indicações' },
-  { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
   { path: '/configuracoes', icon: Settings, label: 'Configurações' },
+  { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
   { path: '/suporte', icon: Headphones, label: 'Suporte' },
 ];
 
@@ -36,9 +34,10 @@ export default function BottomNav() {
 
   const allMoreTabs = isAdmin ? [...moreTabs, adminTab] : moreTabs;
 
-  // Check if current path matches any tab (including sub-paths for finanças)
   const financePaths = ['/financas', '/gastos', '/investimentos', '/patrimonio', '/vendas', '/metas', '/relatorios', '/planilha'];
+  const budgetPaths = ['/orcamentos', '/clientes', '/catalogo'];
   const isFinanceActive = financePaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+  const isBudgetActive = budgetPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
   const isMoreActive = allMoreTabs.some(t => location.pathname.startsWith(t.path));
 
   return (
@@ -48,7 +47,9 @@ export default function BottomNav() {
           {mainTabs.map(tab => {
             const active = tab.path === '/financas'
               ? isFinanceActive
-              : location.pathname === tab.path;
+              : tab.path === '/orcamentos'
+                ? isBudgetActive
+                : location.pathname === tab.path;
             return (
               <button
                 key={tab.path}

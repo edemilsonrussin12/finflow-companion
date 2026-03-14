@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, getMonthLabel } from '@/lib/format';
@@ -8,7 +8,10 @@ import {
   Receipt, PiggyBank, BarChart3, Grid3X3, ShoppingBag
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
+} from 'recharts';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)', 'hsl(200, 70%, 55%)', 'hsl(280, 60%, 60%)',
@@ -42,6 +45,28 @@ export default function Financas() {
     });
     return Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [monthTx]);
+
+  // Evolution data: last 6 months
+  const evolutionData = useMemo(() => {
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const months: { month: string; label: string; receitas: number; despesas: number; investimentos: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(y, m - 1 - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+      const txs = transactions.filter(t => t.date.startsWith(key));
+      months.push({
+        month: key,
+        label,
+        receitas: txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
+        despesas: txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
+        investimentos: txs.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0),
+      });
+    }
+    return months;
+  }, [transactions, selectedMonth]);
+
+  const hasEvolutionData = evolutionData.some(d => d.receitas > 0 || d.despesas > 0 || d.investimentos > 0);
 
   const quickLinks = [
     { label: 'Gastos', icon: Receipt, path: '/gastos', color: 'text-expense' },
@@ -116,6 +141,41 @@ export default function Financas() {
           {formatCurrency(patrimonio)}
         </p>
       </div>
+
+      {/* Evolution chart */}
+      {hasEvolutionData && (
+        <div className="glass rounded-2xl p-5">
+          <p className="text-sm font-medium mb-3">Evolução (últimos 6 meses)</p>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={evolutionData} barGap={2} barSize={12}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={45}
+                  tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
+                <Tooltip
+                  formatter={(value: number, name: string) => [formatCurrency(value), name.charAt(0).toUpperCase() + name.slice(1)]}
+                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))', fontSize: 12 }}
+                />
+                <Bar dataKey="receitas" fill="hsl(153, 60%, 50%)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="despesas" fill="hsl(0, 70%, 55%)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="investimentos" fill="hsl(200, 70%, 55%)" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center gap-4 mt-2">
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(153, 60%, 50%)' }} /> Receitas
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(0, 70%, 55%)' }} /> Despesas
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(200, 70%, 55%)' }} /> Investimentos
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Category chart */}
       {categoryData.length > 0 && (

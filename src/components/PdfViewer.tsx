@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, ZoomIn, ZoomOut, ExternalLink } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, ExternalLink, Download } from 'lucide-react';
 
 interface PdfViewerProps {
   url: string;
@@ -16,12 +16,15 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
   const zoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
   const resetZoom = () => setZoom(100);
 
-  // Build absolute URL to bypass any service worker interception
-  const absoluteUrl = `${window.location.origin}${url}`;
+  // Build absolute URL, handle both relative and absolute paths
+  const absoluteUrl = url.startsWith('http') ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
 
   const openInNewTab = () => {
     window.open(absoluteUrl, '_blank', 'noopener,noreferrer');
   };
+
+  // Use Google Docs viewer as fallback for mobile compatibility
+  const googleViewerUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(absoluteUrl)}`;
 
   return (
     <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col animate-fade-in">
@@ -54,10 +57,15 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
         {loadError ? (
           <div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
             <p className="text-sm text-muted-foreground">Não foi possível carregar o PDF no app.</p>
-            <Button onClick={openInNewTab} className="gap-2">
-              <ExternalLink className="h-4 w-4" />
-              Abrir PDF em nova aba
-            </Button>
+            <div className="flex flex-col gap-2 w-full max-w-xs">
+              <Button onClick={openInNewTab} className="gap-2 w-full">
+                <ExternalLink className="h-4 w-4" />
+                Abrir PDF em nova aba
+              </Button>
+              <Button variant="outline" onClick={() => setLoadError(false)} className="gap-2 w-full">
+                Tentar novamente
+              </Button>
+            </div>
           </div>
         ) : (
           <div
@@ -70,6 +78,10 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
               style={{ height: '100vh', minHeight: '600px' }}
               title={title}
               onError={() => setLoadError(true)}
+              onLoad={(e) => {
+                // If iframe loads but content is an error page, we can't detect it easily
+                // So we just let it render
+              }}
             />
           </div>
         )}

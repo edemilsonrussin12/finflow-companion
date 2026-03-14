@@ -80,10 +80,10 @@ const modules: Module[] = [
     icon: Shield,
     section: 'Construção de Patrimônio',
     lessons: [
-      { title: 'O poder dos juros compostos', description: 'Veja como o tempo multiplica seu dinheiro.', pdfUrl: '/content/modules/modulo4-aula1.pdf' },
-      { title: 'Ativos vs passivos', description: 'Diferencie o que gera e o que consome riqueza.', pdfUrl: '/content/modules/modulo4-aula2.pdf' },
-      { title: 'Estratégias de acumulação', description: 'Métodos comprovados para acumular patrimônio.', pdfUrl: '/content/modules/modulo4-aula3.pdf' },
-      { title: 'Planejamento patrimonial', description: 'Organize e proteja seu patrimônio a longo prazo.', pdfUrl: '/content/modules/modulo4-aula4.pdf' },
+      { title: 'O poder dos juros compostos', description: 'Veja como o tempo multiplica seu dinheiro.', pdfUrl: '' },
+      { title: 'Ativos vs passivos', description: 'Diferencie o que gera e o que consome riqueza.', pdfUrl: '' },
+      { title: 'Estratégias de acumulação', description: 'Métodos comprovados para acumular patrimônio.', pdfUrl: '' },
+      { title: 'Planejamento patrimonial', description: 'Organize e proteja seu patrimônio a longo prazo.', pdfUrl: '' },
     ],
   },
   {
@@ -94,10 +94,10 @@ const modules: Module[] = [
     icon: Rocket,
     section: 'Evolução e Projeções',
     lessons: [
-      { title: 'Calculando seu número de independência', description: 'Descubra quanto precisa para viver de renda.', pdfUrl: '/content/modules/modulo5-aula1.pdf' },
-      { title: 'Fontes de renda passiva', description: 'Explore diferentes fontes de renda passiva.', pdfUrl: '/content/modules/modulo5-aula2.pdf' },
-      { title: 'Estratégias FIRE', description: 'Conheça o movimento de independência financeira antecipada.', pdfUrl: '/content/modules/modulo5-aula3.pdf' },
-      { title: 'Vivendo de renda: o plano definitivo', description: 'Monte seu plano para viver de renda com segurança.', pdfUrl: '/content/modules/modulo5-aula4.pdf' },
+      { title: 'Calculando seu número de independência', description: 'Descubra quanto precisa para viver de renda.', pdfUrl: '' },
+      { title: 'Fontes de renda passiva', description: 'Explore diferentes fontes de renda passiva.', pdfUrl: '' },
+      { title: 'Estratégias FIRE', description: 'Conheça o movimento de independência financeira antecipada.', pdfUrl: '' },
+      { title: 'Vivendo de renda: o plano definitivo', description: 'Monte seu plano para viver de renda com segurança.', pdfUrl: '' },
     ],
   },
 ];
@@ -194,9 +194,13 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShow
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pl-9">
-                    <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setViewingPdf({ url: lesson.pdfUrl, title: lesson.title })}>
-                      <FileText size={12} /> Abrir Aula
-                    </Button>
+                    {lesson.pdfUrl ? (
+                      <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setViewingPdf({ url: lesson.pdfUrl, title: lesson.title })}>
+                        <FileText size={12} /> Abrir Aula
+                      </Button>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground italic">Em breve</span>
+                    )}
                     <Button variant={completed ? 'ghost' : 'default'} size="sm" className="h-7 text-[11px]" onClick={() => onToggleLesson(mod.id, i)}>
                       {completed ? 'Concluída ✓' : 'Concluir'}
                     </Button>
