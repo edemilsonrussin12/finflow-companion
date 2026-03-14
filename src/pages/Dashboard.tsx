@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import EmptyState from '@/components/EmptyState';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import AIInsights from '@/components/AIInsights';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 function getGreeting(firstName: string) {
   const h = new Date().getHours();
