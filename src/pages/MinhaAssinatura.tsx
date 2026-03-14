@@ -109,10 +109,7 @@ export default function MinhaAssinatura() {
     if (!user || !subscription) return;
     setCanceling(true);
     try {
-      const { error } = await supabase
-        .from('user_subscriptions')
-        .update({ is_premium: false, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
+      const { error } = await supabase.rpc('cancel_own_subscription', { _user_id: user.id });
       if (error) throw error;
       toast.success('Assinatura cancelada. Seu acesso Premium foi desativado.');
       await loadData();

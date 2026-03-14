@@ -619,6 +619,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_own_subscription: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
+      expire_subscription_if_needed: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -626,6 +634,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      referrer_code_exists: { Args: { _referrer_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
