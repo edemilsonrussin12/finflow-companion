@@ -38,6 +38,7 @@ export default function Orcamentos() {
   const location = useLocation();
   const navigate = useNavigate();
   const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
+  const { isPremium } = usePremiumStatus();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
