@@ -11,6 +11,11 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import { format } from 'date-fns';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import AskAssistantButton from '@/components/AskAssistantButton';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import PremiumGate from '@/components/PremiumGate';
+import { AlertTriangle } from 'lucide-react';
+
+const FREE_BUDGET_LIMIT = 3;
 
 export interface Budget {
   id: string;
@@ -33,6 +38,7 @@ export default function Orcamentos() {
   const location = useLocation();
   const navigate = useNavigate();
   const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
+  const { isPremium } = usePremiumStatus();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,8 +69,17 @@ export default function Orcamentos() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Count budgets this month
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthBudgetCount = budgets.filter(b => b.created_at?.startsWith(currentMonth)).length;
+  const reachedBudgetLimit = !isPremium && monthBudgetCount >= FREE_BUDGET_LIMIT;
+
   async function createBudget() {
     if (!user) return;
+    if (reachedBudgetLimit) {
+      toast({ variant: 'destructive', title: 'Limite atingido', description: `O plano gratuito permite até ${FREE_BUDGET_LIMIT} orçamentos por mês.` });
+      return;
+    }
     const { data, error } = await supabase
       .from('budgets')
       .insert({ user_id: user.id, client_name: '', service_description: '', notes: '' })
@@ -134,8 +149,15 @@ export default function Orcamentos() {
         </Button>
       </div>
 
+      {!isPremium && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 text-xs text-muted-foreground">
+          <AlertTriangle size={14} className="text-primary shrink-0" />
+          <span>{monthBudgetCount}/{FREE_BUDGET_LIMIT} orçamentos usados neste mês.{reachedBudgetLimit && ' Desbloqueie o Premium para orçamentos ilimitados.'}</span>
+        </div>
+      )}
+
       <div className="flex gap-2">
-        <Button onClick={createBudget} className="flex-1 gap-2">
+        <Button onClick={createBudget} className="flex-1 gap-2" disabled={reachedBudgetLimit}>
           <Plus size={16} /> Novo Orçamento
         </Button>
         <Select value={statusFilter} onValueChange={setStatusFilter}>

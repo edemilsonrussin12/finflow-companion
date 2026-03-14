@@ -5,6 +5,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { formatCurrency } from '@/lib/format';
 import { getCategoryById } from '@/lib/categories';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface AIInsight {
   text: string;
@@ -18,9 +19,13 @@ interface AIInsightsProps {
 export default function AIInsights({ page = 'dashboard' }: AIInsightsProps) {
   const { transactions, sales, selectedMonth } = useFinance();
   const { goals } = useGoals();
+  const { isPremium } = usePremiumStatus();
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
+
+  // AI insights are premium-only; free users see FinancialInsights instead
+  // (early return after all hooks)
 
   const financialData = useMemo(() => {
     const monthTx = transactions.filter(t => t.date.startsWith(selectedMonth));
@@ -92,6 +97,7 @@ export default function AIInsights({ page = 'dashboard' }: AIInsightsProps) {
     return () => clearTimeout(timer);
   }, [fetched, loading, financialData, page, transactions.length]);
 
+  if (!isPremium) return null;
   if (insights.length === 0 && !loading) return null;
 
   const iconMap = {

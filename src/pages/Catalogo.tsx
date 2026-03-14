@@ -14,8 +14,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import PremiumGate from '@/components/PremiumGate';
+import { AlertTriangle } from 'lucide-react';
 
 const CATEGORIES = ['Serviços', 'Produtos', 'Peças', 'Materiais'] as const;
+const FREE_CATALOG_LIMIT = 10;
 
 interface CatalogItem {
   id: string;
@@ -41,6 +45,7 @@ const emptyCatalogItem: Omit<CatalogItem, 'id' | 'created_at' | 'updated_at'> = 
 export default function Catalogo() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isPremium } = usePremiumStatus();
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -50,6 +55,8 @@ export default function Catalogo() {
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  const reachedCatalogLimit = !isPremium && items.length >= FREE_CATALOG_LIMIT;
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -66,6 +73,10 @@ export default function Catalogo() {
   useEffect(() => { load(); }, [load]);
 
   function openNew() {
+    if (reachedCatalogLimit) {
+      toast({ title: 'Limite atingido', description: `O plano gratuito permite até ${FREE_CATALOG_LIMIT} itens. Desbloqueie o Premium para itens ilimitados.` });
+      return;
+    }
     setEditItem({ ...emptyCatalogItem });
     setEditOpen(true);
   }
@@ -164,9 +175,16 @@ export default function Catalogo() {
         </p>
       </div>
 
-      <Button onClick={openNew} className="w-full gap-2">
+      <Button onClick={openNew} className="w-full gap-2" disabled={reachedCatalogLimit}>
         <Plus size={16} /> Novo Item
       </Button>
+
+      {!isPremium && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 text-xs text-muted-foreground">
+          <AlertTriangle size={14} className="text-primary shrink-0" />
+          <span>{items.length}/{FREE_CATALOG_LIMIT} itens usados.{reachedCatalogLimit && ' Limite atingido — desbloqueie o Premium para itens ilimitados.'}</span>
+        </div>
+      )}
 
       {/* Search & filter */}
       {items.length > 0 && (

@@ -3,7 +3,10 @@ import { X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { getCategoryById } from '@/lib/categories';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import ReactMarkdown from 'react-markdown';
+
+const FREE_DAILY_QUESTIONS = 5;
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -29,6 +32,24 @@ export default function AssistantChat({ open, onClose }: AssistantChatProps) {
 
   const { transactions, sales, selectedMonth } = useFinance();
   const { goals } = useGoals();
+  const { isPremium } = usePremiumStatus();
+
+  // Daily question limiter for free users
+  const getDailyCount = useCallback(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `fincontrol_chat_${today}`;
+    return parseInt(localStorage.getItem(key) || '0', 10);
+  }, []);
+
+  const incrementDailyCount = useCallback(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `fincontrol_chat_${today}`;
+    const current = parseInt(localStorage.getItem(key) || '0', 10);
+    localStorage.setItem(key, String(current + 1));
+  }, []);
+
+  const dailyCount = getDailyCount();
+  const reachedDailyLimit = !isPremium && dailyCount >= FREE_DAILY_QUESTIONS;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -99,6 +120,17 @@ export default function AssistantChat({ open, onClose }: AssistantChatProps) {
   const send = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg || isLoading) return;
+
+    if (!isPremium && getDailyCount() >= FREE_DAILY_QUESTIONS) {
+      setMessages(prev => [...prev,
+        { role: 'user', content: msg },
+        { role: 'assistant', content: `Você atingiu o limite de ${FREE_DAILY_QUESTIONS} perguntas diárias do plano gratuito. Desbloqueie o Premium para uso ilimitado do assistente.` },
+      ]);
+      setInput('');
+      return;
+    }
+
+    incrementDailyCount();
 
     const userMsg: Msg = { role: 'user', content: msg };
     setMessages(prev => [...prev, userMsg]);
@@ -290,10 +322,13 @@ export default function AssistantChat({ open, onClose }: AssistantChatProps) {
             ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Pergunte sobre finanças..."
+            placeholder={reachedDailyLimit ? 'Limite diário atingido' : 'Pergunte sobre finanças...'}
             className="flex-1 bg-muted/50 rounded-xl px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-            disabled={isLoading}
+            disabled={isLoading || reachedDailyLimit}
           />
+          {!isPremium && (
+            <span className="text-[9px] text-muted-foreground shrink-0">{getDailyCount()}/{FREE_DAILY_QUESTIONS}</span>
+          )}
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
