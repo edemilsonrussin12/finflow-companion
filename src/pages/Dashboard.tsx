@@ -15,6 +15,13 @@ import { useNavigate } from 'react-router-dom';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
 
+function getGreeting(firstName: string) {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return { greeting: `Bom dia, ${firstName}`, subtitle: 'Vamos organizar suas finanças hoje.' };
+  if (h >= 12 && h < 18) return { greeting: `Boa tarde, ${firstName}`, subtitle: 'Confira como estão suas finanças.' };
+  return { greeting: `Boa noite, ${firstName}`, subtitle: 'Veja o resumo financeiro do seu dia.' };
+}
+
 export default function Dashboard() {
   const { transactions, sales, selectedMonth, setSelectedMonth, availableMonths } = useFinance();
   const { goals } = useGoals();
@@ -22,8 +29,22 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { recheck: recheckPremium } = usePremiumStatus();
   const [recentBudgets, setRecentBudgets] = useState<any[]>([]);
+  const [displayName, setDisplayName] = useState('');
 
   useEffect(() => { recheckPremium(); }, [recheckPremium]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const name = data?.display_name || user.email?.split('@')[0] || '';
+        setDisplayName(name.split(' ')[0]);
+      });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
