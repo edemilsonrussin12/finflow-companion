@@ -80,10 +80,10 @@ const modules: Module[] = [
     icon: Shield,
     section: 'Construção de Patrimônio',
     lessons: [
-      { title: 'O poder dos juros compostos', description: 'Veja como o tempo multiplica seu dinheiro.', pdfUrl: '/content/modules/modulo4-aula1.pdf' },
-      { title: 'Ativos vs passivos', description: 'Diferencie o que gera e o que consome riqueza.', pdfUrl: '/content/modules/modulo4-aula2.pdf' },
-      { title: 'Estratégias de acumulação', description: 'Métodos comprovados para acumular patrimônio.', pdfUrl: '/content/modules/modulo4-aula3.pdf' },
-      { title: 'Planejamento patrimonial', description: 'Organize e proteja seu patrimônio a longo prazo.', pdfUrl: '/content/modules/modulo4-aula4.pdf' },
+      { title: 'O poder dos juros compostos', description: 'Veja como o tempo multiplica seu dinheiro.', pdfUrl: '' },
+      { title: 'Ativos vs passivos', description: 'Diferencie o que gera e o que consome riqueza.', pdfUrl: '' },
+      { title: 'Estratégias de acumulação', description: 'Métodos comprovados para acumular patrimônio.', pdfUrl: '' },
+      { title: 'Planejamento patrimonial', description: 'Organize e proteja seu patrimônio a longo prazo.', pdfUrl: '' },
     ],
   },
   {
