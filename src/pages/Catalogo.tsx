@@ -45,6 +45,7 @@ const emptyCatalogItem: Omit<CatalogItem, 'id' | 'created_at' | 'updated_at'> = 
 export default function Catalogo() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isPremium } = usePremiumStatus();
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -54,6 +55,8 @@ export default function Catalogo() {
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  const reachedCatalogLimit = !isPremium && items.length >= FREE_CATALOG_LIMIT;
 
   const load = useCallback(async () => {
     if (!user) return;
