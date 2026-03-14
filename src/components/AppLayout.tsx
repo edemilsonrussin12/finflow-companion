@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import BottomNav from '@/components/BottomNav';
 import FloatingActionButton from '@/components/FloatingActionButton';
+import SupportFAB from '@/components/SupportFAB';
 import InstallPWA from '@/components/InstallPWA';
 import TransactionForm from '@/components/TransactionForm';
 import PremiumPlansDialog from '@/components/PremiumPlansDialog';
@@ -86,6 +87,7 @@ export default function AppLayout() {
       <TrialBanner trial={trial} />
       <Outlet />
       <FloatingActionButton onClick={handleFabClick} />
+      <SupportFAB />
       <BottomNav />
       {formType && (
         <TransactionForm

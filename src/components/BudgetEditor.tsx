@@ -252,9 +252,9 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     const lightGray: [number, number, number] = [220, 220, 220];
     const bp = bizProfile;
 
-    // Header line - neutral dark
-    doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.setLineWidth(2.5);
+    // Header line - neutral dark black
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(2);
     doc.line(0, 0, pw, 0);
 
     let headerY = 14;
@@ -265,7 +265,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
     const headerName = bp?.business_name || 'FinControl';
     doc.setFontSize(bp?.business_name ? 16 : 20);
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
     doc.text(headerName, logoEndX, headerY + 4);
 

@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Cadastro() {
@@ -14,14 +14,20 @@ export default function Cadastro() {
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get('ref');
   const utmSource = searchParams.get('utm_source');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // After signup + auth, create referral record and save signup source
+  // After signup + auth, save profile name, referral and signup source
   useEffect(() => {
     if (!user) return;
+    if (fullName.trim()) {
+      supabase.from('profiles').update({ display_name: fullName.trim() } as any).eq('id', user.id).then(() => {});
+    }
     if (refCode) createReferralRecord(user.id, refCode);
     if (utmSource) saveSignupSource(user.id, utmSource);
   }, [user, refCode, utmSource]);
@@ -64,6 +70,10 @@ export default function Cadastro() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fullName.trim()) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Informe seu nome completo' });
+      return;
+    }
     setSubmitting(true);
     const result = await signup(email, password, confirm);
     if (!result.success) {
@@ -89,16 +99,30 @@ export default function Cadastro() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <Label htmlFor="fullName">Nome completo</Label>
+            <Input id="fullName" type="text" placeholder="Seu nome completo" value={fullName} onChange={e => setFullName(e.target.value)} className="mt-1" required />
+          </div>
+          <div>
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" required />
           </div>
           <div>
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} className="mt-1" required />
+            <div className="relative mt-1">
+              <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} className="pr-10" required />
+              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <div>
             <Label htmlFor="confirm">Confirmar senha</Label>
-            <Input id="confirm" type="password" placeholder="Repita a senha" value={confirm} onChange={e => setConfirm(e.target.value)} className="mt-1" required />
+            <div className="relative mt-1">
+              <Input id="confirm" type={showConfirm ? 'text' : 'password'} placeholder="Repita a senha" value={confirm} onChange={e => setConfirm(e.target.value)} className="pr-10" required />
+              <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold" disabled={submitting}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar conta'}
