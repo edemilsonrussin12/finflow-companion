@@ -16,12 +16,10 @@ const mainTabs = [
 ];
 
 const moreTabs = [
-  { path: '/engenharia', icon: Sparkles, label: 'Engenharia da Riqueza' },
   { path: '/conquistas', icon: Trophy, label: 'Conquistas' },
   { path: '/convites', icon: Gift, label: 'Indicações' },
-  { path: '/configuracoes', icon: Settings, label: 'Configurações' },
   { path: '/minha-assinatura', icon: Crown, label: 'Minha Assinatura' },
-  { path: '/suporte', icon: Headphones, label: 'Suporte' },
+  { path: '/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 
 const adminTab = { path: '/admin', icon: Shield, label: 'Painel Admin' };

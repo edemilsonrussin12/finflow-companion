@@ -87,6 +87,7 @@ export default function AppLayout() {
       <TrialBanner trial={trial} />
       <Outlet />
       <FloatingActionButton onClick={handleFabClick} />
+      <SupportFAB />
       <BottomNav />
       {formType && (
         <TransactionForm

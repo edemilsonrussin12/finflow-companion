@@ -265,7 +265,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
 
     const headerName = bp?.business_name || 'FinControl';
     doc.setFontSize(bp?.business_name ? 16 : 20);
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
     doc.text(headerName, logoEndX, headerY + 4);
 
