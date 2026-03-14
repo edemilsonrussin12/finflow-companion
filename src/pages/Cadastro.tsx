@@ -22,9 +22,12 @@ export default function Cadastro() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // After signup + auth, create referral record and save signup source
+  // After signup + auth, save profile name, referral and signup source
   useEffect(() => {
     if (!user) return;
+    if (fullName.trim()) {
+      supabase.from('profiles').update({ display_name: fullName.trim() } as any).eq('id', user.id).then(() => {});
+    }
     if (refCode) createReferralRecord(user.id, refCode);
     if (utmSource) saveSignupSource(user.id, utmSource);
   }, [user, refCode, utmSource]);
