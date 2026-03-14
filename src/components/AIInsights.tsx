@@ -97,6 +97,7 @@ export default function AIInsights({ page = 'dashboard' }: AIInsightsProps) {
     return () => clearTimeout(timer);
   }, [fetched, loading, financialData, page, transactions.length]);
 
+  if (!isPremium) return null;
   if (insights.length === 0 && !loading) return null;
 
   const iconMap = {

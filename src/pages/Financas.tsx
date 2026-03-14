@@ -148,70 +148,71 @@ export default function Financas() {
         </p>
       </div>
 
-      {/* Evolution chart */}
-      {hasEvolutionData && (
-        <div className="glass rounded-2xl p-5">
-          <p className="text-sm font-medium mb-3">Evolução (últimos 6 meses)</p>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={evolutionData} barGap={2} barSize={12}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={45}
-                  tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
-                <Tooltip
-                  formatter={(value: number, name: string) => [formatCurrency(value), name.charAt(0).toUpperCase() + name.slice(1)]}
-                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))', fontSize: 12 }}
-                />
-                <Bar dataKey="receitas" fill="hsl(153, 60%, 50%)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="despesas" fill="hsl(0, 70%, 55%)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="investimentos" fill="hsl(200, 70%, 55%)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-center gap-4 mt-2">
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(153, 60%, 50%)' }} /> Receitas
-            </span>
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(0, 70%, 55%)' }} /> Despesas
-            </span>
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(200, 70%, 55%)' }} /> Investimentos
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Category chart */}
-      {categoryData.length > 0 && (
-        <div className="glass rounded-2xl p-5">
-          <p className="text-sm font-medium mb-3">Despesas por categoria</p>
-          <div className="h-40">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={3} dataKey="value">
-                  {categoryData.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {categoryData.map((d, i) => (
-              <span key={d.name} className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                {d.name}
+      {/* Evolution chart + Category chart — Premium */}
+      <PremiumGate isPremium={isPremium} label="Gráficos avançados, comparações entre meses e histórico completo são recursos Premium.">
+        {hasEvolutionData && (
+          <div className="glass rounded-2xl p-5">
+            <p className="text-sm font-medium mb-3">Evolução (últimos 6 meses)</p>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={evolutionData} barGap={2} barSize={12}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={45}
+                    tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [formatCurrency(value), name.charAt(0).toUpperCase() + name.slice(1)]}
+                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))', fontSize: 12 }}
+                  />
+                  <Bar dataKey="receitas" fill="hsl(153, 60%, 50%)" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="despesas" fill="hsl(0, 70%, 55%)" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="investimentos" fill="hsl(200, 70%, 55%)" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-4 mt-2">
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(153, 60%, 50%)' }} /> Receitas
               </span>
-            ))}
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(0, 70%, 55%)' }} /> Despesas
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <span className="w-2 h-2 rounded-full" style={{ background: 'hsl(200, 70%, 55%)' }} /> Investimentos
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {categoryData.length > 0 && (
+          <div className="glass rounded-2xl p-5 mt-5">
+            <p className="text-sm font-medium mb-3">Despesas por categoria</p>
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={categoryData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={3} dataKey="value">
+                    {categoryData.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {categoryData.map((d, i) => (
+                <span key={d.name} className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                  {d.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </PremiumGate>
 
       {/* Quick links */}
       <div className="space-y-2">
