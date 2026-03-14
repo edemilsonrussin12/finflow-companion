@@ -13,6 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from 'recharts';
 import AIInsights from '@/components/AIInsights';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 const CHART_COLORS = [
   'hsl(153, 60%, 50%)', 'hsl(200, 70%, 55%)', 'hsl(280, 60%, 60%)',
