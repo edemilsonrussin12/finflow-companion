@@ -95,6 +95,9 @@ export default function AppLayout() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem disabled className="text-xs text-muted-foreground truncate">
+              {userName || user?.email?.split('@')[0] || '—'}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled className="text-[10px] text-muted-foreground truncate">
               {user?.email ?? '—'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
