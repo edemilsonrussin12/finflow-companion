@@ -34,7 +34,6 @@ async function verifyAdmin(req: Request) {
     return null;
   }
 
-  // Check admin role from user_roles table
   const { data: roleRow, error: roleError } = await supabaseAdmin
     .from('user_roles')
     .select('role')
@@ -129,7 +128,7 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
-      await addLog(admin, supabaseAdmin, 'premium_activated', user_id, profile?.email, `Plan: ${plan_type || 'monthly'}, Days: ${days || (plan_type === 'annual' ? 365 : 30)}`);
+      await addLog(admin, supabaseAdmin, 'premium_activated', user_id, profile?.email, `Plan: ${plan_type || 'monthly'}, Days: ${days || (plan_type === 'annual' ? 365 : 30)}, Origin: admin_grant`);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -278,6 +277,31 @@ Deno.serve(async (req) => {
 
       const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', referrer_id).single();
       await addLog(admin, supabaseAdmin, 'referral_reward_granted', referrer_id, profile?.email, `+${days} days premium via referral`);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ─── UPDATE USER NAME (admin only) ───
+    if (action === 'update_name') {
+      const { user_id, display_name } = params;
+      if (!user_id || typeof display_name !== 'string') {
+        return new Response(JSON.stringify({ error: 'user_id and display_name required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error } = await supabaseAdmin
+        .from('profiles')
+        .update({ display_name: display_name.trim() })
+        .eq('id', user_id);
+
+      if (error) throw error;
+
+      const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
+      await addLog(admin, supabaseAdmin, 'user_name_updated', user_id, profile?.email, `Name changed to: ${display_name.trim()}`);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
