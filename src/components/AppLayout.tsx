@@ -37,11 +37,19 @@ export default function AppLayout() {
   const [showPlans, setShowPlans] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
+  const [userName, setUserName] = useState('');
   const { addTransaction, transactions } = useFinance();
   const { user, logout } = useAuth();
   const { isPremium, trial } = usePremiumStatus();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Load display name
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
+      .then(({ data }) => setUserName(data?.display_name || ''));
+  }, [user]);
 
   const currentMonthCount = useMemo(() => {
     const month = getCurrentMonth();
