@@ -10,7 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Shield, Users, Crown, DollarSign, TrendingUp, BarChart3, RefreshCw, Loader2,
   Search, ArrowUpRight, Clock, XCircle, CheckCircle2, Sparkles, AlertTriangle,
-  CreditCard, ScrollText, Activity, Gift, UserCheck, ChevronLeft, ChevronRight
+  CreditCard, ScrollText, Activity, Gift, UserCheck, ChevronLeft, ChevronRight,
+  Pencil
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -27,6 +28,9 @@ interface Sub {
   plan_type: string | null;
   premium_started_at: string | null;
   premium_expires_at: string | null;
+  trial_start_at: string | null;
+  trial_end_at: string | null;
+  trial_used: boolean;
   mercadopago_payment_id: string | null;
   created_at: string;
   updated_at: string;
@@ -77,6 +81,24 @@ const COLORS = ['hsl(var(--primary))', 'hsl(153,60%,50%)', 'hsl(45,93%,58%)', 'h
 const CHART_STYLE = { background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
 const ADMIN_PAGE_SIZE = 20;
 
+function getPremiumOrigin(sub: Sub | undefined, payments: PaymentRow[]): { label: string; color: string } {
+  if (!sub) return { label: 'Free', color: 'text-muted-foreground' };
+  if (!sub.is_premium && !sub.premium_started_at) return { label: 'Free', color: 'text-muted-foreground' };
+
+  // Check if there's an approved payment for this user
+  const hasPayment = payments.some(p => p.user_id === sub.user_id && p.status === 'approved');
+
+  if (sub.plan_type === 'trial') return { label: 'Teste grátis', color: 'text-yellow-400' };
+  if (hasPayment || sub.mercadopago_payment_id) return { label: 'Pagamento', color: 'text-emerald-400' };
+  return { label: 'Manual', color: 'text-primary' };
+}
+
+function getDisplayName(profile: Profile): string {
+  if (profile.display_name && profile.display_name.trim()) return profile.display_name;
+  if (profile.email) return profile.email.split('@')[0];
+  return '—';
+}
+
 export default function Admin() {
   const [subs, setSubs] = useState<Sub[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -105,6 +127,10 @@ export default function Admin() {
   // Dialog
   const [dialog, setDialog] = useState<{ type: string; userId: string; email: string } | null>(null);
   const [dialogDays, setDialogDays] = useState(7);
+
+  // Name edit dialog
+  const [nameDialog, setNameDialog] = useState<{ userId: string; currentName: string; email: string } | null>(null);
+  const [editName, setEditName] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -176,6 +202,22 @@ export default function Admin() {
       await load();
     }
     setActionLoading(null);
+  };
+
+  const handleUpdateName = async () => {
+    if (!nameDialog || !editName.trim()) return;
+    setActionLoading(`name-${nameDialog.userId}`);
+    const { error } = await supabase.functions.invoke('admin-subscriptions', {
+      body: { action: 'update_name', user_id: nameDialog.userId, display_name: editName.trim() },
+    });
+    if (error) {
+      toast.error('Erro ao atualizar nome');
+    } else {
+      toast.success('Nome atualizado com sucesso');
+      await load();
+    }
+    setActionLoading(null);
+    setNameDialog(null);
   };
 
   const getEmail = (userId: string) => profiles.find(p => p.id === userId)?.email || '—';
@@ -256,7 +298,12 @@ export default function Admin() {
   const filteredUsers = useMemo(() => {
     const now = new Date();
     return profiles.filter(p => {
-      if (userSearch && !p.email?.toLowerCase().includes(userSearch.toLowerCase())) return false;
+      if (userSearch) {
+        const q = userSearch.toLowerCase();
+        const matchEmail = p.email?.toLowerCase().includes(q);
+        const matchName = p.display_name?.toLowerCase().includes(q);
+        if (!matchEmail && !matchName) return false;
+      }
       const sub = subs.find(s => s.user_id === p.id);
       const isActive = sub?.is_premium && (!sub.premium_expires_at || new Date(sub.premium_expires_at) > now);
       switch (userFilter) {
@@ -264,6 +311,7 @@ export default function Admin() {
         case 'premium': return isActive;
         case 'monthly': return isActive && sub?.plan_type === 'monthly';
         case 'annual': return isActive && sub?.plan_type === 'annual';
+        case 'trial': return sub?.plan_type === 'trial';
         case 'expired': return sub?.premium_expires_at && new Date(sub.premium_expires_at) < now;
         case 'canceled': return sub && !sub.is_premium && sub.premium_started_at;
         default: return true;
@@ -514,7 +562,7 @@ export default function Admin() {
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por email..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="Buscar por nome ou email..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={userFilter} onValueChange={setUserFilter}>
               <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
@@ -524,6 +572,7 @@ export default function Admin() {
                 <SelectItem value="premium">Premium</SelectItem>
                 <SelectItem value="monthly">Mensal</SelectItem>
                 <SelectItem value="annual">Anual</SelectItem>
+                <SelectItem value="trial">Trial</SelectItem>
                 <SelectItem value="expired">Expirado</SelectItem>
                 <SelectItem value="canceled">Cancelado</SelectItem>
               </SelectContent>
@@ -535,26 +584,46 @@ export default function Admin() {
               const sub = subs.find(s => s.user_id === p.id);
               const now = new Date();
               const isActive = sub?.is_premium && (!sub.premium_expires_at || new Date(sub.premium_expires_at) > now);
-              const planLabel = !sub || !sub.is_premium ? 'Free' : sub.plan_type === 'annual' ? 'Anual' : 'Mensal';
+              const planLabel = !sub || !sub.is_premium ? 'Free' : sub.plan_type === 'annual' ? 'Anual' : sub.plan_type === 'trial' ? 'Trial' : 'Mensal';
               const statusLabel = isActive ? 'Ativo' : sub?.premium_started_at ? 'Expirado' : 'Free';
+              const origin = getPremiumOrigin(sub, payments);
+              const userName = getDisplayName(p);
 
               return (
                 <Card key={p.id} className="border-border/50">
                   <CardContent className="py-3 px-4">
-                    <div className="flex items-center justify-between mb-2">
+                    {/* Name + Email + Badges */}
+                    <div className="flex items-start justify-between mb-1.5">
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-foreground truncate">{p.email || '—'}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono truncate">{p.id.slice(0, 12)}...</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-semibold text-foreground truncate">{userName}</p>
+                          <button
+                            onClick={() => { setNameDialog({ userId: p.id, currentName: p.display_name || '', email: p.email || '—' }); setEditName(p.display_name || ''); }}
+                            className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                            title="Editar nome"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground truncate">{p.email || '—'}</p>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <Badge variant={isActive ? 'default' : 'secondary'} className="text-[10px]">{planLabel}</Badge>
                         <Badge variant={statusLabel === 'Ativo' ? 'default' : statusLabel === 'Expirado' ? 'destructive' : 'secondary'} className="text-[10px]">{statusLabel}</Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
-                      <span>Cadastro: {p.created_at ? format(new Date(p.created_at), 'dd/MM/yy') : '—'}</span>
-                      {sub?.premium_expires_at && <span>· Expira: {format(new Date(sub.premium_expires_at), 'dd/MM/yy')}</span>}
+
+                    {/* Details row */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground mb-2">
+                      <span>📅 Cadastro: {p.created_at ? format(new Date(p.created_at), 'dd/MM/yy') : '—'}</span>
+                      {sub?.premium_started_at && <span>🟢 Início: {format(new Date(sub.premium_started_at), 'dd/MM/yy')}</span>}
+                      {sub?.premium_expires_at && <span>⏰ Expira: {format(new Date(sub.premium_expires_at), 'dd/MM/yy HH:mm')}</span>}
+                      {(sub?.is_premium || sub?.premium_started_at) && (
+                        <span className={origin.color}>🏷️ {origin.label}</span>
+                      )}
                     </div>
+
+                    {/* Actions */}
                     <div className="flex flex-wrap gap-1">
                       {!isActive && (
                         <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setDialog({ type: 'activate', userId: p.id, email: p.email || '—' })}>
@@ -654,33 +723,43 @@ export default function Admin() {
 
           <h3 className="text-sm font-semibold text-foreground">Assinaturas Ativas</h3>
           <div className="space-y-2">
-            {subsP.paged.map(s => (
-              <Card key={s.user_id} className="border-border/50">
-                <CardContent className="py-3 px-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-foreground truncate">{getEmail(s.user_id)}</span>
-                    <Badge variant="default" className="text-[10px]">{s.plan_type === 'annual' ? 'Anual' : 'Mensal'}</Badge>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground flex gap-3">
-                    {s.premium_started_at && <span>Início: {format(new Date(s.premium_started_at), 'dd/MM/yy')}</span>}
-                    {s.premium_expires_at && <span>Expira: {format(new Date(s.premium_expires_at), 'dd/MM/yy')}</span>}
-                  </div>
-                  <div className="flex gap-1 mt-2">
-                    <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setDialog({ type: 'extend', userId: s.user_id, email: getEmail(s.user_id) })}>
-                      Estender
-                    </Button>
-                    <Button size="sm" variant="outline" className="h-7 text-[10px] text-destructive" onClick={() => setDialog({ type: 'expire', userId: s.user_id, email: getEmail(s.user_id) })}>
-                      Cancelar
-                    </Button>
-                    {s.plan_type === 'monthly' && (
-                      <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleAction('convert_annual', s.user_id)}>
-                        → Anual
+            {subsP.paged.map(s => {
+              const profile = profiles.find(p => p.id === s.user_id);
+              const origin = getPremiumOrigin(s, payments);
+              return (
+                <Card key={s.user_id} className="border-border/50">
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="min-w-0">
+                        <span className="text-xs font-medium text-foreground truncate block">{profile ? getDisplayName(profile) : '—'}</span>
+                        <span className="text-[10px] text-muted-foreground truncate block">{getEmail(s.user_id)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="default" className="text-[10px]">{s.plan_type === 'annual' ? 'Anual' : s.plan_type === 'trial' ? 'Trial' : 'Mensal'}</Badge>
+                        <Badge variant="outline" className={`text-[10px] ${origin.color}`}>{origin.label}</Badge>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground flex gap-3">
+                      {s.premium_started_at && <span>Início: {format(new Date(s.premium_started_at), 'dd/MM/yy')}</span>}
+                      {s.premium_expires_at && <span>Expira: {format(new Date(s.premium_expires_at), 'dd/MM/yy HH:mm')}</span>}
+                    </div>
+                    <div className="flex gap-1 mt-2">
+                      <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setDialog({ type: 'extend', userId: s.user_id, email: getEmail(s.user_id) })}>
+                        Estender
                       </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] text-destructive" onClick={() => setDialog({ type: 'expire', userId: s.user_id, email: getEmail(s.user_id) })}>
+                        Cancelar
+                      </Button>
+                      {s.plan_type === 'monthly' && (
+                        <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleAction('convert_annual', s.user_id)}>
+                          → Anual
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
           <PaginationControls page={subsPage} totalPages={subsP.totalPages} setPage={setSubsPage} total={activeSubs.length} />
         </TabsContent>
@@ -767,9 +846,6 @@ export default function Admin() {
             const sourceLabels: Record<string, string> = {
               tiktok: 'TikTok', instagram: 'Instagram', ads: 'Ads', organic: 'Orgânico', unknown: 'Desconhecido',
             };
-            const acqProfiles = profiles
-              .filter(p => p.signup_source && p.signup_source !== 'organic')
-              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             const allSorted = [...profiles].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             return (
@@ -796,6 +872,7 @@ export default function Admin() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="bg-muted/30">
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Nome</th>
                           <th className="text-left px-3 py-2 font-medium text-muted-foreground">Email</th>
                           <th className="text-left px-3 py-2 font-medium text-muted-foreground">Data</th>
                           <th className="text-left px-3 py-2 font-medium text-muted-foreground">Fonte</th>
@@ -804,7 +881,8 @@ export default function Admin() {
                       <tbody>
                         {allSorted.slice(0, 50).map(p => (
                           <tr key={p.id} className="border-t border-border/50">
-                            <td className="px-3 py-2 text-foreground">{p.email || '—'}</td>
+                            <td className="px-3 py-2 text-foreground">{getDisplayName(p)}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{p.email || '—'}</td>
                             <td className="px-3 py-2 text-muted-foreground">{p.created_at ? format(new Date(p.created_at), 'dd/MM/yy') : '—'}</td>
                             <td className="px-3 py-2">
                               <Badge variant="outline" className={`text-[10px] ${sourceColors[p.signup_source || 'organic']}`}>
@@ -905,6 +983,36 @@ export default function Admin() {
             >
               {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Name Edit Dialog ─── */}
+      <Dialog open={!!nameDialog} onOpenChange={() => setNameDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Nome do Usuário</DialogTitle>
+            <DialogDescription>{nameDialog?.email}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Nome completo</label>
+              <Input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                placeholder="Nome completo do usuário"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNameDialog(null)}>Cancelar</Button>
+            <Button
+              disabled={!!actionLoading || !editName.trim()}
+              onClick={handleUpdateName}
+            >
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>

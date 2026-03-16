@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import {
   Loader2, Save, Upload, Building2, Trash2,
-  Trophy, Gift, Crown, Settings, Shield, ChevronRight,
+  Trophy, Gift, Crown, Settings, Shield, ChevronRight, UserCircle,
 } from 'lucide-react';
 import SignaturePad from '@/components/SignaturePad';
 
@@ -44,28 +44,36 @@ export default function PerfilProfissional() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [exists, setExists] = useState(false);
 
+  // User display name
+  const [displayName, setDisplayName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+
   const allMenuItems = isAdmin ? [...menuItems, adminItem] : menuItems;
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('business_profile')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
 
-    if (data) {
+    // Load business profile and display name in parallel
+    const [bizRes, profileRes] = await Promise.all([
+      supabase.from('business_profile').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle(),
+    ]);
+
+    if (bizRes.data) {
+      const data = bizRes.data as any;
       setProfile({
-        business_name: (data as any).business_name ?? '',
-        phone: (data as any).phone ?? '',
-        email: (data as any).email ?? '',
-        address: (data as any).address ?? '',
-        logo_url: (data as any).logo_url ?? '',
-        signature_url: (data as any).signature_url ?? '',
+        business_name: data.business_name ?? '',
+        phone: data.phone ?? '',
+        email: data.email ?? '',
+        address: data.address ?? '',
+        logo_url: data.logo_url ?? '',
+        signature_url: data.signature_url ?? '',
       });
       setExists(true);
     }
+
+    setDisplayName(profileRes.data?.display_name || '');
     setLoading(false);
   }, [user]);
 
@@ -73,6 +81,22 @@ export default function PerfilProfissional() {
 
   function update(field: keyof BusinessProfile, value: string) {
     setProfile(p => ({ ...p, [field]: value }));
+  }
+
+  async function saveDisplayName() {
+    if (!user || !displayName.trim()) return;
+    setSavingName(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: displayName.trim() })
+      .eq('id', user.id);
+
+    setSavingName(false);
+    if (error) {
+      toast({ title: 'Erro ao salvar nome', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Nome atualizado!' });
+    }
   }
 
   async function uploadLogo(e: React.ChangeEvent<HTMLInputElement>) {
@@ -185,6 +209,36 @@ export default function PerfilProfissional() {
             <ChevronRight size={16} className="text-muted-foreground shrink-0" />
           </button>
         ))}
+      </div>
+
+      {/* Display Name Section */}
+      <div className="glass rounded-2xl p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <UserCircle size={20} className="text-primary" />
+          <div>
+            <label className="text-xs font-medium text-foreground">Seu nome</label>
+            <p className="text-[10px] text-muted-foreground">Exibido no dashboard e em todo o app</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={displayName}
+            onChange={e => setDisplayName(e.target.value)}
+            placeholder="Ex: João da Silva"
+            className="flex-1"
+          />
+          <Button
+            size="sm"
+            onClick={saveDisplayName}
+            disabled={savingName || !displayName.trim()}
+            className="shrink-0"
+          >
+            {savingName ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          </Button>
+        </div>
+        {!displayName.trim() && (
+          <p className="text-[10px] text-yellow-500">⚠️ Adicione seu nome para uma experiência personalizada</p>
+        )}
       </div>
 
       {/* Business Profile Header */}

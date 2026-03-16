@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { supabase } from '@/integrations/supabase/client';
 
 const FREE_MONTHLY_LIMIT = 50;
 
@@ -36,11 +37,19 @@ export default function AppLayout() {
   const [showPlans, setShowPlans] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
+  const [userName, setUserName] = useState('');
   const { addTransaction, transactions } = useFinance();
   const { user, logout } = useAuth();
   const { isPremium, trial } = usePremiumStatus();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Load display name
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
+      .then(({ data }) => setUserName(data?.display_name || ''));
+  }, [user]);
 
   const currentMonthCount = useMemo(() => {
     const month = getCurrentMonth();
@@ -86,6 +95,9 @@ export default function AppLayout() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem disabled className="text-xs text-muted-foreground truncate">
+              {userName || user?.email?.split('@')[0] || '—'}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled className="text-[10px] text-muted-foreground truncate">
               {user?.email ?? '—'}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive gap-2">
