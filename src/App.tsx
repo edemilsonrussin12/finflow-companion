@@ -90,6 +90,7 @@ const App = () => (
                   <Route path="/configuracoes" element={<Configuracoes />} />
                   <Route path="/perfil-profissional" element={<PerfilProfissional />} />
                   <Route path="/catalogo" element={<Catalogo />} />
+                  <Route path="/simulador-independencia" element={<SimuladorIndependencia />} />
 
                   {/* Admin routes */}
                   <Route element={<AdminRoute />}>
