@@ -89,15 +89,15 @@ const modules: Module[] = [
   {
     id: 5,
     title: 'Independência Financeira',
-    description: 'O caminho completo para alcançar sua liberdade financeira.',
+    description: 'Transforme patrimônio em liberdade financeira com estratégias de renda passiva e planejamento FIRE.',
     status: 'premium',
     icon: Rocket,
     section: 'Evolução e Projeções',
     lessons: [
-      { title: 'Calculando seu número de independência', description: 'Descubra quanto precisa para viver de renda.', pdfUrl: '' },
-      { title: 'Fontes de renda passiva', description: 'Explore diferentes fontes de renda passiva.', pdfUrl: '' },
-      { title: 'Estratégias FIRE', description: 'Conheça o movimento de independência financeira antecipada.', pdfUrl: '' },
-      { title: 'Vivendo de renda: o plano definitivo', description: 'Monte seu plano para viver de renda com segurança.', pdfUrl: '' },
+      { title: 'Calculando seu Número de Independência', description: 'Descubra quanto você precisa acumular para viver de renda.', pdfUrl: '/cursos/modulo5/aula-01-numero-independencia.pdf' },
+      { title: 'Fontes de Renda Passiva', description: 'Explore diferentes fontes de renda passiva e como construí-las.', pdfUrl: '/cursos/modulo5/aula-02-renda-passiva.pdf' },
+      { title: 'Estratégias FIRE', description: 'Conheça o movimento de independência financeira antecipada.', pdfUrl: '/cursos/modulo5/aula-03-estrategia-fire.pdf' },
+      { title: 'Vivendo de Renda', description: 'Monte seu plano definitivo para viver de renda com segurança.', pdfUrl: '/cursos/modulo5/aula-04-viver-de-renda.pdf' },
     ],
   },
 ];
