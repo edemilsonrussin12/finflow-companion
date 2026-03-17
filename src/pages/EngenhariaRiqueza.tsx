@@ -144,10 +144,10 @@ function getModuleLockReason(progress: LessonProgress, mod: Module, allModules: 
   return 'none';
 }
 
-function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShowPlans }: {
+function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShowPlans, onOpenSimulator }: {
   mod: Module; progress: LessonProgress;
   onToggleLesson: (moduleId: number, lessonIndex: number) => void;
-  onBack: () => void; isPremium: boolean; onShowPlans: () => void;
+  onBack: () => void; isPremium: boolean; onShowPlans: () => void; onOpenSimulator: () => void;
 }) {
   const lessonStates = progress[mod.id] || [];
   const percent = getModuleLessonPercent(progress, mod);
