@@ -11,10 +11,12 @@ interface PdfViewerProps {
 export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [useIframe, setUseIframe] = useState(false);
 
   // Build absolute URL
   const absoluteUrl = url.startsWith('http') ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+
+  // Use Google Docs Viewer for reliable cross-browser/mobile PDF rendering
+  const viewerUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(absoluteUrl)}`;
 
   const openInNewTab = () => {
     window.open(absoluteUrl, '_blank', 'noopener,noreferrer');
@@ -27,25 +29,16 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
     a.click();
   };
 
-  // Auto-timeout: if hasn't loaded in 6s, try iframe fallback or show error
+  // Auto-timeout
   useEffect(() => {
     const timer = setTimeout(() => {
       if (loading) {
-        if (!useIframe) {
-          // Try iframe as fallback
-          setUseIframe(true);
-          setLoading(true);
-        } else {
-          setLoadError(true);
-          setLoading(false);
-        }
+        setLoadError(true);
+        setLoading(false);
       }
-    }, 6000);
+    }, 12000);
     return () => clearTimeout(timer);
-  }, [loading, useIframe]);
-
-  // Google Docs Viewer URL for reliable rendering
-  const googleViewerUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(absoluteUrl)}`;
+  }, [loading]);
 
   return (
     <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col animate-fade-in">
@@ -88,36 +81,23 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
                 <Download className="h-4 w-4" />
                 Baixar PDF
               </Button>
-              <Button variant="ghost" onClick={() => { setLoadError(false); setUseIframe(false); setLoading(true); }} className="gap-2 w-full">
+              <Button variant="ghost" onClick={() => { setLoadError(false); setLoading(true); }} className="gap-2 w-full">
                 Tentar novamente
               </Button>
             </div>
           </div>
         ) : (
           <div className="min-h-full flex justify-center p-2">
-            {useIframe ? (
-              <iframe
-                src={googleViewerUrl}
-                className="w-full max-w-3xl rounded-lg border border-border bg-white"
-                style={{ height: '100vh', minHeight: '600px' }}
-                title={title}
-                onLoad={() => setLoading(false)}
-                onError={() => { setLoadError(true); setLoading(false); }}
-              />
-            ) : (
-              <object
-                data={`${absoluteUrl}#toolbar=1&navpanes=0&view=FitH`}
-                type="application/pdf"
-                className="w-full max-w-3xl rounded-lg border border-border bg-white"
-                style={{ height: '100vh', minHeight: '600px' }}
-                onLoad={() => setLoading(false)}
-              >
-                {/* Fallback: will auto-trigger iframe fallback via timeout */}
-                <div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
-                  <p className="text-sm text-muted-foreground">Carregando...</p>
-                </div>
-              </object>
-            )}
+            <iframe
+              src={viewerUrl}
+              className="w-full max-w-3xl rounded-lg border border-border bg-white"
+              style={{ height: '100vh', minHeight: '600px' }}
+              title={title}
+              onLoad={() => setLoading(false)}
+              onError={() => { setLoadError(true); setLoading(false); }}
+              allow="autoplay"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+            />
           </div>
         )}
       </div>
