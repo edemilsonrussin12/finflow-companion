@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, ExternalLink, Download, Loader2 } from 'lucide-react';
 
@@ -11,9 +11,15 @@ interface PdfViewerProps {
 export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [attempt, setAttempt] = useState<'direct' | 'google'>('direct');
 
   // Build absolute URL
   const absoluteUrl = url.startsWith('http') ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+
+  const directUrl = `${absoluteUrl}#toolbar=1&navpanes=0`;
+  const googleUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(absoluteUrl)}`;
+
+  const iframeSrc = attempt === 'direct' ? directUrl : googleUrl;
 
   const openInNewTab = () => {
     window.open(absoluteUrl, '_blank', 'noopener,noreferrer');
@@ -26,16 +32,30 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
     a.click();
   };
 
-  // Auto-timeout: if iframe hasn't loaded in 8s, show error
+  // Auto-timeout: if direct fails, try google viewer; if both fail, show error
   useEffect(() => {
+    setLoading(true);
+    setLoadError(false);
     const timer = setTimeout(() => {
-      if (loading) {
+      if (attempt === 'direct') {
+        setAttempt('google');
+      } else {
         setLoadError(true);
         setLoading(false);
       }
     }, 8000);
     return () => clearTimeout(timer);
-  }, [loading]);
+  }, [attempt]);
+
+  const handleIframeLoad = useCallback(() => {
+    setLoading(false);
+  }, []);
+
+  const retry = () => {
+    setAttempt('direct');
+    setLoadError(false);
+    setLoading(true);
+  };
 
   return (
     <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm flex flex-col animate-fade-in">
@@ -60,7 +80,7 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
       {/* PDF Content */}
       <div className="flex-1 overflow-auto relative">
         {loading && !loadError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-background/80">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Carregando PDF...</p>
           </div>
@@ -78,7 +98,7 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
                 <Download className="h-4 w-4" />
                 Baixar PDF
               </Button>
-              <Button variant="ghost" onClick={() => { setLoadError(false); setLoading(true); }} className="gap-2 w-full">
+              <Button variant="ghost" onClick={retry} className="gap-2 w-full">
                 Tentar novamente
               </Button>
             </div>
@@ -86,11 +106,12 @@ export default function PdfViewer({ url, title, onClose }: PdfViewerProps) {
         ) : (
           <div className="min-h-full flex justify-center p-2">
             <iframe
-              src={`${absoluteUrl}#toolbar=0&navpanes=0`}
+              key={attempt}
+              src={iframeSrc}
               className="w-full max-w-3xl rounded-lg border border-border bg-white"
               style={{ height: '100vh', minHeight: '600px' }}
               title={title}
-              onLoad={() => setLoading(false)}
+              onLoad={handleIframeLoad}
               onError={() => { setLoadError(true); setLoading(false); }}
             />
           </div>
