@@ -211,6 +211,24 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShow
             })}
           </CardContent>
         </Card>
+
+        {/* Simulator CTA for Module 5 */}
+        {mod.id === 5 && (
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5">
+            <CardContent className="pt-5 pb-5 flex flex-col items-center text-center space-y-3">
+              <Rocket className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="text-sm font-bold">Próximo passo</h3>
+                <p className="text-xs text-muted-foreground mt-1">Transforme o aprendizado em ação prática</p>
+              </div>
+              <Button className="w-full gradient-primary text-primary-foreground font-semibold gap-2" onClick={onOpenSimulator}>
+                <Target size={16} />
+                Calcular minha independência
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {allComplete && (
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="pt-6 pb-6 flex flex-col items-center text-center space-y-4">
