@@ -307,6 +307,7 @@ export default function EngenhariaRiqueza() {
           mod={selectedModule} progress={lessonProgress}
           onToggleLesson={handleToggleLesson} onBack={() => setSelectedModule(null)}
           isPremium={isPremium} onShowPlans={() => setShowPremiumDialog(true)}
+          onOpenSimulator={() => navigate('/simulador-independencia')}
         />
         <PremiumPlansDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog} />
       </>
