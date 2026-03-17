@@ -257,6 +257,7 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShow
 }
 
 export default function EngenhariaRiqueza() {
+  const navigate = useNavigate();
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const [lessonProgress, setLessonProgress] = useState<LessonProgress>(loadLessonProgress);
