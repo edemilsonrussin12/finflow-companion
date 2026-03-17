@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -143,10 +144,10 @@ function getModuleLockReason(progress: LessonProgress, mod: Module, allModules: 
   return 'none';
 }
 
-function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShowPlans }: {
+function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShowPlans, onOpenSimulator }: {
   mod: Module; progress: LessonProgress;
   onToggleLesson: (moduleId: number, lessonIndex: number) => void;
-  onBack: () => void; isPremium: boolean; onShowPlans: () => void;
+  onBack: () => void; isPremium: boolean; onShowPlans: () => void; onOpenSimulator: () => void;
 }) {
   const lessonStates = progress[mod.id] || [];
   const percent = getModuleLessonPercent(progress, mod);
@@ -210,6 +211,24 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShow
             })}
           </CardContent>
         </Card>
+
+        {/* Simulator CTA for Module 5 */}
+        {mod.id === 5 && (
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5">
+            <CardContent className="pt-5 pb-5 flex flex-col items-center text-center space-y-3">
+              <Rocket className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="text-sm font-bold">Próximo passo</h3>
+                <p className="text-xs text-muted-foreground mt-1">Transforme o aprendizado em ação prática</p>
+              </div>
+              <Button className="w-full gradient-primary text-primary-foreground font-semibold gap-2" onClick={onOpenSimulator}>
+                <Target size={16} />
+                Calcular minha independência
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {allComplete && (
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="pt-6 pb-6 flex flex-col items-center text-center space-y-4">
@@ -238,6 +257,7 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShow
 }
 
 export default function EngenhariaRiqueza() {
+  const navigate = useNavigate();
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const [lessonProgress, setLessonProgress] = useState<LessonProgress>(loadLessonProgress);
@@ -287,6 +307,7 @@ export default function EngenhariaRiqueza() {
           mod={selectedModule} progress={lessonProgress}
           onToggleLesson={handleToggleLesson} onBack={() => setSelectedModule(null)}
           isPremium={isPremium} onShowPlans={() => setShowPremiumDialog(true)}
+          onOpenSimulator={() => navigate('/simulador-independencia')}
         />
         <PremiumPlansDialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog} />
       </>
