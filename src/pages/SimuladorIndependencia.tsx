@@ -64,6 +64,12 @@ function simulate(
     }
   }
 
+  // Use values at yearsToGoal for final display (not at year 60)
+  const goalIdx = Math.min(yearsToGoal, chartData.length - 1);
+  const finalValue = Math.round(chartData[goalIdx].patrimonio * 100) / 100;
+  const finalInvested = Math.round(chartData[goalIdx].invested * 100) / 100;
+  const finalInterest = Math.round((finalValue - finalInvested) * 100) / 100;
+
   const trimTo = Math.min(yearsToGoal + 5, maxYears);
   const trimmedData = chartData.filter(d => d.year <= trimTo);
 
@@ -71,9 +77,9 @@ function simulate(
     annualExpense,
     requiredPatrimony,
     yearsToGoal,
-    finalValue: Math.round(current * 100) / 100,
-    totalInvested: Math.round(totalInvested * 100) / 100,
-    totalInterest: Math.round((current - totalInvested) * 100) / 100,
+    finalValue,
+    totalInvested: finalInvested,
+    totalInterest: finalInterest,
     chartData: trimmedData,
   };
 }
@@ -86,9 +92,9 @@ function getMessages(result: SimResult, monthlyInvestment: number, patrimonyNeg:
   }
 
   if (result.yearsToGoal <= 10) {
-    msgs.push(`🚀 Você está mais perto do que imagina! Mantendo esse ritmo, sua independência pode chegar em ${result.yearsToGoal} anos.`);
+    msgs.push(`🚀 Você está mais perto do que imagina! Mantendo esse ritmo, sua independência financeira pode chegar em ${result.yearsToGoal} anos.`);
   } else if (result.yearsToGoal <= 20) {
-    msgs.push('💪 Você já começou sua jornada. Pequenos ajustes no aporte mensal podem acelerar muito sua independência.');
+    msgs.push('💪 Você já começou sua jornada. Pequenos ajustes no aporte mensal podem acelerar muito sua independência financeira.');
   } else if (monthlyInvestment < 500) {
     msgs.push('📈 Aumentar seus aportes mensais pode reduzir bastante o tempo até sua liberdade financeira.');
   } else {
@@ -99,7 +105,7 @@ function getMessages(result: SimResult, monthlyInvestment: number, patrimonyNeg:
     msgs.push('✨ Os juros compostos já superaram o total investido — o tempo está trabalhando a seu favor!');
   }
 
-  msgs.push('📊 A consistência é o principal fator de crescimento patrimonial.');
+  msgs.push('📊 A consistência é o principal fator de crescimento patrimonial. Continue investindo regularmente.');
 
   return msgs;
 }
@@ -312,8 +318,8 @@ export default function SimuladorIndependencia() {
             <Card className="border-income/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <ArrowRight size={14} className="text-emerald-400" />
-                  E se você investisse +R$100/mês?
+                  <ArrowRight size={14} className="text-income" />
+                  E se você investisse +R$100 por mês?
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -321,17 +327,17 @@ export default function SimuladorIndependencia() {
                   <div className="bg-secondary/50 rounded-lg p-3 text-center space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase">Cenário atual</p>
                     <p className="text-xs font-bold tabular-nums">{result.yearsToGoal >= 60 ? '60+' : result.yearsToGoal} anos</p>
-                    <p className="text-[10px] text-muted-foreground tabular-nums">{formatCurrency(result.chartData[Math.min(result.yearsToGoal, result.chartData.length - 1)]?.patrimonio ?? 0)}</p>
+                    <p className="text-[10px] text-muted-foreground tabular-nums">{formatCurrency(result.finalValue)}</p>
                   </div>
                   <div className="bg-income/10 rounded-lg p-3 text-center space-y-1">
                     <p className="text-[10px] text-income uppercase font-medium">Cenário melhorado</p>
                     <p className="text-xs font-bold text-income tabular-nums">{improvedResult.yearsToGoal >= 60 ? '60+' : improvedResult.yearsToGoal} anos</p>
-                    <p className="text-[10px] text-muted-foreground tabular-nums">{formatCurrency(improvedResult.chartData[Math.min(improvedResult.yearsToGoal, improvedResult.chartData.length - 1)]?.patrimonio ?? 0)}</p>
+                    <p className="text-[10px] text-muted-foreground tabular-nums">{formatCurrency(improvedResult.finalValue)}</p>
                   </div>
                 </div>
                 {improvedResult.yearsToGoal < result.yearsToGoal && (
                   <p className="text-xs text-center text-income font-medium">
-                    Aumentar R$100/mês pode reduzir {result.yearsToGoal - improvedResult.yearsToGoal} ano{result.yearsToGoal - improvedResult.yearsToGoal !== 1 ? 's' : ''} do seu caminho!
+                    Aumentar R$100 por mês pode antecipar sua independência financeira em {result.yearsToGoal - improvedResult.yearsToGoal} ano{result.yearsToGoal - improvedResult.yearsToGoal !== 1 ? 's' : ''}.
                   </p>
                 )}
                 {improvedResult.finalValue > result.finalValue && (
@@ -358,7 +364,7 @@ export default function SimuladorIndependencia() {
               <Target size={15} />
               Salvar meta
             </Button>
-            <Button variant="outline" className="w-full gap-2 text-sm" onClick={() => navigate('/dashboard')}>
+            <Button variant="outline" className="w-full gap-2 text-sm" onClick={() => navigate('/')}>
               <DollarSign size={15} />
               Voltar ao dashboard
             </Button>
