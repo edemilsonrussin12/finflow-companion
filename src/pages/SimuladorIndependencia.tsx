@@ -92,9 +92,9 @@ function getMessages(result: SimResult, monthlyInvestment: number, patrimonyNeg:
   }
 
   if (result.yearsToGoal <= 10) {
-    msgs.push(`🚀 Você está mais perto do que imagina! Mantendo esse ritmo, sua independência pode chegar em ${result.yearsToGoal} anos.`);
+    msgs.push(`🚀 Você está mais perto do que imagina! Mantendo esse ritmo, sua independência financeira pode chegar em ${result.yearsToGoal} anos.`);
   } else if (result.yearsToGoal <= 20) {
-    msgs.push('💪 Você já começou sua jornada. Pequenos ajustes no aporte mensal podem acelerar muito sua independência.');
+    msgs.push('💪 Você já começou sua jornada. Pequenos ajustes no aporte mensal podem acelerar muito sua independência financeira.');
   } else if (monthlyInvestment < 500) {
     msgs.push('📈 Aumentar seus aportes mensais pode reduzir bastante o tempo até sua liberdade financeira.');
   } else {
@@ -105,7 +105,7 @@ function getMessages(result: SimResult, monthlyInvestment: number, patrimonyNeg:
     msgs.push('✨ Os juros compostos já superaram o total investido — o tempo está trabalhando a seu favor!');
   }
 
-  msgs.push('📊 A consistência é o principal fator de crescimento patrimonial.');
+  msgs.push('📊 A consistência é o principal fator de crescimento patrimonial. Continue investindo regularmente.');
 
   return msgs;
 }
