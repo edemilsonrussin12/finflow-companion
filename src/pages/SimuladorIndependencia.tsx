@@ -309,7 +309,7 @@ export default function SimuladorIndependencia() {
 
           {/* Scenario Comparison */}
           {improvedResult && (
-            <Card className="border-emerald-500/20">
+            <Card className="border-income/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <ArrowRight size={14} className="text-emerald-400" />
