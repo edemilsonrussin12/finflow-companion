@@ -364,7 +364,7 @@ export default function SimuladorIndependencia() {
               <Target size={15} />
               Salvar meta
             </Button>
-            <Button variant="outline" className="w-full gap-2 text-sm" onClick={() => navigate('/dashboard')}>
+            <Button variant="outline" className="w-full gap-2 text-sm" onClick={() => navigate('/')}>
               <DollarSign size={15} />
               Voltar ao dashboard
             </Button>
