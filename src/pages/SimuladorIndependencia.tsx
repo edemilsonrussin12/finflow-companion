@@ -323,9 +323,9 @@ export default function SimuladorIndependencia() {
                     <p className="text-xs font-bold tabular-nums">{result.yearsToGoal >= 60 ? '60+' : result.yearsToGoal} anos</p>
                     <p className="text-[10px] text-muted-foreground tabular-nums">{formatCurrency(result.chartData[Math.min(result.yearsToGoal, result.chartData.length - 1)]?.patrimonio ?? 0)}</p>
                   </div>
-                  <div className="bg-emerald-500/10 rounded-lg p-3 text-center space-y-1">
-                    <p className="text-[10px] text-emerald-400 uppercase font-medium">Cenário melhorado</p>
-                    <p className="text-xs font-bold text-emerald-400 tabular-nums">{improvedResult.yearsToGoal >= 60 ? '60+' : improvedResult.yearsToGoal} anos</p>
+                  <div className="bg-income/10 rounded-lg p-3 text-center space-y-1">
+                    <p className="text-[10px] text-income uppercase font-medium">Cenário melhorado</p>
+                    <p className="text-xs font-bold text-income tabular-nums">{improvedResult.yearsToGoal >= 60 ? '60+' : improvedResult.yearsToGoal} anos</p>
                     <p className="text-[10px] text-muted-foreground tabular-nums">{formatCurrency(improvedResult.chartData[Math.min(improvedResult.yearsToGoal, improvedResult.chartData.length - 1)]?.patrimonio ?? 0)}</p>
                   </div>
                 </div>
