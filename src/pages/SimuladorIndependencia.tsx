@@ -64,6 +64,12 @@ function simulate(
     }
   }
 
+  // Use values at yearsToGoal for final display (not at year 60)
+  const goalIdx = Math.min(yearsToGoal, chartData.length - 1);
+  const finalValue = Math.round(chartData[goalIdx].patrimonio * 100) / 100;
+  const finalInvested = Math.round(chartData[goalIdx].invested * 100) / 100;
+  const finalInterest = Math.round((finalValue - finalInvested) * 100) / 100;
+
   const trimTo = Math.min(yearsToGoal + 5, maxYears);
   const trimmedData = chartData.filter(d => d.year <= trimTo);
 
@@ -71,9 +77,9 @@ function simulate(
     annualExpense,
     requiredPatrimony,
     yearsToGoal,
-    finalValue: Math.round(current * 100) / 100,
-    totalInvested: Math.round(totalInvested * 100) / 100,
-    totalInterest: Math.round((current - totalInvested) * 100) / 100,
+    finalValue,
+    totalInvested: finalInvested,
+    totalInterest: finalInterest,
     chartData: trimmedData,
   };
 }
