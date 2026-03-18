@@ -330,7 +330,7 @@ export default function SimuladorIndependencia() {
                   </div>
                 </div>
                 {improvedResult.yearsToGoal < result.yearsToGoal && (
-                  <p className="text-xs text-center text-emerald-400 font-medium">
+                  <p className="text-xs text-center text-income font-medium">
                     Aumentar R$100/mês pode reduzir {result.yearsToGoal - improvedResult.yearsToGoal} ano{result.yearsToGoal - improvedResult.yearsToGoal !== 1 ? 's' : ''} do seu caminho!
                   </p>
                 )}
