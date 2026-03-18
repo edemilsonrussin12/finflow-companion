@@ -336,7 +336,7 @@ export default function SimuladorIndependencia() {
                 )}
                 {improvedResult.finalValue > result.finalValue && (
                   <p className="text-[11px] text-center text-muted-foreground">
-                    Diferença de patrimônio: <span className="text-emerald-400 font-semibold">{formatCurrency(improvedResult.finalValue - result.finalValue)}</span> a mais
+                    Diferença de patrimônio: <span className="text-income font-semibold">{formatCurrency(improvedResult.finalValue - result.finalValue)}</span> a mais
                   </p>
                 )}
               </CardContent>
