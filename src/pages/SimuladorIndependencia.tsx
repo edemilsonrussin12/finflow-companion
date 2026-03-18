@@ -247,7 +247,7 @@ export default function SimuladorIndependencia() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">Total em rendimentos</span>
-                <span className={`text-sm font-semibold tabular-nums ${result.totalInterest >= 0 ? 'text-emerald-400' : 'text-destructive'}`}>
+                <span className={`text-sm font-semibold tabular-nums ${result.totalInterest >= 0 ? 'text-income' : 'text-destructive'}`}>
                   {formatCurrency(result.totalInterest)}
                 </span>
               </div>
