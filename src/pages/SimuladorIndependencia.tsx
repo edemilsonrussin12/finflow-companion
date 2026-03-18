@@ -253,7 +253,7 @@ export default function SimuladorIndependencia() {
               </div>
               <div className="border-t border-border pt-2 flex justify-between items-center">
                 <span className="text-xs font-medium">Patrimônio acumulado</span>
-                <span className={`text-sm font-bold tabular-nums ${result.finalValue >= 0 ? 'text-emerald-400' : 'text-destructive'}`}>
+                <span className={`text-sm font-bold tabular-nums ${result.finalValue >= 0 ? 'text-income' : 'text-destructive'}`}>
                   {formatCurrency(result.finalValue)}
                 </span>
               </div>
