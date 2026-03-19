@@ -108,7 +108,7 @@ export default function Relatorios() {
           {/* Summary — always visible (simple report) */}
           <div className="glass rounded-2xl p-5 space-y-3">
             <p className="text-sm font-medium">Resumo de {getMonthLabel(selectedMonth)}</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5">
                   <ArrowUpRight size={14} className="text-income" />
