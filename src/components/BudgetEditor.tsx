@@ -423,7 +423,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   }
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-5 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={onClose}>
