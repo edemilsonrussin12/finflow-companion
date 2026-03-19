@@ -50,7 +50,7 @@ export default function Gastos() {
   };
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-4 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-4 animate-fade-in">
       <div>
         <p className="text-sm text-muted-foreground">Gestão</p>
         <h1 className="text-xl font-bold">Gastos</h1>

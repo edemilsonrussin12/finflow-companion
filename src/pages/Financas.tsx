@@ -217,7 +217,7 @@ export default function Financas() {
       {/* Quick links */}
       <div className="space-y-2">
         <p className="text-sm font-medium">Acesso rápido</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {quickLinks.map(link => (
             <button
               key={link.path}

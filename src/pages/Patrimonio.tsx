@@ -49,7 +49,7 @@ export default function Patrimonio() {
   }));
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-6 animate-fade-in">
       <div>
         <p className="text-sm text-muted-foreground">FinControl</p>
         <h1 className="text-xl font-bold">Evolução Patrimonial</h1>

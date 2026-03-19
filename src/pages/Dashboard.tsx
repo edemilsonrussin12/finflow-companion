@@ -167,7 +167,7 @@ export default function Dashboard() {
       {/* Acessos rápidos */}
       <div className="space-y-2">
         <p className="text-sm font-medium">Acesso rápido</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
           {[
             { label: 'Finanças', icon: Receipt, path: '/financas', color: 'text-primary' },
             { label: 'Orçamentos', icon: ClipboardList, path: '/orcamentos', color: 'text-gold' },

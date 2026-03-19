@@ -79,7 +79,7 @@ export default function Relatorios() {
   const handleExportSales = () => exportSalesCSV(monthSales, selectedMonth);
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">FinControl</p>
