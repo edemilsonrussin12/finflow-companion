@@ -85,7 +85,7 @@ export default function Financas() {
   ];
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-5 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
