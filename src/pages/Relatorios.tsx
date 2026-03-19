@@ -253,7 +253,7 @@ export default function Relatorios() {
               <Download size={18} className="text-primary" />
               <p className="text-sm font-medium">Exportar dados</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
               <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 text-xs">
                 <FileText size={14} />
                 Relatório CSV

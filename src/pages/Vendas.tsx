@@ -65,7 +65,7 @@ export default function Vendas() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
         <div className="glass rounded-2xl p-4 space-y-1">
           <p className="text-xs text-muted-foreground">Faturamento</p>
           <p className="text-lg font-bold text-income tabular-nums">{formatCurrency(revenue)}</p>

@@ -86,7 +86,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-[100dvh] bg-background overflow-x-hidden">
       {/* Global header with logout */}
-      <header className="sticky top-0 z-30 flex items-center justify-end px-4 py-2">
+      <header className="sticky top-0 z-30 flex items-center justify-end px-4 md:px-8 py-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-2 rounded-xl hover:bg-accent transition-colors text-muted-foreground">

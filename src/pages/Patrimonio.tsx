@@ -74,7 +74,7 @@ export default function Patrimonio() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
               <div className="glass rounded-2xl p-4 space-y-2">
                 <div className="p-2.5 rounded-xl bg-income/10 w-fit">
                   {monthGrowth >= 0 ? <ArrowUpRight size={20} className="text-income" /> : <ArrowDownLeft size={20} className="text-expense" />}
