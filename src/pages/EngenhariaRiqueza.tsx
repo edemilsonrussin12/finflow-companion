@@ -315,7 +315,7 @@ export default function EngenhariaRiqueza() {
   }
 
   return (
-    <div className="pb-24 px-4 pt-6 max-w-lg mx-auto space-y-6">
+    <div className="page-container pb-24 pt-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-primary" />

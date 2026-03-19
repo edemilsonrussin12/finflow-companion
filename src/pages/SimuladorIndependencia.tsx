@@ -147,7 +147,7 @@ export default function SimuladorIndependencia() {
   const resetCalc = () => setCalculated(false);
 
   return (
-    <div className="pb-24 px-4 pt-6 max-w-lg mx-auto space-y-5">
+    <div className="page-container pb-24 pt-6 space-y-5">
       {/* Header */}
       <div>
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3">
