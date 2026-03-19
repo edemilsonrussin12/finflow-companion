@@ -32,7 +32,7 @@ export default function InstallPWA() {
   if (!deferredPrompt || dismissed) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-50 max-w-lg mx-auto glass rounded-2xl p-4 flex items-center gap-3 border border-border/50 animate-fade-in">
+    <div className="fixed top-4 left-4 right-4 z-50 max-w-lg md:max-w-3xl mx-auto glass rounded-2xl p-4 flex items-center gap-3 border border-border/50 animate-fade-in">
       <div className="p-2 rounded-xl bg-primary/10">
         <Download size={20} className="text-primary" />
       </div>

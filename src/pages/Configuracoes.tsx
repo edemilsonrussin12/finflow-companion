@@ -127,7 +127,7 @@ export default function Configuracoes() {
   };
 
   return (
-    <div className="min-h-screen pb-24 px-4 pt-6 max-w-lg mx-auto space-y-6">
+    <div className="page-container min-h-screen pb-24 pt-6 space-y-6">
       <div className="flex items-center gap-3">
         <Settings className="h-6 w-6 text-primary" />
         <h1 className="text-xl font-bold text-foreground">Configurações</h1>

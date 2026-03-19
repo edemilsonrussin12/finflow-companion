@@ -158,7 +158,7 @@ function ModuleDetail({ mod, progress, onToggleLesson, onBack, isPremium, onShow
   return (
     <>
       {viewingPdf && <PdfViewer url={viewingPdf.url} title={viewingPdf.title} onClose={() => setViewingPdf(null)} />}
-      <div className="pb-24 px-4 pt-6 max-w-lg mx-auto space-y-6">
+      <div className="page-container pb-24 pt-6 space-y-6">
         <button onClick={onBack} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" /><span className="text-sm">Voltar</span>
         </button>
@@ -315,7 +315,7 @@ export default function EngenhariaRiqueza() {
   }
 
   return (
-    <div className="pb-24 px-4 pt-6 max-w-lg mx-auto space-y-6">
+    <div className="page-container pb-24 pt-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-primary" />

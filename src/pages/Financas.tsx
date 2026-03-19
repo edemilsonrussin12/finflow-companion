@@ -85,7 +85,7 @@ export default function Financas() {
   ];
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-5 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -114,7 +114,7 @@ export default function Financas() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="card-income rounded-2xl p-4 space-y-1">
           <div className="p-2 rounded-xl bg-income/15 w-fit"><ArrowUpRight size={16} className="text-income" /></div>
           <p className="text-[11px] text-muted-foreground">Receitas</p>
@@ -217,7 +217,7 @@ export default function Financas() {
       {/* Quick links */}
       <div className="space-y-2">
         <p className="text-sm font-medium">Acesso rápido</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {quickLinks.map(link => (
             <button
               key={link.path}

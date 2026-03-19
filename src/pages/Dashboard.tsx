@@ -83,7 +83,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-5 animate-fade-in">
       <OnboardingFlow />
 
       {/* Greeting + Month */}
@@ -131,34 +131,34 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="glass rounded-xl p-3 space-y-0.5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="glass rounded-xl p-3 md:p-4 space-y-0.5">
               <div className="flex items-center gap-1.5">
                 <ArrowUpRight size={14} className="text-income" />
-                <span className="text-[10px] text-muted-foreground">Receitas</span>
+                <span className="text-[10px] md:text-xs text-muted-foreground">Receitas</span>
               </div>
-              <p className="text-sm font-bold text-income tabular-nums">{formatCurrency(income)}</p>
+              <p className="text-sm md:text-lg font-bold text-income tabular-nums">{formatCurrency(income)}</p>
             </div>
-            <div className="glass rounded-xl p-3 space-y-0.5">
+            <div className="glass rounded-xl p-3 md:p-4 space-y-0.5">
               <div className="flex items-center gap-1.5">
                 <ArrowDownLeft size={14} className="text-expense" />
-                <span className="text-[10px] text-muted-foreground">Despesas</span>
+                <span className="text-[10px] md:text-xs text-muted-foreground">Despesas</span>
               </div>
-              <p className="text-sm font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
+              <p className="text-sm md:text-lg font-bold text-expense tabular-nums">{formatCurrency(expense)}</p>
             </div>
-            <div className="glass rounded-xl p-3 space-y-0.5">
+            <div className="glass rounded-xl p-3 md:p-4 space-y-0.5">
               <div className="flex items-center gap-1.5">
                 <TrendingUp size={14} className="text-emerald" />
-                <span className="text-[10px] text-muted-foreground">Investimentos</span>
+                <span className="text-[10px] md:text-xs text-muted-foreground">Investimentos</span>
               </div>
-              <p className="text-sm font-bold text-emerald tabular-nums">{formatCurrency(investment)}</p>
+              <p className="text-sm md:text-lg font-bold text-emerald tabular-nums">{formatCurrency(investment)}</p>
             </div>
-            <div className="glass rounded-xl p-3 space-y-0.5">
+            <div className="glass rounded-xl p-3 md:p-4 space-y-0.5">
               <div className="flex items-center gap-1.5">
                 <LineChart size={14} className="text-emerald" />
-                <span className="text-[10px] text-muted-foreground">Patrimônio</span>
+                <span className="text-[10px] md:text-xs text-muted-foreground">Patrimônio</span>
               </div>
-              <p className="text-sm font-bold text-emerald tabular-nums">{formatCurrency(patrimonio)}</p>
+              <p className="text-sm md:text-lg font-bold text-emerald tabular-nums">{formatCurrency(patrimonio)}</p>
             </div>
           </div>
         </>
@@ -167,7 +167,7 @@ export default function Dashboard() {
       {/* Acessos rápidos */}
       <div className="space-y-2">
         <p className="text-sm font-medium">Acesso rápido</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
           {[
             { label: 'Finanças', icon: Receipt, path: '/financas', color: 'text-primary' },
             { label: 'Orçamentos', icon: ClipboardList, path: '/orcamentos', color: 'text-gold' },

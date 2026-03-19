@@ -163,7 +163,7 @@ export default function Clientes() {
   );
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-5 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-5 animate-fade-in">
       <div className="text-center space-y-2">
         <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
           <Users size={28} className="text-primary" />

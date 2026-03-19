@@ -79,7 +79,7 @@ export default function Relatorios() {
   const handleExportSales = () => exportSalesCSV(monthSales, selectedMonth);
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">FinControl</p>
@@ -108,7 +108,7 @@ export default function Relatorios() {
           {/* Summary — always visible (simple report) */}
           <div className="glass rounded-2xl p-5 space-y-3">
             <p className="text-sm font-medium">Resumo de {getMonthLabel(selectedMonth)}</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5">
                   <ArrowUpRight size={14} className="text-income" />
@@ -253,7 +253,7 @@ export default function Relatorios() {
               <Download size={18} className="text-primary" />
               <p className="text-sm font-medium">Exportar dados</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
               <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 text-xs">
                 <FileText size={14} />
                 Relatório CSV

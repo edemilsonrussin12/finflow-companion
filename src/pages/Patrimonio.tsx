@@ -49,7 +49,7 @@ export default function Patrimonio() {
   }));
 
   return (
-    <div className="px-4 pt-6 pb-24 max-w-lg mx-auto space-y-6 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-6 animate-fade-in">
       <div>
         <p className="text-sm text-muted-foreground">FinControl</p>
         <h1 className="text-xl font-bold">Evolução Patrimonial</h1>
@@ -74,7 +74,7 @@ export default function Patrimonio() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
               <div className="glass rounded-2xl p-4 space-y-2">
                 <div className="p-2.5 rounded-xl bg-income/10 w-fit">
                   {monthGrowth >= 0 ? <ArrowUpRight size={20} className="text-income" /> : <ArrowDownLeft size={20} className="text-expense" />}

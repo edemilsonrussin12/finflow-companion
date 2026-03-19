@@ -93,6 +93,32 @@
 }
 
 @layer utilities {
+  /* Responsive page container */
+  .page-container {
+    @apply px-4 mx-auto w-full;
+    max-width: 32rem; /* mobile: same as max-w-lg */
+  }
+
+  @media (min-width: 768px) {
+    .page-container {
+      @apply px-6;
+      max-width: 48rem; /* md: max-w-3xl */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      @apply px-8;
+      max-width: 64rem; /* lg: max-w-5xl */
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .page-container {
+      max-width: 76rem; /* xl */
+    }
+  }
+
   /* Premium Glass Effect */
   .glass {
     @apply bg-card/90 border border-border/60;
