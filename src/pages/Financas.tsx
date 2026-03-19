@@ -114,7 +114,7 @@ export default function Financas() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="card-income rounded-2xl p-4 space-y-1">
           <div className="p-2 rounded-xl bg-income/15 w-fit"><ArrowUpRight size={16} className="text-income" /></div>
           <p className="text-[11px] text-muted-foreground">Receitas</p>
