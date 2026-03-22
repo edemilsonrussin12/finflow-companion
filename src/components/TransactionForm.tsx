@@ -87,6 +87,7 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
       recurrencePaused: initial?.recurrencePaused ?? false,
       recurrenceGroupId: initial?.recurrenceGroupId,
     });
+    toast({ title: 'Registro salvo com sucesso', description: `${TYPE_LABELS[type]} registrada.` });
     onClose();
   };
 

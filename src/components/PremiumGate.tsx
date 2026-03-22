@@ -31,6 +31,9 @@ export default function PremiumGate({ children, isPremium, label, className = ''
             Recurso Premium
           </p>
           {label && <p className="text-xs text-muted-foreground">{label}</p>}
+          <p className="text-[11px] text-muted-foreground/70">
+            Pequenas decisões financeiras hoje podem mudar seu futuro.
+          </p>
         </div>
         <Button size="sm" onClick={() => setShowPlans(true)} className="gap-1.5">
           <Lock className="h-3.5 w-3.5" />
