@@ -28,14 +28,14 @@ export default function TrialBanner({ trial }: TrialBannerProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-xs leading-tight">
-            Você está usando o Premium em modo teste.
+            Aproveite o acesso completo por tempo limitado
           </p>
           <p className="text-xs opacity-80">
             {trial.daysRemaining > 1
-              ? `Restam ${trial.daysRemaining} dias.`
+              ? `Você está experimentando recursos Premium — restam ${trial.daysRemaining} dias.`
               : trial.daysRemaining === 1
-                ? 'Expira amanhã!'
-                : 'Expira hoje!'}
+                ? 'Seu acesso Premium expira amanhã!'
+                : 'Seu acesso Premium expira hoje!'}
           </p>
         </div>
         {isExpiring && (
