@@ -56,7 +56,7 @@ export default function Configuracoes() {
       setEditingName(false);
     }
     setSavingName(false);
-
+  };
 
   const deleteOptions: DeleteOption[] = [
     {
