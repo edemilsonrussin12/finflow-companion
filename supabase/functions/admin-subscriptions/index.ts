@@ -173,6 +173,10 @@ Deno.serve(async (req) => {
         .from('user_subscriptions')
         .update({
           is_premium: false,
+          plan_type: null,
+          premium_expires_at: null,
+          premium_started_at: null,
+          mercadopago_payment_id: null,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user_id);
@@ -180,7 +184,7 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).single();
-      await addLog(admin, supabaseAdmin, 'premium_expired', user_id, profile?.email, 'Manually expired by admin');
+      await addLog(admin, supabaseAdmin, 'premium_removed', user_id, profile?.email, 'Premium removido manualmente pelo admin — plan_type, datas e payment_id limpos');
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
