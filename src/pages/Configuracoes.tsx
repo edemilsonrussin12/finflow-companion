@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Settings, Trash2, Receipt, TrendingUp, Target, Grid3X3, ClipboardList, History, ShieldCheck } from 'lucide-react';
+import { Settings, Trash2, Receipt, TrendingUp, Target, Grid3X3, ClipboardList, History, ShieldCheck, User, Pencil, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
@@ -32,7 +32,31 @@ export default function Configuracoes() {
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  // Name editing
+  const [displayName, setDisplayName] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+
   const userId = user?.id;
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle()
+      .then(({ data }) => setDisplayName(data?.display_name || ''));
+  }, [userId]);
+
+  const handleSaveName = async () => {
+    if (!userId || !displayName.trim()) return;
+    setSavingName(true);
+    const { error } = await supabase.from('profiles').update({ display_name: displayName.trim() }).eq('id', userId);
+    if (error) {
+      toast.error('Erro ao salvar nome');
+    } else {
+      toast.success('Nome atualizado com sucesso');
+      setEditingName(false);
+    }
+    setSavingName(false);
+  };
 
   const deleteOptions: DeleteOption[] = [
     {
@@ -132,6 +156,41 @@ export default function Configuracoes() {
         <Settings className="h-6 w-6 text-primary" />
         <h1 className="text-xl font-bold text-foreground">Configurações</h1>
       </div>
+
+      {/* Name editing section */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />
+            Seu nome
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {editingName ? (
+            <div className="flex gap-2">
+              <Input
+                value={displayName}
+                onChange={e => setDisplayName(e.target.value)}
+                placeholder="Seu nome completo"
+                className="flex-1"
+              />
+              <Button size="sm" onClick={handleSaveName} disabled={savingName || !displayName.trim()}>
+                {savingName ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditingName(false)}>Cancelar</Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-foreground">{displayName || user?.email?.split('@')[0] || '—'}</p>
+              <Button size="sm" variant="ghost" onClick={() => setEditingName(true)} className="gap-1.5 text-xs">
+                <Pencil className="h-3.5 w-3.5" />
+                Editar
+              </Button>
+            </div>
+          )}
+          <p className="text-[10px] text-muted-foreground">{user?.email}</p>
+        </CardContent>
+      </Card>
 
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-1">Gerenciamento de dados</h2>
