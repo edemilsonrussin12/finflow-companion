@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import EmptyState from '@/components/EmptyState';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import AIInsights from '@/components/AIInsights';
+import DashboardProgress from '@/components/DashboardProgress';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
@@ -216,11 +217,28 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Progress indicator */}
+      {hasData && <DashboardProgress transactions={transactions} selectedMonth={selectedMonth} />}
+
+      {/* Engenharia da Riqueza CTA */}
+      <button
+        onClick={() => navigate('/engenharia')}
+        className="w-full glass rounded-xl p-3 text-left hover:bg-accent/10 transition-colors"
+      >
+        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+          <Sparkles size={14} className="text-primary" />
+          Engenharia da Riqueza
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          Planeje o crescimento do seu patrimônio com base em metas reais.
+        </p>
+      </button>
+
       {/* AI Insights */}
       {hasData && <AIInsights page="dashboard" />}
 
       {/* Ask Assistant */}
-      {hasData && <div className="px-4 pb-24">
+      {hasData && <div className="pb-24">
         <AskAssistantButton onClick={() => outletCtx?.openAssistant?.()} />
       </div>}
     </div>
