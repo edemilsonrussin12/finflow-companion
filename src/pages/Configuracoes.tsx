@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Settings, Trash2, Receipt, TrendingUp, Target, Grid3X3, ClipboardList, History, ShieldCheck, User, Pencil, Loader2 } from 'lucide-react';
+import { Settings, Trash2, Receipt, TrendingUp, Target, Grid3X3, ClipboardList, History, ShieldCheck, User, Pencil, Loader2, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';

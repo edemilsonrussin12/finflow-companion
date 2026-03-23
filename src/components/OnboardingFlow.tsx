@@ -1,63 +1,63 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Wallet, Receipt, Target, Users, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  Wallet, TrendingUp, ClipboardList, ArrowRight, Sparkles,
+  BarChart3, FolderOpen, LineChart, Target, FileText, Users, CheckCircle2
+} from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const ONBOARDING_KEY = 'fincontrol_onboarding_done';
 
-interface OnboardingStep {
+type GoalType = 'financas' | 'investimentos' | 'orcamentos';
+
+interface TutorialStep {
   icon: typeof Wallet;
   title: string;
   description: string;
-  gradient: string;
 }
 
-const steps: OnboardingStep[] = [
-  {
-    icon: Wallet,
-    title: 'Bem-vindo ao FinControl',
-    description: 'Controle inteligente do seu dinheiro.',
-    gradient: 'from-primary to-accent',
-  },
-  {
-    icon: Receipt,
-    title: 'Registre seus gastos',
-    description: 'Veja para onde seu dinheiro está indo e organize suas finanças.',
-    gradient: 'from-primary to-cyan-400',
-  },
-  {
-    icon: Target,
-    title: 'Crie metas e acompanhe sua evolução',
-    description: 'Acompanhe sua economia e alcance seus objetivos financeiros.',
-    gradient: 'from-emerald-500 to-emerald-400',
-  },
-  {
-    icon: Users,
-    title: 'Convide amigos e ganhe Premium',
-    description: 'Indique amigos e desbloqueie meses de Premium.',
-    gradient: 'from-amber-500 to-yellow-400',
-  },
-];
+const tutorialsByGoal: Record<GoalType, TutorialStep[]> = {
+  financas: [
+    { icon: Wallet, title: 'Dashboard', description: 'Aqui você vê o resumo da sua vida financeira.' },
+    { icon: BarChart3, title: 'Finanças', description: 'Registre seus gastos e receitas de forma simples.' },
+    { icon: FolderOpen, title: 'Categorias', description: 'Organize suas movimentações para entender para onde seu dinheiro está indo.' },
+    { icon: LineChart, title: 'Gráficos', description: 'Visualize sua evolução financeira.' },
+    { icon: CheckCircle2, title: 'Tudo pronto!', description: 'Você já pode começar registrando seu primeiro gasto.' },
+  ],
+  investimentos: [
+    { icon: TrendingUp, title: 'Investimentos', description: 'Cadastre seus investimentos.' },
+    { icon: LineChart, title: 'Gráficos', description: 'Visualize a evolução do patrimônio.' },
+    { icon: Sparkles, title: 'Engenharia da Riqueza', description: 'Simule o crescimento financeiro ao longo do tempo.' },
+    { icon: Target, title: 'Planejamento', description: 'Tenha visão de longo prazo.' },
+    { icon: CheckCircle2, title: 'Tudo pronto!', description: 'Comece adicionando seu primeiro investimento.' },
+  ],
+  orcamentos: [
+    { icon: ClipboardList, title: 'Orçamentos', description: 'Crie documentos organizados para enviar ao cliente.' },
+    { icon: Users, title: 'Dados do cliente', description: 'Cadastre informações do cliente.' },
+    { icon: FileText, title: 'Serviços', description: 'Adicione descrição e valores.' },
+    { icon: FileText, title: 'PDF profissional', description: 'Gere documento com seu logo e dados.' },
+    { icon: CheckCircle2, title: 'Tudo pronto!', description: 'Crie seu primeiro orçamento.' },
+  ],
+};
 
-interface QuickAction {
-  icon: typeof Wallet;
-  label: string;
-  path: string;
-}
-
-const quickActions: QuickAction[] = [
-  { icon: Receipt, label: 'Adicionar gasto', path: '/gastos' },
-  { icon: Target, label: 'Criar meta', path: '/metas' },
-  { icon: Sparkles, label: 'Explorar dashboard', path: '/' },
+const goalOptions = [
+  { value: 'financas' as GoalType, label: 'Organizar minha vida financeira', icon: Wallet },
+  { value: 'investimentos' as GoalType, label: 'Acompanhar meus investimentos', icon: TrendingUp },
+  { value: 'orcamentos' as GoalType, label: 'Criar orçamentos profissionais', icon: ClipboardList },
 ];
 
 export default function OnboardingFlow() {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(0);
-  const [showQuickStart, setShowQuickStart] = useState(false);
+  const [phase, setPhase] = useState<'goal' | 'tutorial'>('goal');
+  const [selectedGoal, setSelectedGoal] = useState<GoalType | ''>('');
+  const [tutorialStep, setTutorialStep] = useState(0);
   const { transactions } = useFinance();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,12 +69,16 @@ export default function OnboardingFlow() {
     setOpen(true);
   }, [transactions]);
 
-  const handleNext = () => {
-    if (step < steps.length - 1) {
-      setStep(step + 1);
-    } else {
-      setShowQuickStart(true);
-    }
+  const saveGoal = async (goal: GoalType) => {
+    if (!user) return;
+    await supabase.from('profiles').update({ onboarding_goal: goal } as any).eq('id', user.id);
+  };
+
+  const handleContinue = () => {
+    if (!selectedGoal) return;
+    saveGoal(selectedGoal);
+    setPhase('tutorial');
+    setTutorialStep(0);
   };
 
   const handleFinish = () => {
@@ -82,57 +86,92 @@ export default function OnboardingFlow() {
     setOpen(false);
   };
 
-  const handleQuickAction = (path: string) => {
+  const handleStartApp = () => {
     localStorage.setItem(ONBOARDING_KEY, 'true');
     setOpen(false);
-    if (path !== '/') navigate(path);
+    if (selectedGoal === 'financas') navigate('/financas');
+    else if (selectedGoal === 'investimentos') navigate('/investimentos');
+    else if (selectedGoal === 'orcamentos') navigate('/orcamentos');
+  };
+
+  const handleNextStep = () => {
+    const steps = tutorialsByGoal[selectedGoal as GoalType];
+    if (tutorialStep < steps.length - 1) {
+      setTutorialStep(tutorialStep + 1);
+    }
   };
 
   if (!open) return null;
 
-  if (showQuickStart) {
+  // Phase 1: Goal selection
+  if (phase === 'goal') {
     return (
       <Dialog open={open} onOpenChange={(v) => { if (!v) handleFinish(); }}>
-        <DialogContent className="max-w-sm text-center p-8 gap-0">
-          <div className="mx-auto mb-4 p-3 rounded-2xl bg-primary/10 w-fit">
-            <Sparkles size={28} className="text-primary" />
+        <DialogContent className="max-w-sm p-6 gap-0">
+          <div className="text-center mb-5">
+            <div className="mx-auto mb-3 p-3 rounded-2xl bg-primary/10 w-fit">
+              <Sparkles size={24} className="text-primary" />
+            </div>
+            <h2 className="text-lg font-bold text-foreground">Qual seu objetivo principal?</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Assim podemos te mostrar o melhor caminho dentro do FinControl.
+            </p>
           </div>
-          <h2 className="text-lg font-bold mb-1">Pronto para começar?</h2>
-          <p className="text-sm text-muted-foreground mb-6">Escolha uma ação rápida para dar o primeiro passo.</p>
-          <div className="space-y-2.5">
-            {quickActions.map((action) => (
-              <button
-                key={action.path}
-                onClick={() => handleQuickAction(action.path)}
-                className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left group"
+
+          <RadioGroup
+            value={selectedGoal}
+            onValueChange={(v) => setSelectedGoal(v as GoalType)}
+            className="space-y-2"
+          >
+            {goalOptions.map((opt) => (
+              <label
+                key={opt.value}
+                className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${
+                  selectedGoal === opt.value
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-muted/30 hover:bg-muted/50'
+                }`}
               >
-                <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <action.icon size={18} className="text-primary" />
+                <RadioGroupItem value={opt.value} />
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <opt.icon size={18} className="text-primary" />
                 </div>
-                <span className="text-sm font-medium flex-1">{action.label}</span>
-                <ArrowRight size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
-              </button>
+                <span className="text-sm font-medium text-foreground">{opt.label}</span>
+              </label>
             ))}
+          </RadioGroup>
+
+          <div className="flex gap-3 mt-5">
+            <Button variant="ghost" className="flex-1 text-muted-foreground" onClick={handleFinish}>
+              Pular
+            </Button>
+            <Button
+              className="flex-1 gradient-primary text-primary-foreground gap-1.5"
+              onClick={handleContinue}
+              disabled={!selectedGoal}
+            >
+              Continuar <ArrowRight size={16} />
+            </Button>
           </div>
-          <Button variant="ghost" className="mt-4 text-muted-foreground" onClick={handleFinish}>
-            Pular
-          </Button>
         </DialogContent>
       </Dialog>
     );
   }
 
-  const current = steps[step];
+  // Phase 2: Tutorial steps
+  const steps = tutorialsByGoal[selectedGoal as GoalType];
+  const current = steps[tutorialStep];
   const Icon = current.icon;
+  const isLast = tutorialStep === steps.length - 1;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleFinish(); }}>
-      <DialogContent className="max-w-sm text-center p-8 gap-0">
-        <div className={`mx-auto mb-5 p-4 rounded-2xl bg-gradient-to-br ${current.gradient} w-fit shadow-lg`}>
-          <Icon size={32} className="text-primary-foreground" />
+      <DialogContent className="max-w-sm text-center p-6 gap-0">
+        <div className="mx-auto mb-4 p-4 rounded-2xl bg-gradient-to-br from-primary to-accent w-fit shadow-lg">
+          <Icon size={28} className="text-primary-foreground" />
         </div>
-        <h2 className="text-lg font-bold mb-2">{current.title}</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-6">{current.description}</p>
+        <h2 className="text-lg font-bold text-foreground mb-1">{current.title}</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-5">{current.description}</p>
 
         {/* Progress dots */}
         <div className="flex justify-center gap-1.5 mb-5">
@@ -140,7 +179,7 @@ export default function OnboardingFlow() {
             <span
               key={i}
               className={`h-2 rounded-full transition-all duration-300 ${
-                i === step ? 'bg-primary w-6' : i < step ? 'bg-primary/50 w-2' : 'bg-muted w-2'
+                i === tutorialStep ? 'bg-primary w-6' : i < tutorialStep ? 'bg-primary/50 w-2' : 'bg-muted w-2'
               }`}
             />
           ))}
@@ -150,9 +189,15 @@ export default function OnboardingFlow() {
           <Button variant="ghost" className="flex-1 text-muted-foreground" onClick={handleFinish}>
             Pular
           </Button>
-          <Button className="flex-1 gradient-primary text-primary-foreground gap-1.5" onClick={handleNext}>
-            Próximo <ArrowRight size={16} />
-          </Button>
+          {isLast ? (
+            <Button className="flex-1 gradient-primary text-primary-foreground gap-1.5" onClick={handleStartApp}>
+              Começar usar o app <ArrowRight size={16} />
+            </Button>
+          ) : (
+            <Button className="flex-1 gradient-primary text-primary-foreground gap-1.5" onClick={handleNextStep}>
+              Próximo <ArrowRight size={16} />
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
