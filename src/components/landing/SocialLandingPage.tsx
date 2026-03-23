@@ -11,7 +11,7 @@ const benefits = [
   {
     icon: Wallet,
     title: 'Controle seus gastos em segundos',
-    description: 'Registre e categorize todas as suas despesas rapidamente.',
+    description: 'Registre e categorize suas despesas rapidamente.',
   },
   {
     icon: TrendingUp,
@@ -19,17 +19,23 @@ const benefits = [
     description: 'Veja sua evolução financeira com gráficos claros.',
   },
   {
+    icon: TrendingUp,
+    title: 'Planeje sua evolução financeira',
+    description: 'Visualize o crescimento do seu patrimônio e entenda o caminho para sua independência financeira.',
+  },
+  {
     icon: FileText,
-    title: 'Crie orçamentos profissionais para seus clientes',
-    description: 'Gere PDFs prontos com logo e assinatura digital.',
+    title: 'Crie orçamentos profissionais',
+    description: 'Gere PDFs organizados com seu logo e dados cadastrados.',
   },
 ];
 
 const faqs = [
-  { question: 'Tem versão grátis?', answer: 'Sim! O FinControl possui um plano gratuito com todas as funcionalidades básicas de controle financeiro.' },
-  { question: 'Posso usar no celular?', answer: 'Sim! O FinControl funciona perfeitamente em qualquer dispositivo — celular, tablet ou computador.' },
-  { question: 'Consigo controlar gastos e investimentos?', answer: 'Com certeza! Registre despesas, receitas e acompanhe seus investimentos com gráficos claros e intuitivos.' },
-  { question: 'Consigo criar orçamentos profissionais?', answer: 'Sim! Crie orçamentos com logo, assinatura digital e exporte em PDF pronto para enviar ao cliente.' },
+  { question: 'Tem versão grátis?', answer: 'Sim, você pode começar gratuitamente.' },
+  { question: 'Posso usar no celular?', answer: 'Sim, funciona perfeitamente no celular e computador.' },
+  { question: 'Consigo controlar gastos e investimentos?', answer: 'Sim, o FinControl permite acompanhar toda sua vida financeira.' },
+  { question: 'Consigo criar orçamentos profissionais?', answer: 'Sim, você pode gerar documentos organizados para enviar aos clientes.' },
+  { question: 'O que é a engenharia da riqueza?', answer: 'É a funcionalidade que mostra como seu patrimônio pode evoluir ao longo do tempo.' },
 ];
 
 interface SocialLandingPageProps {
@@ -57,7 +63,7 @@ export default function SocialLandingPage({ source, seoTitle, seoDescription }: 
           <span className="text-emerald">dinheiro</span>
         </h1>
         <p className="text-muted-foreground text-base max-w-md mx-auto">
-          Organize gastos, acompanhe investimentos e crie orçamentos profissionais em um único aplicativo.
+          Organize gastos, acompanhe investimentos, planeje seu crescimento financeiro e crie orçamentos profissionais em um único aplicativo.
         </p>
       </header>
 
@@ -106,7 +112,7 @@ export default function SocialLandingPage({ source, seoTitle, seoDescription }: 
         <div className="glass rounded-2xl p-6 max-w-md mx-auto flex items-center gap-3 justify-center">
           <Shield size={20} className="text-emerald flex-shrink-0" />
           <p className="text-sm text-muted-foreground">
-            Cada vez mais pessoas estão organizando suas finanças com o{' '}
+          Cada vez mais pessoas estão organizando e evoluindo suas finanças com o{' '}
             <span className="text-foreground font-semibold">FinControl</span>.
           </p>
         </div>
