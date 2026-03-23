@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Settings, Trash2, Receipt, TrendingUp, Target, Grid3X3, ClipboardList, History, ShieldCheck, User, Pencil, Loader2 } from 'lucide-react';
+import { Settings, Trash2, Receipt, TrendingUp, Target, Grid3X3, ClipboardList, History, ShieldCheck, User, Pencil, Loader2, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
@@ -189,6 +189,30 @@ export default function Configuracoes() {
             </div>
           )}
           <p className="text-[10px] text-muted-foreground">{user?.email}</p>
+        </CardContent>
+      </Card>
+
+      {/* Replay tutorial */}
+      <Card>
+        <CardContent className="flex items-center justify-between p-4 gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <RotateCcw className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-medium text-sm text-foreground">Ver tutorial novamente</p>
+              <p className="text-xs text-muted-foreground">Reveja o tutorial de introdução ao app.</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              localStorage.removeItem('fincontrol_onboarding_done');
+              toast.success('Tutorial será exibido ao recarregar a página.');
+              setTimeout(() => window.location.href = '/', 800);
+            }}
+          >
+            Rever
+          </Button>
         </CardContent>
       </Card>
 
