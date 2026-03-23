@@ -393,6 +393,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          onboarding_goal: string | null
           signup_source: string | null
         }
         Insert: {
@@ -401,6 +402,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id: string
+          onboarding_goal?: string | null
           signup_source?: string | null
         }
         Update: {
@@ -409,6 +411,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          onboarding_goal?: string | null
           signup_source?: string | null
         }
         Relationships: []
