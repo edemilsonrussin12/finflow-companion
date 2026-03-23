@@ -63,7 +63,7 @@ export default function SocialLandingPage({ source, seoTitle, seoDescription }: 
           <span className="text-emerald">dinheiro</span>
         </h1>
         <p className="text-muted-foreground text-base max-w-md mx-auto">
-          Organize gastos, acompanhe investimentos e crie orçamentos profissionais em um único aplicativo.
+          Organize gastos, acompanhe investimentos, planeje seu crescimento financeiro e crie orçamentos profissionais em um único aplicativo.
         </p>
       </header>
 
@@ -112,7 +112,7 @@ export default function SocialLandingPage({ source, seoTitle, seoDescription }: 
         <div className="glass rounded-2xl p-6 max-w-md mx-auto flex items-center gap-3 justify-center">
           <Shield size={20} className="text-emerald flex-shrink-0" />
           <p className="text-sm text-muted-foreground">
-            Cada vez mais pessoas estão organizando suas finanças com o{' '}
+          Cada vez mais pessoas estão organizando e evoluindo suas finanças com o{' '}
             <span className="text-foreground font-semibold">FinControl</span>.
           </p>
         </div>
