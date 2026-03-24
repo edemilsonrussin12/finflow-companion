@@ -386,6 +386,92 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_assets: {
+        Row: {
+          asset_name: string
+          asset_type: string
+          average_price: number
+          created_at: string
+          id: string
+          notes: string | null
+          purchase_date: string | null
+          quantity: number
+          ticker: string | null
+          total_invested: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_name: string
+          asset_type?: string
+          average_price?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity?: number
+          ticker?: string | null
+          total_invested?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_name?: string
+          asset_type?: string
+          average_price?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity?: number
+          ticker?: string | null
+          total_invested?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      portfolio_dividends: {
+        Row: {
+          amount: number
+          asset_id: string
+          created_at: string
+          dividend_type: string
+          id: string
+          notes: string | null
+          received_date: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          asset_id: string
+          created_at?: string
+          dividend_type?: string
+          id?: string
+          notes?: string | null
+          received_date?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asset_id?: string
+          created_at?: string
+          dividend_type?: string
+          id?: string
+          notes?: string | null
+          received_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_dividends_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
