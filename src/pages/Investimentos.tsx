@@ -389,7 +389,7 @@ export default function Investimentos() {
 
       <ConfirmDialog open={!!deleteConfirm} title="Confirmar exclusão"
         description={deleteConfirm?.type === 'asset' ? 'Excluir este ativo e todos os proventos associados?' : 'Excluir este rendimento?'}
-        onConfirm={handleDeleteConfirm} onCancel={() => setDeleteConfirm(null)} />
+        onConfirm={handleDeleteConfirm} onOpenChange={(v) => { if (!v) setDeleteConfirm(null); }} />
 
       {editingTx && (
         <TransactionForm initial={editingTx} onSubmit={t => updateTransaction({ ...t, id: editingTx.id, type: 'investment' })} onClose={() => setEditingTx(null)} />
