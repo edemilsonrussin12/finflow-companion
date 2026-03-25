@@ -4,6 +4,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { getCategoryById } from '@/lib/categories';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
 
 const FREE_DAILY_QUESTIONS = 5;
@@ -140,11 +141,13 @@ export default function AssistantChat({ open, onClose }: AssistantChatProps) {
     let assistantSoFar = '';
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           messages: [...messages, userMsg],
