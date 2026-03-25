@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -17,19 +17,47 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const initializingRef = useRef(true);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const finishInitialization = (nextUser: User | null) => {
+      if (!isMounted) return;
+      initializingRef.current = false;
+      setUser(nextUser);
+      setLoading(false);
+      window.clearTimeout(timeoutId);
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
       setUser(session?.user ?? null);
-      setLoading(false);
+      if (!initializingRef.current) {
+        setLoading(false);
+      }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    const timeoutId = window.setTimeout(() => {
+      if (!isMounted) return;
+      initializingRef.current = false;
       setLoading(false);
-    });
+    }, 4000);
 
-    return () => subscription.unsubscribe();
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        finishInitialization(session?.user ?? null);
+      })
+      .catch(() => {
+        finishInitialization(null);
+      });
+
+    return () => {
+      isMounted = false;
+      initializingRef.current = false;
+      window.clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
