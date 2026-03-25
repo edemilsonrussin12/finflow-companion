@@ -199,6 +199,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   }
 
   const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
+  const { discountAmount, netAmount: netTotal } = calcNetAmount(grandTotal, payment);
   const quoteLabel = budget.quote_number ? String(budget.quote_number).padStart(5, '0') : '—';
 
   async function saveToDb() {
