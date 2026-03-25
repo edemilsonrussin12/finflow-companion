@@ -557,10 +557,15 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
               </div>
             ))}
             <div className="flex justify-between items-center pt-3 border-t border-border/50">
-              <span className="text-sm font-semibold">Total</span>
+              <span className="text-sm font-semibold">Total bruto</span>
               <span className="text-lg font-bold text-primary">R$ {grandTotal.toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
+        )}
+
+        {/* Desconto / Cartão / Valor líquido */}
+        {grandTotal > 0 && (
+          <PaymentDetails amount={grandTotal} state={payment} onChange={setPayment} />
         )}
       </div>
 
