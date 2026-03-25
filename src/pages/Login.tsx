@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import logoFinControl from '@/assets/logo-fincontrol.png';
+import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 export default function Login() {
   const { isAuthenticated, loading, login } = useAuth();
@@ -16,7 +17,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  if (loading) return null;
+  if (loading) return <AuthLoadingScreen message="Verificando acesso..." />;
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {

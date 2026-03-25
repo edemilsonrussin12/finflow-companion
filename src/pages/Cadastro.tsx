@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 export default function Cadastro() {
   const { signup, isAuthenticated, loading, user } = useAuth();
@@ -64,7 +65,7 @@ export default function Cadastro() {
     }
   }
 
-  if (loading) return null;
+  if (loading) return <AuthLoadingScreen message="Preparando cadastro..." />;
   if (isAuthenticated && !refCode) return <Navigate to="/" replace />;
   if (isAuthenticated && refCode) return <Navigate to="/" replace />;
 

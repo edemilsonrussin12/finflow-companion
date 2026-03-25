@@ -8,6 +8,8 @@ export function useAdmin() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!user) {
       setIsAdmin(false);
       setLoading(false);
@@ -15,18 +17,32 @@ export function useAdmin() {
     }
 
     const checkAdmin = async () => {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
 
-      setIsAdmin(!error && !!data);
-      setLoading(false);
+        if (!isMounted) return;
+        setIsAdmin(!error && !!data);
+      } catch (error) {
+        console.error('[useAdmin] check failed:', error);
+        if (!isMounted) return;
+        setIsAdmin(false);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     };
 
     checkAdmin();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   return { isAdmin, loading };
