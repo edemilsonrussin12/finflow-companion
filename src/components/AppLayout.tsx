@@ -44,6 +44,7 @@ export default function AppLayout() {
   const { isPremium, trial } = usePremiumStatus();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isOnline, pendingCount, syncing } = useOfflineSync();
 
   // Load display name
   useEffect(() => {
@@ -83,8 +84,6 @@ export default function AppLayout() {
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
-
-  const { isOnline, pendingCount, syncing } = useOfflineSync();
 
   return (
     <div className="min-h-[100dvh] bg-background overflow-x-hidden">
