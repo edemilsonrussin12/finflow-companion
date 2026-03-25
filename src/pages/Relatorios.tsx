@@ -161,6 +161,26 @@ export default function Relatorios() {
                 <p className={`text-sm font-bold tabular-nums ${savingsRate >= 0 ? 'text-income' : 'text-expense'}`}>{savingsRate.toFixed(1)}%</p>
               </div>
             </div>
+            {(totalDiscounts > 0 || totalFees > 0) && (
+              <div className="pt-2 border-t border-border/30 grid grid-cols-2 gap-3">
+                {totalDiscounts > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Descontos concedidos</span>
+                    <p className="text-sm font-bold text-orange-400 tabular-nums">- {formatCurrency(totalDiscounts)}</p>
+                  </div>
+                )}
+                {totalFees > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Taxas + Juros pagos</span>
+                    <p className="text-sm font-bold text-orange-400 tabular-nums">- {formatCurrency(totalFees)}</p>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Receita líquida</span>
+                  <p className="text-sm font-bold text-income tabular-nums">{formatCurrency(incomeNet)}</p>
+                </div>
+              </div>
+            )}
             <div className="pt-2 border-t border-border/30">
               <div className="flex items-center gap-1.5">
                 <ShoppingBag size={14} className="text-primary" />
