@@ -116,8 +116,8 @@ export default function PerfilProfissional() {
       return;
     }
 
-    const { data: urlData } = supabase.storage.from('business-assets').getPublicUrl(path);
-    const url = `${urlData.publicUrl}?t=${Date.now()}`;
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    const url = signedData?.signedUrl || '';
     update('logo_url', url);
     setUploadingLogo(false);
     toast({ title: 'Logo enviado!' });
@@ -140,8 +140,8 @@ export default function PerfilProfissional() {
       .from('business-assets')
       .upload(path, blob, { upsert: true, contentType: 'image/png' });
 
-    const { data: urlData } = supabase.storage.from('business-assets').getPublicUrl(path);
-    const url = `${urlData.publicUrl}?t=${Date.now()}`;
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    const url = signedData?.signedUrl || '';
     update('signature_url', url);
   }
 
