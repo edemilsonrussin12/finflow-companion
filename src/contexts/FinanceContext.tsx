@@ -44,7 +44,6 @@ function mapTx(row: any): Transaction {
   const normalizedType = normalizeTransactionType(row.type);
   let txType: TransactionType = normalizedType ?? 'expense';
 
-  // Migrate legacy category names to new IDs
   const existing = getCategoryById(categoryId);
   if (!existing) {
     const migrated = migrateLegacyCategory(categoryId);
@@ -66,6 +65,15 @@ function mapTx(row: any): Transaction {
     recurrenceFrequency: row.recurrence_frequency ?? undefined,
     recurrencePaused: row.recurrence_paused,
     recurrenceGroupId: row.recurrence_group_id ?? undefined,
+    discountType: row.discount_type ?? null,
+    discountValue: Number(row.discount_value ?? 0),
+    discountReason: row.discount_reason ?? null,
+    paymentMethod: row.payment_method ?? null,
+    cardType: row.card_type ?? null,
+    installments: row.installments ?? null,
+    cardFee: Number(row.card_fee ?? 0),
+    paymentInterest: Number(row.payment_interest ?? 0),
+    netAmount: row.net_amount != null ? Number(row.net_amount) : null,
   };
 }
 
@@ -258,6 +266,15 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       recurrence_frequency: t.recurrenceFrequency ?? null,
       recurrence_paused: t.recurrencePaused ?? false,
       recurrence_group_id: groupId,
+      discount_type: t.discountType ?? null,
+      discount_value: t.discountValue ?? 0,
+      discount_reason: t.discountReason ?? null,
+      payment_method: t.paymentMethod ?? null,
+      card_type: t.cardType ?? null,
+      installments: t.installments ?? null,
+      card_fee: t.cardFee ?? 0,
+      payment_interest: t.paymentInterest ?? 0,
+      net_amount: t.netAmount ?? null,
     }).select().single();
     if (!error && data) {
       setTransactions(prev => [mapTx(data), ...prev]);
@@ -276,6 +293,15 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       recurrence_frequency: t.recurrenceFrequency ?? null,
       recurrence_paused: t.recurrencePaused ?? false,
       recurrence_group_id: t.recurrenceGroupId ?? null,
+      discount_type: t.discountType ?? null,
+      discount_value: t.discountValue ?? 0,
+      discount_reason: t.discountReason ?? null,
+      payment_method: t.paymentMethod ?? null,
+      card_type: t.cardType ?? null,
+      installments: t.installments ?? null,
+      card_fee: t.cardFee ?? 0,
+      payment_interest: t.paymentInterest ?? 0,
+      net_amount: t.netAmount ?? null,
     }).eq('id', t.id).select().single();
     if (!error && data) {
       setTransactions(prev => prev.map(p => p.id === t.id ? mapTx(data) : p));

@@ -63,9 +63,10 @@ export default function Dashboard() {
 
   const monthTx = useMemo(() => transactions.filter(t => t.date.startsWith(selectedMonth)), [transactions, selectedMonth]);
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
+  const incomeNet = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + (t.netAmount ?? t.amount), 0), [monthTx]);
   const expense = useMemo(() => monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const investment = useMemo(() => monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0), [monthTx]);
-  const saldoLivre = income - expense - investment;
+  const saldoLivre = incomeNet - expense - investment;
 
   const patrimonio = useMemo(() => {
     const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);

@@ -15,6 +15,10 @@ export const CATEGORIES = [
 
 export type Category = typeof CATEGORIES[number];
 
+export type DiscountType = 'fixed' | 'percentage';
+export type CardType = 'debit' | 'credit';
+export type PaymentMethod = 'pix' | 'cash' | 'debit' | 'credit' | 'transfer' | 'boleto';
+
 export interface Transaction {
   id: string;
   type: TransactionType;
@@ -27,6 +31,16 @@ export interface Transaction {
   recurrenceFrequency?: RecurrenceFrequency;
   recurrencePaused?: boolean;
   recurrenceGroupId?: string;
+  // Payment detail fields
+  discountType?: DiscountType | null;
+  discountValue?: number;
+  discountReason?: string | null;
+  paymentMethod?: PaymentMethod | null;
+  cardType?: CardType | null;
+  installments?: number | null;
+  cardFee?: number;
+  paymentInterest?: number;
+  netAmount?: number | null;
 }
 
 export interface Sale {

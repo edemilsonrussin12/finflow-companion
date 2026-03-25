@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Transaction, TransactionType, RecurrenceFrequency } from '@/types/finance';
-import { getMainCategories, getSubCategories, type CategoryDefinition } from '@/lib/categories';
+import { getMainCategories, getSubCategories } from '@/lib/categories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
+import PaymentDetails, { getDefaultPaymentState, calcNetAmount, type PaymentState } from '@/components/PaymentDetails';
 
 interface Props {
   onSubmit: (t: Omit<Transaction, 'id'>) => void;
@@ -33,6 +34,24 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
     initial?.recurrenceFrequency ?? 'monthly'
   );
 
+  // Payment details state
+  const [payment, setPayment] = useState<PaymentState>(() => {
+    if (initial) {
+      return {
+        hasDiscount: (initial.discountValue ?? 0) > 0,
+        discountType: initial.discountType ?? 'percentage',
+        discountValue: initial.discountValue ?? 0,
+        discountReason: initial.discountReason ?? '',
+        paymentMethod: initial.paymentMethod ?? '',
+        cardType: initial.cardType ?? 'credit',
+        installments: initial.installments ?? 1,
+        cardFee: initial.cardFee ?? 0,
+        paymentInterest: initial.paymentInterest ?? 0,
+      };
+    }
+    return getDefaultPaymentState();
+  });
+
   // Category state
   const mainCategories = useMemo(() => getMainCategories(type), [type]);
   const defaultCategory = initial?.category ?? mainCategories[0]?.id ?? '';
@@ -42,7 +61,6 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
   const subCategories = useMemo(() => getSubCategories(category), [category]);
   const hasSubCategories = subCategories.length > 0;
 
-  // Reset category when type changes (only if not editing)
   const handleTypeChange = (newType: TransactionType) => {
     setType(newType);
     const cats = getMainCategories(newType);
@@ -50,7 +68,6 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
     setSubCategory('');
   };
 
-  // Reset subcategory when category changes
   const handleCategoryChange = (catId: string) => {
     setCategory(catId);
     setSubCategory('');
@@ -72,8 +89,8 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
       return;
     }
 
-    // Store _general as null
     const finalSubCategory = subCategory && subCategory !== '_general' ? subCategory : null;
+    const { netAmount } = calcNetAmount(val, payment);
 
     onSubmit({
       type,
@@ -86,6 +103,15 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
       recurrenceFrequency: isRecurring ? recurrenceFrequency : undefined,
       recurrencePaused: initial?.recurrencePaused ?? false,
       recurrenceGroupId: initial?.recurrenceGroupId,
+      discountType: payment.hasDiscount ? payment.discountType : null,
+      discountValue: payment.hasDiscount ? payment.discountValue : 0,
+      discountReason: payment.discountReason || null,
+      paymentMethod: payment.paymentMethod || null,
+      cardType: (payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit') ? payment.cardType : null,
+      installments: (payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit') ? payment.installments : null,
+      cardFee: payment.cardFee,
+      paymentInterest: payment.paymentInterest,
+      netAmount: (payment.hasDiscount || payment.cardFee > 0 || payment.paymentInterest > 0) ? netAmount : null,
     });
     toast({ title: 'Registro salvo com sucesso', description: `${TYPE_LABELS[type]} registrada.` });
     onClose();
@@ -103,37 +129,16 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {/* Type selector */}
           <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleTypeChange('income')}
-              className={`py-2.5 rounded-lg font-medium text-sm transition-all ${
-                type === 'income'
-                  ? 'gradient-income text-income-foreground'
-                  : 'bg-secondary text-secondary-foreground'
-              }`}
-            >
+            <button type="button" onClick={() => handleTypeChange('income')}
+              className={`py-2.5 rounded-lg font-medium text-sm transition-all ${type === 'income' ? 'gradient-income text-income-foreground' : 'bg-secondary text-secondary-foreground'}`}>
               Receita
             </button>
-            <button
-              type="button"
-              onClick={() => handleTypeChange('expense')}
-              className={`py-2.5 rounded-lg font-medium text-sm transition-all ${
-                type === 'expense'
-                  ? 'gradient-expense text-expense-foreground'
-                  : 'bg-secondary text-secondary-foreground'
-              }`}
-            >
+            <button type="button" onClick={() => handleTypeChange('expense')}
+              className={`py-2.5 rounded-lg font-medium text-sm transition-all ${type === 'expense' ? 'gradient-expense text-expense-foreground' : 'bg-secondary text-secondary-foreground'}`}>
               Despesa
             </button>
-            <button
-              type="button"
-              onClick={() => handleTypeChange('investment')}
-              className={`py-2.5 rounded-lg font-medium text-sm transition-all ${
-                type === 'investment'
-                  ? 'gradient-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground'
-              }`}
-            >
+            <button type="button" onClick={() => handleTypeChange('investment')}
+              className={`py-2.5 rounded-lg font-medium text-sm transition-all ${type === 'investment' ? 'gradient-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
               Investimento
             </button>
           </div>
@@ -160,15 +165,12 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {mainCategories.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.emoji} {c.name}
-                  </SelectItem>
+                  <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Subcategory (always shown when parent has subs, with "Geral" option) */}
           {hasSubCategories && (
             <div>
               <Label>Subcategoria</Label>
@@ -177,9 +179,7 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
                 <SelectContent>
                   <SelectItem value="_general">📁 Geral</SelectItem>
                   {subCategories.map(c => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.emoji} {c.name}
-                    </SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -203,6 +203,11 @@ export default function TransactionForm({ onSubmit, onClose, initial, initialTyp
                 </SelectContent>
               </Select>
             </div>
+          )}
+
+          {/* Payment details (discount, card fees) */}
+          {type === 'income' && (
+            <PaymentDetails amount={parseFloat(amount) || 0} state={payment} onChange={setPayment} />
           )}
 
           <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold">

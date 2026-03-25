@@ -12,10 +12,11 @@ import TrialBanner from '@/components/TrialBanner';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { getCurrentMonth } from '@/lib/format';
 import type { TransactionType } from '@/types/finance';
 import { toast } from 'sonner';
-import { LogOut, User, Bot } from 'lucide-react';
+import { LogOut, User, Bot, WifiOff, RefreshCw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,10 +84,27 @@ export default function AppLayout() {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
+  const { isOnline, pendingCount, syncing } = useOfflineSync();
+
   return (
     <div className="min-h-[100dvh] bg-background overflow-x-hidden">
+      {/* Offline / sync indicator */}
+      {(!isOnline || pendingCount > 0) && (
+        <div className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 text-xs font-medium ${
+          !isOnline ? 'bg-destructive/90 text-destructive-foreground' : 'bg-primary/90 text-primary-foreground'
+        }`}>
+          {!isOnline ? (
+            <><WifiOff size={14} /> Sem internet – dados salvos offline</>
+          ) : syncing ? (
+            <><RefreshCw size={14} className="animate-spin" /> Sincronizando {pendingCount} registro(s)...</>
+          ) : (
+            <><RefreshCw size={14} /> {pendingCount} registro(s) pendente(s)</>
+          )}
+        </div>
+      )}
+
       {/* Global header with logout */}
-      <header className="sticky top-0 z-30 flex items-center justify-end px-4 md:px-8 py-2">
+      <header className={`sticky top-0 z-30 flex items-center justify-end px-4 md:px-8 py-2 ${(!isOnline || pendingCount > 0) ? 'mt-7' : ''}`}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-2 rounded-xl hover:bg-accent transition-colors text-muted-foreground">

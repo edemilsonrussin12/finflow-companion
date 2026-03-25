@@ -595,12 +595,21 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          card_fee: number | null
+          card_type: string | null
           category: string
           created_at: string
           date: string
           description: string
+          discount_reason: string | null
+          discount_type: string | null
+          discount_value: number | null
           id: string
+          installments: number | null
           is_recurring: boolean
+          net_amount: number | null
+          payment_interest: number | null
+          payment_method: string | null
           recurrence_frequency: string | null
           recurrence_group_id: string | null
           recurrence_paused: boolean
@@ -610,12 +619,21 @@ export type Database = {
         }
         Insert: {
           amount: number
+          card_fee?: number | null
+          card_type?: string | null
           category: string
           created_at?: string
           date: string
           description: string
+          discount_reason?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           id?: string
+          installments?: number | null
           is_recurring?: boolean
+          net_amount?: number | null
+          payment_interest?: number | null
+          payment_method?: string | null
           recurrence_frequency?: string | null
           recurrence_group_id?: string | null
           recurrence_paused?: boolean
@@ -625,12 +643,21 @@ export type Database = {
         }
         Update: {
           amount?: number
+          card_fee?: number | null
+          card_type?: string | null
           category?: string
           created_at?: string
           date?: string
           description?: string
+          discount_reason?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           id?: string
+          installments?: number | null
           is_recurring?: boolean
+          net_amount?: number | null
+          payment_interest?: number | null
+          payment_method?: string | null
           recurrence_frequency?: string | null
           recurrence_group_id?: string | null
           recurrence_paused?: boolean
