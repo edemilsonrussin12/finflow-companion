@@ -29,12 +29,28 @@ export default function Relatorios() {
   const monthSales = useMemo(() => sales.filter(s => s.date.startsWith(selectedMonth)), [sales, selectedMonth]);
 
   const income = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [monthTx]);
+  const incomeNet = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => s + (t.netAmount ?? t.amount), 0), [monthTx]);
   const expense = useMemo(() => monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const investment = useMemo(() => monthTx.filter(t => t.type === 'investment').reduce((s, t) => s + t.amount, 0), [monthTx]);
   const revenue = useMemo(() => monthSales.reduce((s, v) => s + v.totalValue, 0), [monthSales]);
   const totalIncome = income + revenue;
   const balance = totalIncome - expense - investment;
   const savingsRate = totalIncome > 0 ? ((totalIncome - expense - investment) / totalIncome) * 100 : 0;
+
+  const totalDiscounts = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => {
+    const disc = t.discountValue ?? 0;
+    if (disc <= 0) return s;
+    return s + (t.discountType === 'percentage' ? t.amount * (disc / 100) : disc);
+  }, 0), [monthTx]);
+
+  const totalFees = useMemo(() => monthTx.filter(t => t.type === 'income').reduce((s, t) => {
+    const disc = t.discountValue ?? 0;
+    const discAmount = t.discountType === 'percentage' ? t.amount * (disc / 100) : disc;
+    const afterDiscount = t.amount - discAmount;
+    const fee = t.cardFee ? afterDiscount * (t.cardFee / 100) : 0;
+    const interest = t.paymentInterest ?? 0;
+    return s + fee + interest;
+  }, 0), [monthTx]);
 
   const categoryData = useMemo(() => {
     const map = new Map<string, number>();
@@ -145,6 +161,26 @@ export default function Relatorios() {
                 <p className={`text-sm font-bold tabular-nums ${savingsRate >= 0 ? 'text-income' : 'text-expense'}`}>{savingsRate.toFixed(1)}%</p>
               </div>
             </div>
+            {(totalDiscounts > 0 || totalFees > 0) && (
+              <div className="pt-2 border-t border-border/30 grid grid-cols-2 gap-3">
+                {totalDiscounts > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Descontos concedidos</span>
+                    <p className="text-sm font-bold text-orange-400 tabular-nums">- {formatCurrency(totalDiscounts)}</p>
+                  </div>
+                )}
+                {totalFees > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Taxas + Juros pagos</span>
+                    <p className="text-sm font-bold text-orange-400 tabular-nums">- {formatCurrency(totalFees)}</p>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Receita líquida</span>
+                  <p className="text-sm font-bold text-income tabular-nums">{formatCurrency(incomeNet)}</p>
+                </div>
+              </div>
+            )}
             <div className="pt-2 border-t border-border/30">
               <div className="flex items-center gap-1.5">
                 <ShoppingBag size={14} className="text-primary" />
