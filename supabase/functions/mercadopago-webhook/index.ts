@@ -10,13 +10,88 @@ const PLAN_PRICES: Record<string, number> = {
   annual: 167.00,
 };
 
+async function verifyWebhookSignature(req: Request, body: string): Promise<boolean> {
+  const xSignature = req.headers.get('x-signature');
+  const xRequestId = req.headers.get('x-request-id');
+  const webhookSecret = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET');
+
+  // If no webhook secret configured, log warning but allow (graceful degradation)
+  if (!webhookSecret) {
+    console.warn('[WEBHOOK] MERCADOPAGO_WEBHOOK_SECRET not configured, skipping signature verification');
+    return true;
+  }
+
+  if (!xSignature || !xRequestId) {
+    console.error('[WEBHOOK] Missing x-signature or x-request-id headers');
+    return false;
+  }
+
+  // Parse x-signature header: "ts=...,v1=..."
+  const parts: Record<string, string> = {};
+  for (const part of xSignature.split(',')) {
+    const [key, value] = part.split('=', 2);
+    if (key && value) parts[key.trim()] = value.trim();
+  }
+
+  const ts = parts['ts'];
+  const v1 = parts['v1'];
+  if (!ts || !v1) {
+    console.error('[WEBHOOK] Invalid x-signature format');
+    return false;
+  }
+
+  // Extract data.id from the parsed body
+  let dataId = '';
+  try {
+    const parsed = JSON.parse(body);
+    dataId = parsed.data?.id ? String(parsed.data.id) : '';
+  } catch {
+    return false;
+  }
+
+  // Build the manifest string per MercadoPago docs
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+
+  // Compute HMAC-SHA256
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(webhookSecret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(manifest));
+  const computed = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  if (computed !== v1) {
+    console.error('[WEBHOOK] Signature mismatch');
+    return false;
+  }
+
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const body = await req.json();
+    const bodyText = await req.text();
+
+    // Verify webhook signature
+    const isValid = await verifyWebhookSignature(req, bodyText);
+    if (!isValid) {
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = JSON.parse(bodyText);
     console.log('[WEBHOOK] ─── Notification received ───');
     console.log('[WEBHOOK] Type:', body.type, '| Action:', body.action);
 
