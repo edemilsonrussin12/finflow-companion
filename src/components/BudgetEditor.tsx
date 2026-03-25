@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import CatalogPicker from '@/components/CatalogPicker';
+import PaymentDetails, { getDefaultPaymentState, calcNetAmount, type PaymentState } from '@/components/PaymentDetails';
 
 interface BudgetItem {
   id: string;
@@ -85,6 +86,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [payment, setPayment] = useState<PaymentState>(getDefaultPaymentState());
   const lastSavedRef = useRef<string>('');
 
   const load = useCallback(async () => {
