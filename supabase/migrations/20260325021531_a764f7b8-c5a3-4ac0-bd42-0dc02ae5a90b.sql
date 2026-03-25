@@ -1,0 +1,11 @@
+
+ALTER TABLE public.transactions
+ADD COLUMN IF NOT EXISTS discount_type text DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS discount_value numeric DEFAULT 0,
+ADD COLUMN IF NOT EXISTS discount_reason text DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS payment_method text DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS card_type text DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS installments integer DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS card_fee numeric DEFAULT 0,
+ADD COLUMN IF NOT EXISTS payment_interest numeric DEFAULT 0,
+ADD COLUMN IF NOT EXISTS net_amount numeric DEFAULT NULL;
