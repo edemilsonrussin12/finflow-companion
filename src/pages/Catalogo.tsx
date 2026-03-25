@@ -152,8 +152,8 @@ export default function Catalogo() {
       setUploading(false);
       return;
     }
-    const { data: urlData } = supabase.storage.from('business-assets').getPublicUrl(path);
-    setEditItem(prev => ({ ...prev, photo_url: urlData.publicUrl }));
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    setEditItem(prev => ({ ...prev, photo_url: signedData?.signedUrl || '' }));
     setUploading(false);
   }
 
