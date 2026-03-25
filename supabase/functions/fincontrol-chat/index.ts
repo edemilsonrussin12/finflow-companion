@@ -7,6 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const FREE_DAILY_LIMIT = 5;
+
 const SYSTEM_PROMPT = `Você é o Assistente FinControl, um Mentor Financeiro Digital Inteligente integrado ao aplicativo FinControl.
 
 ═══ MODO DE OPERAÇÃO: SOMENTE LEITURA ═══
@@ -81,6 +83,54 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const userId = claimsData.claims.sub as string;
+
+    // --- Server-side quota enforcement for free users ---
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const { data: subData } = await serviceClient
+      .from("user_subscriptions")
+      .select("is_premium")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const isPremium = subData?.is_premium === true;
+
+    if (!isPremium) {
+      const today = new Date().toISOString().slice(0, 10);
+
+      // Check current daily usage
+      const { data: usageRow } = await serviceClient
+        .from("ai_usage")
+        .select("count")
+        .eq("user_id", userId)
+        .eq("usage_date", today)
+        .maybeSingle();
+
+      const currentCount = usageRow?.count ?? 0;
+
+      if (currentCount >= FREE_DAILY_LIMIT) {
+        return new Response(
+          JSON.stringify({
+            error: `Você atingiu o limite de ${FREE_DAILY_LIMIT} perguntas diárias do plano gratuito. Desbloqueie o Premium para uso ilimitado.`,
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Increment usage atomically via upsert
+      await serviceClient
+        .from("ai_usage")
+        .upsert(
+          { user_id: userId, usage_date: today, count: currentCount + 1 },
+          { onConflict: "user_id,usage_date" }
+        );
+    }
+    // --- End quota enforcement ---
 
     const { messages, financialContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
