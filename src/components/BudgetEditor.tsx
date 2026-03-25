@@ -342,7 +342,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       startY: y,
       head: [['Descrição', 'Qtd', 'Valor Unit.', 'Total']],
       body: tableData,
-      foot: [['', '', 'TOTAL', fmtBRL(grandTotal)]],
+      foot: [['', '', 'SUBTOTAL', fmtBRL(grandTotal)]],
       theme: 'plain',
       styles: { fontSize: 10, cellPadding: 4, textColor: darkText, lineColor: lightGray, lineWidth: 0.5 },
       headStyles: { fillColor: [240, 240, 242], textColor: accentColor, fontStyle: 'bold', fontSize: 10, lineColor: [200, 200, 200], lineWidth: 0.5 },
@@ -352,6 +352,46 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       columnStyles: { 0: { cellWidth: 'auto' }, 1: { cellWidth: 22, halign: 'center' }, 2: { cellWidth: 38, halign: 'right' }, 3: { cellWidth: 38, halign: 'right' } },
       margin: { left: 14, right: 14 },
     });
+
+    // Payment details (discount, fees, net) after table
+    const hasPaymentDetails = payment.hasDiscount || payment.cardFee > 0 || payment.paymentInterest > 0;
+    if (hasPaymentDetails) {
+      const tableEndY = (doc as any).lastAutoTable?.finalY ?? y + 40;
+      let py = tableEndY + 6;
+      doc.setFontSize(10);
+      doc.setTextColor(grayText[0], grayText[1], grayText[2]);
+
+      if (payment.hasDiscount && discountAmount > 0) {
+        const discLabel = payment.discountType === 'percentage' ? `Desconto (${payment.discountValue}%)` : 'Desconto';
+        doc.setFont('helvetica', 'normal');
+        doc.text(discLabel, pw - 14 - 50, py, { align: 'right' });
+        doc.text(`- ${fmtBRL(discountAmount)}`, pw - 14, py, { align: 'right' });
+        py += 5;
+      }
+
+      const isCard = payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit';
+      if (isCard && payment.cardFee > 0) {
+        const feeAmount = (grandTotal - discountAmount) * (payment.cardFee / 100);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Taxa cartão (${payment.cardFee}%)`, pw - 14 - 50, py, { align: 'right' });
+        doc.text(`- ${fmtBRL(feeAmount)}`, pw - 14, py, { align: 'right' });
+        py += 5;
+      }
+
+      if (isCard && payment.paymentInterest > 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.text('Juros', pw - 14 - 50, py, { align: 'right' });
+        doc.text(`- ${fmtBRL(payment.paymentInterest)}`, pw - 14, py, { align: 'right' });
+        py += 5;
+      }
+
+      py += 2;
+      doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('VALOR LÍQUIDO', pw - 14 - 50, py, { align: 'right' });
+      doc.text(fmtBRL(netTotal), pw - 14, py, { align: 'right' });
+    }
 
     // Footer
     const footerTop = ph - 48;
