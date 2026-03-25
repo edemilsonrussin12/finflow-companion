@@ -17,8 +17,8 @@ async function verifyWebhookSignature(req: Request, body: string): Promise<boole
 
   // If no webhook secret configured, log warning but allow (graceful degradation)
   if (!webhookSecret) {
-    console.warn('[WEBHOOK] MERCADOPAGO_WEBHOOK_SECRET not configured, skipping signature verification');
-    return true;
+    console.error('[WEBHOOK] MERCADOPAGO_WEBHOOK_SECRET not configured — rejecting request');
+    return false;
   }
 
   if (!xSignature || !xRequestId) {
