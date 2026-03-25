@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import CatalogPicker from '@/components/CatalogPicker';
+import PaymentDetails, { getDefaultPaymentState, calcNetAmount, type PaymentState } from '@/components/PaymentDetails';
 
 interface BudgetItem {
   id: string;
@@ -85,6 +86,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [payment, setPayment] = useState<PaymentState>(getDefaultPaymentState());
   const lastSavedRef = useRef<string>('');
 
   const load = useCallback(async () => {
@@ -197,6 +199,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   }
 
   const grandTotal = items.reduce((s, i) => s + (Number(i.quantity) * Number(i.unit_price)), 0);
+  const { discountAmount, netAmount: netTotal } = calcNetAmount(grandTotal, payment);
   const quoteLabel = budget.quote_number ? String(budget.quote_number).padStart(5, '0') : '—';
 
   async function saveToDb() {
@@ -339,7 +342,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       startY: y,
       head: [['Descrição', 'Qtd', 'Valor Unit.', 'Total']],
       body: tableData,
-      foot: [['', '', 'TOTAL', fmtBRL(grandTotal)]],
+      foot: [['', '', 'SUBTOTAL', fmtBRL(grandTotal)]],
       theme: 'plain',
       styles: { fontSize: 10, cellPadding: 4, textColor: darkText, lineColor: lightGray, lineWidth: 0.5 },
       headStyles: { fillColor: [240, 240, 242], textColor: accentColor, fontStyle: 'bold', fontSize: 10, lineColor: [200, 200, 200], lineWidth: 0.5 },
@@ -349,6 +352,46 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       columnStyles: { 0: { cellWidth: 'auto' }, 1: { cellWidth: 22, halign: 'center' }, 2: { cellWidth: 38, halign: 'right' }, 3: { cellWidth: 38, halign: 'right' } },
       margin: { left: 14, right: 14 },
     });
+
+    // Payment details (discount, fees, net) after table
+    const hasPaymentDetails = payment.hasDiscount || payment.cardFee > 0 || payment.paymentInterest > 0;
+    if (hasPaymentDetails) {
+      const tableEndY = (doc as any).lastAutoTable?.finalY ?? y + 40;
+      let py = tableEndY + 6;
+      doc.setFontSize(10);
+      doc.setTextColor(grayText[0], grayText[1], grayText[2]);
+
+      if (payment.hasDiscount && discountAmount > 0) {
+        const discLabel = payment.discountType === 'percentage' ? `Desconto (${payment.discountValue}%)` : 'Desconto';
+        doc.setFont('helvetica', 'normal');
+        doc.text(discLabel, pw - 14 - 50, py, { align: 'right' });
+        doc.text(`- ${fmtBRL(discountAmount)}`, pw - 14, py, { align: 'right' });
+        py += 5;
+      }
+
+      const isCard = payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit';
+      if (isCard && payment.cardFee > 0) {
+        const feeAmount = (grandTotal - discountAmount) * (payment.cardFee / 100);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Taxa cartão (${payment.cardFee}%)`, pw - 14 - 50, py, { align: 'right' });
+        doc.text(`- ${fmtBRL(feeAmount)}`, pw - 14, py, { align: 'right' });
+        py += 5;
+      }
+
+      if (isCard && payment.paymentInterest > 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.text('Juros', pw - 14 - 50, py, { align: 'right' });
+        doc.text(`- ${fmtBRL(payment.paymentInterest)}`, pw - 14, py, { align: 'right' });
+        py += 5;
+      }
+
+      py += 2;
+      doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('VALOR LÍQUIDO', pw - 14 - 50, py, { align: 'right' });
+      doc.text(fmtBRL(netTotal), pw - 14, py, { align: 'right' });
+    }
 
     // Footer
     const footerTop = ph - 48;
@@ -392,14 +435,33 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     );
     const paymentLine = budget.payment_method ? `\nForma de pagamento: ${budget.payment_method}` : '';
     const validityLine = `\nValidade: ${budget.validity_days} dias`;
+
+    let totalSection = `\n*Subtotal: ${fmtBRL(grandTotal)}*`;
+    const hasPaymentInfo = payment.hasDiscount || payment.cardFee > 0 || payment.paymentInterest > 0;
+    if (hasPaymentInfo) {
+      if (payment.hasDiscount && discountAmount > 0) {
+        totalSection += `\nDesconto: - ${fmtBRL(discountAmount)}`;
+      }
+      const isCard = payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit';
+      if (isCard && payment.cardFee > 0) {
+        const feeAmt = (grandTotal - discountAmount) * (payment.cardFee / 100);
+        totalSection += `\nTaxa cartão: - ${fmtBRL(feeAmt)}`;
+      }
+      if (isCard && payment.paymentInterest > 0) {
+        totalSection += `\nJuros: - ${fmtBRL(payment.paymentInterest)}`;
+      }
+      totalSection += `\n*Valor líquido: ${fmtBRL(netTotal)}*`;
+    }
+
     const text = encodeURIComponent(
-      `*Orçamento #${quoteLabel} — ${bizProfile?.business_name || 'FinControl'}*\n\nCliente: ${budget.client_name || '—'}${budget.client_contact ? `\nContato: ${budget.client_contact}` : ''}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}${validityLine}${paymentLine}\n\n${lines.join('\n')}\n\n*Total: ${fmtBRL(grandTotal)}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
+      `*Orçamento #${quoteLabel} — ${bizProfile?.business_name || 'FinControl'}*\n\nCliente: ${budget.client_name || '—'}${budget.client_contact ? `\nContato: ${budget.client_contact}` : ''}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}${validityLine}${paymentLine}\n\n${lines.join('\n')}${totalSection}\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
 
   function registerPayment() {
     if (!user) return;
+    const hasPaymentInfo = payment.hasDiscount || payment.cardFee > 0 || payment.paymentInterest > 0;
     addTransaction({
       type: 'income',
       amount: grandTotal,
@@ -407,6 +469,15 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       description: `Pagamento: ${budget.client_name} — ${budget.service_description}`.slice(0, 100),
       date: new Date().toISOString().slice(0, 10),
       isRecurring: false,
+      discountType: payment.hasDiscount ? payment.discountType : null,
+      discountValue: payment.hasDiscount ? payment.discountValue : 0,
+      discountReason: payment.discountReason || null,
+      paymentMethod: payment.paymentMethod || null,
+      cardType: (payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit') ? payment.cardType : null,
+      installments: (payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit') ? payment.installments : null,
+      cardFee: payment.cardFee,
+      paymentInterest: payment.paymentInterest,
+      netAmount: hasPaymentInfo ? netTotal : null,
     });
     supabase.from('budgets').update({ status: 'paid', updated_at: new Date().toISOString() } as any).eq('id', budgetId).then(() => {
       setBudget(b => ({ ...b, status: 'paid' }));
@@ -554,10 +625,15 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
               </div>
             ))}
             <div className="flex justify-between items-center pt-3 border-t border-border/50">
-              <span className="text-sm font-semibold">Total</span>
+              <span className="text-sm font-semibold">Total bruto</span>
               <span className="text-lg font-bold text-primary">R$ {grandTotal.toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
+        )}
+
+        {/* Desconto / Cartão / Valor líquido */}
+        {grandTotal > 0 && (
+          <PaymentDetails amount={grandTotal} state={payment} onChange={setPayment} />
         )}
       </div>
 
