@@ -435,14 +435,33 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     );
     const paymentLine = budget.payment_method ? `\nForma de pagamento: ${budget.payment_method}` : '';
     const validityLine = `\nValidade: ${budget.validity_days} dias`;
+
+    let totalSection = `\n*Subtotal: ${fmtBRL(grandTotal)}*`;
+    const hasPaymentInfo = payment.hasDiscount || payment.cardFee > 0 || payment.paymentInterest > 0;
+    if (hasPaymentInfo) {
+      if (payment.hasDiscount && discountAmount > 0) {
+        totalSection += `\nDesconto: - ${fmtBRL(discountAmount)}`;
+      }
+      const isCard = payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit';
+      if (isCard && payment.cardFee > 0) {
+        const feeAmt = (grandTotal - discountAmount) * (payment.cardFee / 100);
+        totalSection += `\nTaxa cartão: - ${fmtBRL(feeAmt)}`;
+      }
+      if (isCard && payment.paymentInterest > 0) {
+        totalSection += `\nJuros: - ${fmtBRL(payment.paymentInterest)}`;
+      }
+      totalSection += `\n*Valor líquido: ${fmtBRL(netTotal)}*`;
+    }
+
     const text = encodeURIComponent(
-      `*Orçamento #${quoteLabel} — ${bizProfile?.business_name || 'FinControl'}*\n\nCliente: ${budget.client_name || '—'}${budget.client_contact ? `\nContato: ${budget.client_contact}` : ''}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}${validityLine}${paymentLine}\n\n${lines.join('\n')}\n\n*Total: ${fmtBRL(grandTotal)}*\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
+      `*Orçamento #${quoteLabel} — ${bizProfile?.business_name || 'FinControl'}*\n\nCliente: ${budget.client_name || '—'}${budget.client_contact ? `\nContato: ${budget.client_contact}` : ''}\nServiço: ${budget.service_description || '—'}\nData: ${budget.date ? new Date(budget.date + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}${validityLine}${paymentLine}\n\n${lines.join('\n')}${totalSection}\n\n${budget.notes ? `Obs: ${budget.notes}\n\n` : ''}Gerado com FinControl\nfincontrolapp.com`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
 
   function registerPayment() {
     if (!user) return;
+    const hasPaymentInfo = payment.hasDiscount || payment.cardFee > 0 || payment.paymentInterest > 0;
     addTransaction({
       type: 'income',
       amount: grandTotal,
@@ -450,6 +469,15 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       description: `Pagamento: ${budget.client_name} — ${budget.service_description}`.slice(0, 100),
       date: new Date().toISOString().slice(0, 10),
       isRecurring: false,
+      discountType: payment.hasDiscount ? payment.discountType : null,
+      discountValue: payment.hasDiscount ? payment.discountValue : 0,
+      discountReason: payment.discountReason || null,
+      paymentMethod: payment.paymentMethod || null,
+      cardType: (payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit') ? payment.cardType : null,
+      installments: (payment.paymentMethod === 'credit' || payment.paymentMethod === 'debit') ? payment.installments : null,
+      cardFee: payment.cardFee,
+      paymentInterest: payment.paymentInterest,
+      netAmount: hasPaymentInfo ? netTotal : null,
     });
     supabase.from('budgets').update({ status: 'paid', updated_at: new Date().toISOString() } as any).eq('id', budgetId).then(() => {
       setBudget(b => ({ ...b, status: 'paid' }));
