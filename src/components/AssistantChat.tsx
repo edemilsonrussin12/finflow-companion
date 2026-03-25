@@ -4,6 +4,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { useGoals } from '@/contexts/GoalsContext';
 import { getCategoryById } from '@/lib/categories';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { supabase } from '@/integrations/supabase/client';
 import ReactMarkdown from 'react-markdown';
 
 const FREE_DAILY_QUESTIONS = 5;
