@@ -24,14 +24,24 @@ function triggerDownload(content: string, filename: string, mimeType: string) {
 }
 
 export function exportTransactionsCSV(transactions: Transaction[], month: string) {
-  const headers = ['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor'];
-  const rows = transactions.map(t => [
-    t.date,
-    t.type === 'income' ? 'Entrada' : 'Saída',
-    t.category,
-    escapeCSV(t.description),
-    formatCurrency(t.amount),
-  ]);
+  const headers = ['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor Bruto', 'Desconto', 'Taxa', 'Juros', 'Valor Líquido'];
+  const rows = transactions.map(t => {
+    const discount = t.discountValue ?? 0;
+    const fee = t.cardFee ? (t.amount - discount) * (t.cardFee / 100) : 0;
+    const interest = t.paymentInterest ?? 0;
+    const net = t.netAmount ?? t.amount;
+    return [
+      t.date,
+      t.type === 'income' ? 'Entrada' : t.type === 'investment' ? 'Investimento' : 'Saída',
+      t.category,
+      escapeCSV(t.description),
+      formatCurrency(t.amount),
+      formatCurrency(discount),
+      formatCurrency(fee),
+      formatCurrency(interest),
+      formatCurrency(net),
+    ];
+  });
   const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
   triggerDownload(csv, `transacoes-${month}.csv`, 'text/csv');
 }
@@ -133,8 +143,14 @@ export function exportReportExcel(
 </Worksheet>
 <Worksheet ss:Name="Transações">
 <Table>
-  <Row><Cell ss:StyleID="header"><Data ss:Type="String">Data</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Tipo</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Categoria</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Descrição</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Valor</Data></Cell></Row>
-  ${transactions.map(t => `<Row><Cell><Data ss:Type="String">${t.date}</Data></Cell><Cell><Data ss:Type="String">${t.type === 'income' ? 'Entrada' : 'Saída'}</Data></Cell><Cell><Data ss:Type="String">${t.category}</Data></Cell><Cell><Data ss:Type="String">${t.description.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</Data></Cell><Cell ss:StyleID="currency"><Data ss:Type="Number">${t.amount}</Data></Cell></Row>`).join('\n  ')}
+  <Row><Cell ss:StyleID="header"><Data ss:Type="String">Data</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Tipo</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Categoria</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Descrição</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Valor Bruto</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Desconto</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Taxa</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Juros</Data></Cell><Cell ss:StyleID="header"><Data ss:Type="String">Valor Líquido</Data></Cell></Row>
+  ${transactions.map(t => {
+    const disc = t.discountValue ?? 0;
+    const fee = t.cardFee ? (t.amount - disc) * (t.cardFee / 100) : 0;
+    const interest = t.paymentInterest ?? 0;
+    const net = t.netAmount ?? t.amount;
+    return `<Row><Cell><Data ss:Type="String">${t.date}</Data></Cell><Cell><Data ss:Type="String">${t.type === 'income' ? 'Entrada' : t.type === 'investment' ? 'Investimento' : 'Saída'}</Data></Cell><Cell><Data ss:Type="String">${t.category}</Data></Cell><Cell><Data ss:Type="String">${t.description.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</Data></Cell><Cell ss:StyleID="currency"><Data ss:Type="Number">${t.amount}</Data></Cell><Cell ss:StyleID="currency"><Data ss:Type="Number">${disc}</Data></Cell><Cell ss:StyleID="currency"><Data ss:Type="Number">${fee}</Data></Cell><Cell ss:StyleID="currency"><Data ss:Type="Number">${interest}</Data></Cell><Cell ss:StyleID="currency"><Data ss:Type="Number">${net}</Data></Cell></Row>`;
+  }).join('\n  ')}
 </Table>
 </Worksheet>
 ${goals.length > 0 ? `<Worksheet ss:Name="Metas">
