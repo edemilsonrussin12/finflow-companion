@@ -60,74 +60,67 @@ function StatCounter({ end, label, suffix = '' }: { end: number; label: string; 
 
 /* ─── data ─── */
 const problems = [
-  { icon: AlertTriangle, text: 'Messy finances with no clear overview' },
-  { icon: Layers, text: 'Manual spreadsheets that waste your time' },
-  { icon: FileText, text: 'Difficulty creating professional budgets' },
-  { icon: Target, text: 'Lack of organization in income & expenses' },
-  { icon: DollarSign, text: 'No easy way to track real profit' },
+  { icon: AlertTriangle, text: 'Finanças desorganizadas sem visão clara' },
+  { icon: Layers, text: 'Planilhas manuais que desperdiçam seu tempo' },
+  { icon: FileText, text: 'Dificuldade para criar orçamentos profissionais' },
+  { icon: Target, text: 'Falta de organização nas receitas e despesas' },
+  { icon: DollarSign, text: 'Sem forma fácil de acompanhar o lucro real' },
 ];
 
 const benefits = [
-  { icon: Wallet, title: 'Track Income & Expenses', desc: 'Log every transaction and see where your money goes in real time.' },
-  { icon: FileText, title: 'Professional Budgets', desc: 'Create clean, organized quotes and send them to clients in minutes.' },
-  { icon: LayoutDashboard, title: 'Financial Dashboard', desc: 'See your full financial picture at a glance with intuitive charts.' },
-  { icon: BarChart3, title: 'Reports & Analytics', desc: 'Detailed monthly and yearly reports to guide smarter decisions.' },
-  { icon: Smartphone, title: 'Mobile & Desktop', desc: 'Access your finances from any device, anywhere, anytime.' },
-  { icon: Zap, title: 'Simple & Fast', desc: 'Clean interface designed for speed — no learning curve.' },
+  { icon: Wallet, title: 'Controle de Receitas e Despesas', desc: 'Registre cada transação e veja para onde vai seu dinheiro em tempo real.' },
+  { icon: FileText, title: 'Orçamentos Profissionais', desc: 'Crie orçamentos organizados e envie para clientes em minutos.' },
+  { icon: LayoutDashboard, title: 'Painel Financeiro', desc: 'Veja toda sua situação financeira de forma rápida com gráficos intuitivos.' },
+  { icon: BarChart3, title: 'Relatórios e Análises', desc: 'Relatórios mensais e anuais detalhados para decisões mais inteligentes.' },
+  { icon: Smartphone, title: 'Celular e Computador', desc: 'Acesse suas finanças de qualquer dispositivo, em qualquer lugar.' },
+  { icon: Zap, title: 'Simples e Rápido', desc: 'Interface limpa pensada para agilidade — sem curva de aprendizado.' },
 ];
 
 const features = [
-  { icon: Wallet, title: 'Financial Control', desc: 'Manage income, expenses, and cash flow effortlessly.' },
-  { icon: LayoutDashboard, title: 'Dashboard', desc: 'Visual overview of your financial health with key metrics.' },
-  { icon: LineChart, title: 'Reports', desc: 'Automatic reports with graphs, categories, and trends.' },
-  { icon: Target, title: 'Planning', desc: 'Set goals, simulate scenarios, and plan your financial growth.' },
-  { icon: Receipt, title: 'Professional Budgets', desc: 'Create, send, and track quotes for clients with ease.' },
+  { icon: Wallet, title: 'Controle Financeiro', desc: 'Gerencie receitas, despesas e fluxo de caixa com facilidade.' },
+  { icon: LayoutDashboard, title: 'Dashboard', desc: 'Visão geral da sua saúde financeira com métricas importantes.' },
+  { icon: LineChart, title: 'Relatórios', desc: 'Relatórios automáticos com gráficos, categorias e tendências.' },
+  { icon: Target, title: 'Planejamento', desc: 'Defina metas, simule cenários e planeje seu crescimento financeiro.' },
+  { icon: Receipt, title: 'Orçamentos Profissionais', desc: 'Crie, envie e acompanhe orçamentos para clientes com facilidade.' },
 ];
 
 const budgetBenefits = [
-  { icon: Zap, text: 'Create budgets quickly' },
-  { icon: DollarSign, text: 'Add services and prices' },
-  { icon: FileText, text: 'Professional layout' },
-  { icon: Send, text: 'Send to clients' },
-  { icon: CreditCard, text: 'Track payments' },
-  { icon: PieChart, text: 'Integrated with financial control' },
+  { icon: Zap, text: 'Crie orçamentos rapidamente' },
+  { icon: DollarSign, text: 'Adicione serviços e preços' },
+  { icon: FileText, text: 'Layout profissional' },
+  { icon: Send, text: 'Envie para clientes' },
+  { icon: CreditCard, text: 'Acompanhe pagamentos' },
+  { icon: PieChart, text: 'Integrado ao controle financeiro' },
 ];
 
 const steps = [
-  { step: '01', title: 'Create Account', desc: 'Sign up in seconds — free, no credit card required.' },
-  { step: '02', title: 'Add Finances', desc: 'Log your income and expenses to build your financial picture.' },
-  { step: '03', title: 'Create Budgets', desc: 'Generate professional quotes and send them to clients.' },
-  { step: '04', title: 'Control Money', desc: 'Use dashboards, reports, and insights to stay on top.' },
-];
-
-const videos = [
-  { title: 'Create Your Account', id: '' },
-  { title: 'Add Expenses', id: '' },
-  { title: 'Create a Budget', id: '' },
-  { title: 'View Reports', id: '' },
+  { step: '01', title: 'Crie sua Conta', desc: 'Cadastre-se em segundos — grátis, sem cartão de crédito.' },
+  { step: '02', title: 'Adicione Finanças', desc: 'Registre receitas e despesas para montar seu panorama financeiro.' },
+  { step: '03', title: 'Crie Orçamentos', desc: 'Gere orçamentos profissionais e envie para seus clientes.' },
+  { step: '04', title: 'Controle seu Dinheiro', desc: 'Use dashboards, relatórios e insights para manter o controle.' },
 ];
 
 const freePlan = [
-  'Financial control',
+  'Controle financeiro',
   'Dashboard',
-  'Basic reports',
-  'Budget creation',
+  'Relatórios básicos',
+  'Criação de orçamentos',
 ];
 
 const premiumPlan = [
-  'Advanced reports',
-  'Unlimited budgets',
-  'Business tools',
-  'Priority support',
-  'Annual plan',
+  'Relatórios avançados',
+  'Orçamentos ilimitados',
+  'Ferramentas empresariais',
+  'Suporte prioritário',
+  'Plano anual',
 ];
 
 /* ─── component ─── */
 export default function Aterrissagem() {
   useEffect(() => {
-    document.title = 'FinControlApp — Control Finances & Create Professional Budgets';
+    document.title = 'FinControlApp — Controle Financeiro e Orçamentos Profissionais';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'FinControlApp helps freelancers and small business owners organize money, track expenses, and create professional budgets in one simple app.');
+    if (meta) meta.setAttribute('content', 'O FinControlApp ajuda autônomos e pequenos empresários a organizar dinheiro, acompanhar gastos e criar orçamentos profissionais em um app simples.');
   }, []);
 
   const howRef = useRef<HTMLElement | null>(null);
@@ -140,17 +133,17 @@ export default function Aterrissagem() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-8 h-14">
           <span className="text-lg font-bold tracking-tight text-primary">FinControlApp</span>
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#benefits" className="hover:text-foreground transition-colors">Benefits</a>
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#budgets" className="hover:text-foreground transition-colors">Budgets</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+            <a href="#benefits" className="hover:text-foreground transition-colors">Benefícios</a>
+            <a href="#features" className="hover:text-foreground transition-colors">Funcionalidades</a>
+            <a href="#budgets" className="hover:text-foreground transition-colors">Orçamentos</a>
+            <a href="#pricing" className="hover:text-foreground transition-colors">Planos</a>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/login">
-              <Button variant="ghost" size="sm">Log In</Button>
+              <Button variant="ghost" size="sm">Entrar</Button>
             </Link>
             <Link to="/cadastro">
-              <Button size="sm">Start Free</Button>
+              <Button size="sm">Começar Grátis</Button>
             </Link>
           </div>
         </div>
@@ -160,29 +153,29 @@ export default function Aterrissagem() {
       <Section className="pt-16 pb-20 md:pt-24 md:pb-28 px-4" id="hero">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
-            Control Your Finances and Create{' '}
-            <span className="text-primary">Professional Budgets</span>{' '}
-            in One App
+            Controle suas Finanças e Crie{' '}
+            <span className="text-primary">Orçamentos Profissionais</span>{' '}
+            em Um Só App
           </h1>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            FinControlApp helps freelancers, small business owners and individuals organize money, track expenses, plan budgets and create professional quotes — simple and fast.
+            O FinControlApp ajuda autônomos, pequenos empresários e pessoas físicas a organizar dinheiro, acompanhar gastos, planejar orçamentos e criar propostas profissionais — de forma simples e rápida.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/cadastro">
               <Button size="lg" className="w-full sm:w-auto text-base px-8 py-6 h-auto fab-glow font-bold">
-                Start Free Now
+                Começar Grátis Agora
                 <ArrowRight className="ml-2" size={18} />
               </Button>
             </Link>
             <Button variant="outline" size="lg" className="w-full sm:w-auto text-base px-8 py-6 h-auto border-primary/30 hover:bg-primary/10" onClick={scrollToHow}>
               <Play className="mr-2" size={16} />
-              See How It Works
+              Veja Como Funciona
             </Button>
           </div>
           <div className="flex flex-wrap justify-center gap-4 text-xs text-muted-foreground pt-2">
-            <span className="flex items-center gap-1"><CheckCircle size={14} className="text-emerald" /> Free plan available</span>
-            <span className="flex items-center gap-1"><CheckCircle size={14} className="text-emerald" /> No credit card required</span>
-            <span className="flex items-center gap-1"><Shield size={14} className="text-emerald" /> Secure platform</span>
+            <span className="flex items-center gap-1"><CheckCircle size={14} className="text-emerald" /> Plano gratuito disponível</span>
+            <span className="flex items-center gap-1"><CheckCircle size={14} className="text-emerald" /> Sem cartão de crédito</span>
+            <span className="flex items-center gap-1"><Shield size={14} className="text-emerald" /> Plataforma segura</span>
           </div>
         </div>
       </Section>
@@ -190,7 +183,7 @@ export default function Aterrissagem() {
       {/* ── PROBLEM ── */}
       <Section className="py-16 md:py-20 px-4 bg-card/40" id="problem">
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h2 className="text-2xl md:text-3xl font-bold">Managing Money and Client Budgets Should Not Be Complicated</h2>
+          <h2 className="text-2xl md:text-3xl font-bold">Gerenciar Dinheiro e Orçamentos Não Deveria Ser Complicado</h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
             {problems.map((p, i) => (
               <div key={i} className="flex items-center gap-3 glass rounded-xl p-4 text-left">
@@ -206,17 +199,17 @@ export default function Aterrissagem() {
       <Section className="py-16 md:py-20 px-4" id="solution">
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <h2 className="text-2xl md:text-3xl font-bold">
-            FinControlApp Solves Everything in{' '}
-            <span className="text-primary">One Place</span>
+            FinControlApp Resolve Tudo em{' '}
+            <span className="text-primary">Um Só Lugar</span>
           </h2>
-          <p className="text-muted-foreground">A complete platform to manage finances and create professional budgets.</p>
+          <p className="text-muted-foreground">Uma plataforma completa para gerenciar finanças e criar orçamentos profissionais.</p>
         </div>
       </Section>
 
       {/* ── BENEFITS ── */}
       <Section className="py-16 md:py-20 px-4" id="benefits">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Main Benefits</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Principais Benefícios</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {benefits.map((b, i) => (
               <Card key={i} className="bg-card border-border hover:border-primary/40 transition-colors">
@@ -236,7 +229,7 @@ export default function Aterrissagem() {
       {/* ── FEATURES ── */}
       <Section className="py-16 md:py-20 px-4 bg-card/40" id="features">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Powerful Features</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Funcionalidades Poderosas</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
               <div key={i} className="glass rounded-2xl p-6 space-y-3 hover:border-primary/30 border border-transparent transition-colors">
@@ -256,11 +249,11 @@ export default function Aterrissagem() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 space-y-3">
             <h2 className="text-2xl md:text-3xl font-bold">
-              Professional Budgets for{' '}
-              <span className="text-primary">Freelancers & Small Business Owners</span>
+              Orçamentos Profissionais para{' '}
+              <span className="text-primary">Autônomos e Pequenos Empresários</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Create professional budgets in minutes and send them to clients with a clean, organized layout.
+              Crie orçamentos profissionais em minutos e envie para clientes com um layout limpo e organizado.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
@@ -274,7 +267,7 @@ export default function Aterrissagem() {
           <div className="text-center">
             <Link to="/cadastro">
               <Button size="lg" className="fab-glow font-bold text-base px-8 py-6 h-auto">
-                Create Your First Budget Now
+                Crie Seu Primeiro Orçamento Agora
                 <ArrowRight className="ml-2" size={18} />
               </Button>
             </Link>
@@ -285,7 +278,7 @@ export default function Aterrissagem() {
       {/* ── VIDEO / DEMO ── */}
       <Section className="py-16 md:py-20 px-4 bg-card/40" id="demo">
         <div className="max-w-5xl mx-auto text-center space-y-8">
-          <h2 className="text-2xl md:text-3xl font-bold">See FinControlApp in Action</h2>
+          <h2 className="text-2xl md:text-3xl font-bold">Veja o FinControlApp em Ação</h2>
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="space-y-3">
               <div className="glass rounded-2xl overflow-hidden aspect-video">
@@ -299,7 +292,7 @@ export default function Aterrissagem() {
                   <source src="/videos/funcionamento-geral.mp4" type="video/mp4" />
                 </video>
               </div>
-              <p className="text-sm font-medium">How FinControlApp Works</p>
+              <p className="text-sm font-medium">Como o FinControlApp Funciona</p>
             </div>
             <div className="space-y-3">
               <div className="glass rounded-2xl overflow-hidden aspect-video">
@@ -313,7 +306,7 @@ export default function Aterrissagem() {
                   <source src="/videos/orcamentos.mp4" type="video/mp4" />
                 </video>
               </div>
-              <p className="text-sm font-medium">Professional Budgets</p>
+              <p className="text-sm font-medium">Orçamentos Profissionais</p>
             </div>
           </div>
         </div>
@@ -322,18 +315,18 @@ export default function Aterrissagem() {
       {/* ── SOCIAL PROOF ── */}
       <Section className="py-16 md:py-20 px-4" id="proof">
         <div className="max-w-5xl mx-auto space-y-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-center">Built for Real Users</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center">Feito para Usuários Reais</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <StatCounter end={10000} suffix="+" label="Users" />
-            <StatCounter end={99} suffix="%" label="Uptime" />
-            <StatCounter end={50000} suffix="+" label="Budgets Created" />
-            <StatCounter end={4} suffix=".9★" label="Rating" />
+            <StatCounter end={10000} suffix="+" label="Usuários" />
+            <StatCounter end={99} suffix="%" label="Disponibilidade" />
+            <StatCounter end={50000} suffix="+" label="Orçamentos Criados" />
+            <StatCounter end={4} suffix=".9★" label="Avaliação" />
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { name: 'Lucas M.', text: 'FinControlApp changed how I manage my freelance income. Highly recommend!', stars: 5 },
-              { name: 'Ana S.', text: 'Creating professional budgets used to take hours. Now it takes minutes.', stars: 5 },
-              { name: 'Carlos R.', text: 'Finally a finance app that actually works for small business owners.', stars: 5 },
+              { name: 'Lucas M.', text: 'O FinControlApp mudou a forma como gerencio minha renda como autônomo. Recomendo demais!', stars: 5 },
+              { name: 'Ana S.', text: 'Criar orçamentos profissionais levava horas. Agora leva minutos.', stars: 5 },
+              { name: 'Carlos R.', text: 'Finalmente um app financeiro que realmente funciona para pequenos empresários.', stars: 5 },
             ].map((t, i) => (
               <Card key={i} className="bg-card border-border">
                 <CardContent className="p-6 space-y-3">
@@ -354,7 +347,7 @@ export default function Aterrissagem() {
       {/* ── HOW IT WORKS ── */}
       <Section className="py-16 md:py-20 px-4 bg-card/40" id="how">
         <div className="max-w-5xl mx-auto" ref={(el) => { howRef.current = el; }}>
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">How It Works</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Como Funciona</h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
             {steps.map((s, i) => (
               <div key={i} className="glass rounded-2xl p-6 text-center space-y-3 relative">
@@ -373,13 +366,13 @@ export default function Aterrissagem() {
       {/* ── PRICING ── */}
       <Section className="py-16 md:py-20 px-4" id="pricing">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Simple Pricing</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Planos Simples</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Free */}
+            {/* Gratuito */}
             <Card className="bg-card border-border">
               <CardContent className="p-8 space-y-5">
-                <h3 className="text-xl font-bold">Free Plan</h3>
-                <p className="text-3xl font-extrabold">R$ 0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                <h3 className="text-xl font-bold">Plano Gratuito</h3>
+                <p className="text-3xl font-extrabold">R$ 0<span className="text-sm font-normal text-muted-foreground">/mês</span></p>
                 <ul className="space-y-2">
                   {freePlan.map((f, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
@@ -389,7 +382,7 @@ export default function Aterrissagem() {
                   ))}
                 </ul>
                 <Link to="/cadastro" className="block">
-                  <Button variant="outline" className="w-full">Start Free</Button>
+                  <Button variant="outline" className="w-full">Começar Grátis</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -397,8 +390,8 @@ export default function Aterrissagem() {
             <Card className="bg-card border-primary/50 ring-1 ring-primary/30 relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
               <CardContent className="p-8 space-y-5">
-                <h3 className="text-xl font-bold">Premium Plan</h3>
-                <p className="text-3xl font-extrabold text-primary">R$ 19,90<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                <h3 className="text-xl font-bold">Plano Premium</h3>
+                <p className="text-3xl font-extrabold text-primary">R$ 19,90<span className="text-sm font-normal text-muted-foreground">/mês</span></p>
                 <ul className="space-y-2">
                   {premiumPlan.map((p, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
@@ -408,7 +401,7 @@ export default function Aterrissagem() {
                   ))}
                 </ul>
                 <Link to="/cadastro" className="block">
-                  <Button className="w-full fab-glow font-bold">Get Premium</Button>
+                  <Button className="w-full fab-glow font-bold">Assinar Premium</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -419,13 +412,13 @@ export default function Aterrissagem() {
       {/* ── FINAL CTA ── */}
       <Section className="py-20 md:py-28 px-4 bg-gradient-to-b from-primary/10 to-background" id="cta">
         <div className="max-w-3xl mx-auto text-center space-y-6">
-          <h2 className="text-2xl md:text-4xl font-bold">Start Controlling Your Finances Today</h2>
+          <h2 className="text-2xl md:text-4xl font-bold">Comece a Controlar suas Finanças Hoje</h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Join FinControlApp and organize your money and professional budgets in one platform.
+            Junte-se ao FinControlApp e organize seu dinheiro e orçamentos profissionais em uma só plataforma.
           </p>
           <Link to="/cadastro">
             <Button size="lg" className="fab-glow text-base px-10 py-6 h-auto font-bold">
-              Create Free Account
+              Criar Conta Grátis
               <ArrowRight className="ml-2" size={18} />
             </Button>
           </Link>
@@ -437,13 +430,13 @@ export default function Aterrissagem() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <span className="font-bold text-foreground text-sm">FinControlApp</span>
           <div className="flex gap-4">
-            <span>Terms</span>
-            <span>Privacy</span>
-            <span>Contact</span>
+            <span>Termos</span>
+            <span>Privacidade</span>
+            <span>Contato</span>
           </div>
           <div className="flex items-center gap-1">
             <Shield size={12} className="text-emerald" />
-            <span>Secure platform · © {new Date().getFullYear()} All rights reserved</span>
+            <span>Plataforma segura · © {new Date().getFullYear()} Todos os direitos reservados</span>
           </div>
         </div>
       </footer>
