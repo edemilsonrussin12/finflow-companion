@@ -146,7 +146,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       }
     }, AUTO_SAVE_INTERVAL);
     return () => clearInterval(interval);
-  }, [budget, items, user, loading]);
+  }, [budget, items, paymentMethods, user, loading]);
 
   function updateField(field: keyof BudgetData, value: string | number | null) {
     setBudget(b => ({ ...b, [field]: value }));
