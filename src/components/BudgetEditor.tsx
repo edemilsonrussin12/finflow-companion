@@ -562,8 +562,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
             <Input type="number" min={1} value={budget.validity_days} onChange={e => updateField('validity_days', Number(e.target.value))} />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
+        <div>
             <label className="text-xs font-medium text-muted-foreground">Status</label>
             <Select value={budget.status} onValueChange={v => updateField('status', v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -573,20 +572,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Pagamento</label>
-            <Select value={budget.payment_method || 'none'} onValueChange={v => updateField('payment_method', v === 'none' ? '' : v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Selecionar</SelectItem>
-                {PAYMENT_METHODS.map(m => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
+        <BudgetPaymentMethods methods={paymentMethods} onChange={setPaymentMethods} />
         <div>
           <label className="text-xs font-medium text-muted-foreground">Observações</label>
           <Textarea value={budget.notes} onChange={e => updateField('notes', e.target.value)} placeholder="Notas adicionais..." rows={2} />
