@@ -307,7 +307,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     ];
     if (budget.client_contact) infoItems.push(['Contato', budget.client_contact]);
     if (budget.service_description) infoItems.push(['Serviço', budget.service_description]);
-    if (budget.payment_method) infoItems.push(['Pagamento', budget.payment_method]);
+    const paymentMethodsText = formatPaymentMethods(paymentMethods);
+    if (paymentMethodsText) infoItems.push(['Pagamento', paymentMethodsText]);
 
     doc.setFontSize(10);
     for (const [label, value] of infoItems) {
@@ -436,7 +437,8 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     const lines = items.map(i =>
       `• ${i.description || 'Item'} — ${i.quantity}x ${fmtBRL(Number(i.unit_price))} = ${fmtBRL(Number(i.quantity) * Number(i.unit_price))}`
     );
-    const paymentLine = budget.payment_method ? `\nForma de pagamento: ${budget.payment_method}` : '';
+    const pmText = formatPaymentMethods(paymentMethods);
+    const paymentLine = pmText ? `\nForma de pagamento: ${pmText}` : '';
     const validityLine = `\nValidade: ${budget.validity_days} dias`;
 
     let totalSection = `\n*Subtotal: ${fmtBRL(grandTotal)}*`;
