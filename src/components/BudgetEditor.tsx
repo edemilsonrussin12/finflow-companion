@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import CatalogPicker from '@/components/CatalogPicker';
 import PaymentDetails, { getDefaultPaymentState, calcNetAmount, type PaymentState } from '@/components/PaymentDetails';
+import BudgetPaymentMethods, { parsePaymentMethodsFromDb, serializePaymentMethods, formatPaymentMethods, type PaymentMethodEntry } from '@/components/BudgetPaymentMethods';
 
 interface BudgetItem {
   id: string;
@@ -59,7 +60,7 @@ interface Props {
 }
 
 const AUTO_SAVE_INTERVAL = 5000;
-const PAYMENT_METHODS = ['Pix', 'Dinheiro', 'Cartão', 'Transferência', 'Outros'];
+// Payment methods now handled by BudgetPaymentMethods component
 const STATUSES = [
   { value: 'draft', label: 'Rascunho' },
   { value: 'sent', label: 'Enviado' },
@@ -87,6 +88,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [payment, setPayment] = useState<PaymentState>(getDefaultPaymentState());
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodEntry[]>([]);
   const lastSavedRef = useRef<string>('');
 
   const load = useCallback(async () => {
@@ -112,6 +114,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
         validity_days: (bData as any).validity_days ?? 30,
         payment_method: (bData as any).payment_method ?? '',
       });
+      setPaymentMethods(parsePaymentMethodsFromDb((bData as any).payment_method));
     }
     if (bpData) {
       setBizProfile({
@@ -214,7 +217,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       status: budget.status,
       total: grandTotal,
       validity_days: budget.validity_days,
-      payment_method: budget.payment_method,
+      payment_method: serializePaymentMethods(paymentMethods),
       updated_at: new Date().toISOString(),
     } as any).eq('id', budgetId);
 
