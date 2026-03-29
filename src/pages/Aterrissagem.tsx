@@ -275,42 +275,6 @@ export default function Aterrissagem() {
         </div>
       </Section>
 
-      {/* ── VIDEO / DEMO ── */}
-      <Section className="py-16 md:py-20 px-4 bg-card/40" id="demo">
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          <h2 className="text-2xl md:text-3xl font-bold">Veja o FinControlApp em Ação</h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <div className="glass rounded-2xl overflow-hidden aspect-video">
-                <video
-                  className="w-full h-full object-cover"
-                  controls
-                  preload="metadata"
-                  playsInline
-                  poster=""
-                >
-                  <source src="/videos/funcionamento-geral.mp4" type="video/mp4" />
-                </video>
-              </div>
-              <p className="text-sm font-medium">Como o FinControlApp Funciona</p>
-            </div>
-            <div className="space-y-3">
-              <div className="glass rounded-2xl overflow-hidden aspect-video">
-                <video
-                  className="w-full h-full object-cover"
-                  controls
-                  preload="metadata"
-                  playsInline
-                  poster=""
-                >
-                  <source src="/videos/orcamentos.mp4" type="video/mp4" />
-                </video>
-              </div>
-              <p className="text-sm font-medium">Orçamentos Profissionais</p>
-            </div>
-          </div>
-        </div>
-      </Section>
 
       {/* ── SOCIAL PROOF ── */}
       <Section className="py-16 md:py-20 px-4" id="proof">
