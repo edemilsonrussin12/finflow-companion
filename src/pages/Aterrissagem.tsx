@@ -287,19 +287,35 @@ export default function Aterrissagem() {
         <div className="max-w-5xl mx-auto text-center space-y-8">
           <h2 className="text-2xl md:text-3xl font-bold">See FinControlApp in Action</h2>
           <div className="grid sm:grid-cols-2 gap-6">
-            {videos.map((v, i) => (
-              <div key={i} className="glass rounded-2xl overflow-hidden aspect-video flex items-center justify-center relative group cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10" />
-                <div className="relative z-10 text-center space-y-2">
-                  <div className="w-14 h-14 mx-auto rounded-full bg-primary/30 flex items-center justify-center group-hover:bg-primary/50 transition-colors">
-                    <Play size={28} className="text-primary-foreground ml-1" />
-                  </div>
-                  <p className="text-sm font-medium">{v.title}</p>
-                </div>
+            <div className="space-y-3">
+              <div className="glass rounded-2xl overflow-hidden aspect-video">
+                <video
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
+                  playsInline
+                  poster=""
+                >
+                  <source src="/videos/funcionamento-geral.mp4" type="video/mp4" />
+                </video>
               </div>
-            ))}
+              <p className="text-sm font-medium">How FinControlApp Works</p>
+            </div>
+            <div className="space-y-3">
+              <div className="glass rounded-2xl overflow-hidden aspect-video">
+                <video
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
+                  playsInline
+                  poster=""
+                >
+                  <source src="/videos/orcamentos.mp4" type="video/mp4" />
+                </video>
+              </div>
+              <p className="text-sm font-medium">Professional Budgets</p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">Videos coming soon — stay tuned!</p>
         </div>
       </Section>
 
