@@ -136,7 +136,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (!user) return;
-      const snapshot = JSON.stringify({ budget, items });
+      const snapshot = JSON.stringify({ budget, items, paymentMethods });
       if (snapshot !== lastSavedRef.current && !loading) {
         setAutoSaveStatus('saving');
         await saveToDb();
