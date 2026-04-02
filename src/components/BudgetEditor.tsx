@@ -120,6 +120,7 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     if (bpData) {
       setBizProfile({
         business_name: (bpData as any).business_name ?? '',
+        cnpj: (bpData as any).cnpj ?? '',
         phone: (bpData as any).phone ?? '',
         email: (bpData as any).email ?? '',
         address: (bpData as any).address ?? '',
