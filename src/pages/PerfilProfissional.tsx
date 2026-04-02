@@ -38,7 +38,7 @@ export default function PerfilProfissional() {
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<BusinessProfile>({
-    business_name: '', phone: '', email: '', address: '', logo_url: '', signature_url: '',
+    business_name: '', cnpj: '', phone: '', email: '', address: '', logo_url: '', signature_url: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
