@@ -15,6 +15,7 @@ import SignaturePad from '@/components/SignaturePad';
 
 interface BusinessProfile {
   business_name: string;
+  cnpj: string;
   phone: string;
   email: string;
   address: string;
@@ -37,7 +38,7 @@ export default function PerfilProfissional() {
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<BusinessProfile>({
-    business_name: '', phone: '', email: '', address: '', logo_url: '', signature_url: '',
+    business_name: '', cnpj: '', phone: '', email: '', address: '', logo_url: '', signature_url: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,6 +65,7 @@ export default function PerfilProfissional() {
       const data = bizRes.data as any;
       setProfile({
         business_name: data.business_name ?? '',
+        cnpj: data.cnpj ?? '',
         phone: data.phone ?? '',
         email: data.email ?? '',
         address: data.address ?? '',
@@ -152,6 +154,7 @@ export default function PerfilProfissional() {
     const payload = {
       user_id: user.id,
       business_name: profile.business_name,
+      cnpj: profile.cnpj,
       phone: profile.phone,
       email: profile.email,
       address: profile.address,
@@ -290,6 +293,26 @@ export default function PerfilProfissional() {
         <div>
           <label className="text-xs font-medium text-muted-foreground">Nome da empresa / profissional</label>
           <Input value={profile.business_name} onChange={e => update('business_name', e.target.value)} placeholder="Ex: João Silva Serviços" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">CNPJ (opcional)</label>
+          <Input
+            value={profile.cnpj}
+            onChange={e => {
+              const digits = e.target.value.replace(/\D/g, '').slice(0, 14);
+              const formatted = digits
+                .replace(/^(\d{2})(\d)/, '$1.$2')
+                .replace(/^(\d{2}\.\d{3})(\d)/, '$1.$2')
+                .replace(/^(\d{2}\.\d{3}\.\d{3})(\d)/, '$1/$2')
+                .replace(/^(\d{2}\.\d{3}\.\d{3}\/\d{4})(\d)/, '$1-$2');
+              update('cnpj', formatted);
+            }}
+            placeholder="00.000.000/0000-00"
+            maxLength={18}
+          />
+          {profile.cnpj && profile.cnpj.replace(/\D/g, '').length > 0 && profile.cnpj.replace(/\D/g, '').length < 14 && (
+            <p className="text-[10px] text-yellow-500 mt-1">CNPJ incompleto</p>
+          )}
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground">Telefone</label>
