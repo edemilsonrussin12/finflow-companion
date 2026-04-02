@@ -154,6 +154,7 @@ export default function PerfilProfissional() {
     const payload = {
       user_id: user.id,
       business_name: profile.business_name,
+      cnpj: profile.cnpj,
       phone: profile.phone,
       email: profile.email,
       address: profile.address,
