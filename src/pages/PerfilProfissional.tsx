@@ -295,6 +295,26 @@ export default function PerfilProfissional() {
           <Input value={profile.business_name} onChange={e => update('business_name', e.target.value)} placeholder="Ex: João Silva Serviços" />
         </div>
         <div>
+          <label className="text-xs font-medium text-muted-foreground">CNPJ (opcional)</label>
+          <Input
+            value={profile.cnpj}
+            onChange={e => {
+              const digits = e.target.value.replace(/\D/g, '').slice(0, 14);
+              const formatted = digits
+                .replace(/^(\d{2})(\d)/, '$1.$2')
+                .replace(/^(\d{2}\.\d{3})(\d)/, '$1.$2')
+                .replace(/^(\d{2}\.\d{3}\.\d{3})(\d)/, '$1/$2')
+                .replace(/^(\d{2}\.\d{3}\.\d{3}\/\d{4})(\d)/, '$1-$2');
+              update('cnpj', formatted);
+            }}
+            placeholder="00.000.000/0000-00"
+            maxLength={18}
+          />
+          {profile.cnpj && profile.cnpj.replace(/\D/g, '').length > 0 && profile.cnpj.replace(/\D/g, '').length < 14 && (
+            <p className="text-[10px] text-yellow-500 mt-1">CNPJ incompleto</p>
+          )}
+        </div>
+        <div>
           <label className="text-xs font-medium text-muted-foreground">Telefone</label>
           <Input value={profile.phone} onChange={e => update('phone', e.target.value)} placeholder="Ex: (11) 99999-0000" />
         </div>

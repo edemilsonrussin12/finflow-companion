@@ -277,11 +277,12 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     doc.setFont('helvetica', 'bold');
     doc.text(headerName, logoEndX, headerY + 4);
 
-    if (bp && (bp.phone || bp.email || bp.address)) {
+    if (bp && (bp.cnpj || bp.phone || bp.email || bp.address)) {
       doc.setFontSize(7);
       doc.setTextColor(grayText[0], grayText[1], grayText[2]);
       doc.setFont('helvetica', 'normal');
       let infoY = headerY + 9;
+      if (bp.cnpj) { doc.text(`CNPJ: ${bp.cnpj}`, logoEndX, infoY); infoY += 4; }
       const parts: string[] = [];
       if (bp.phone) parts.push(bp.phone);
       if (bp.email) parts.push(bp.email);
