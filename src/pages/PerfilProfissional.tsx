@@ -15,6 +15,7 @@ import SignaturePad from '@/components/SignaturePad';
 
 interface BusinessProfile {
   business_name: string;
+  cnpj: string;
   phone: string;
   email: string;
   address: string;
