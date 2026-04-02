@@ -65,6 +65,7 @@ export default function PerfilProfissional() {
       const data = bizRes.data as any;
       setProfile({
         business_name: data.business_name ?? '',
+        cnpj: data.cnpj ?? '',
         phone: data.phone ?? '',
         email: data.email ?? '',
         address: data.address ?? '',
