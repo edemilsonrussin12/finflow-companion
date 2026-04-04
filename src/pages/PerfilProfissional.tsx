@@ -263,7 +263,10 @@ export default function PerfilProfissional() {
             <img
               src={profile.logo_url}
               alt="Logo"
-              className="w-20 h-20 object-contain rounded-xl border border-border bg-background"
+              className="w-[120px] h-auto max-h-20 object-contain rounded-xl border border-border bg-background"
+              loading="eager"
+              decoding="sync"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
             <div className="flex flex-col gap-2">
               <label className="cursor-pointer">
