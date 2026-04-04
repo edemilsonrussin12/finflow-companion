@@ -118,7 +118,8 @@ export default function PerfilProfissional() {
       return;
     }
 
-    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    // Use longer-lived signed URL (24h) to avoid disappearing logo
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 86400);
     const url = signedData?.signedUrl || '';
     update('logo_url', url);
     setUploadingLogo(false);
