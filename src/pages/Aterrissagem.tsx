@@ -30,6 +30,7 @@ import {
   Receipt,
   ChevronRight,
 } from 'lucide-react';
+import logoFinControl from '@/assets/logo-fincontrol.png';
 
 /* ─── tiny helpers ─── */
 function Section({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
