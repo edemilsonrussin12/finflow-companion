@@ -59,7 +59,7 @@ export default function InstagramLanding() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="pt-8 pb-2 px-6 text-center">
-        <img src={logoFinControl} alt="FinControl" className="h-10 mx-auto mb-6" />
+        <img src={logoFinControl} alt="FinControl" className="h-10 w-auto mx-auto mb-6 object-contain" loading="eager" decoding="sync" />
       </header>
 
       {/* Section 1 – Hero */}

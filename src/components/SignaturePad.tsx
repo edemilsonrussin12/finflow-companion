@@ -18,32 +18,45 @@ export default function SignaturePad({ onSave, initialImage }: Props) {
     return canvas.getContext('2d');
   }, []);
 
+  // Stable canvas init — only runs once on mount
+  const initialImageRef = useRef(initialImage);
+  initialImageRef.current = initialImage;
+  const [canvasReady, setCanvasReady] = useState(false);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
+    // Use fixed pixel dimensions to avoid mobile resize issues
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * 2;
-    canvas.height = rect.height * 2;
+    const w = Math.max(rect.width, 280);
+    const h = Math.max(rect.height, 128);
+    canvas.width = w * 2;
+    canvas.height = h * 2;
     ctx.scale(2, 2);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#1e1e1e';
+    setCanvasReady(true);
 
-    if (initialImage) {
+    if (initialImageRef.current) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        ctx.drawImage(img, 0, 0, w, h);
         setHasContent(true);
       };
-      img.src = initialImage;
+      img.onerror = () => {
+        // Fallback: signature image failed to load, canvas stays blank
+        console.warn('Signature image failed to load');
+      };
+      img.src = initialImageRef.current;
     }
-  }, [initialImage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function getPos(e: React.TouchEvent | React.MouseEvent) {
     const canvas = canvasRef.current!;
