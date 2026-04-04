@@ -143,7 +143,8 @@ export default function PerfilProfissional() {
       .from('business-assets')
       .upload(path, blob, { upsert: true, contentType: 'image/png' });
 
-    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    // Use longer-lived signed URL (24h)
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 86400);
     const url = signedData?.signedUrl || '';
     update('signature_url', url);
   }
