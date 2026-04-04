@@ -118,7 +118,8 @@ export default function PerfilProfissional() {
       return;
     }
 
-    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    // Use longer-lived signed URL (24h) to avoid disappearing logo
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 86400);
     const url = signedData?.signedUrl || '';
     update('logo_url', url);
     setUploadingLogo(false);
@@ -142,7 +143,8 @@ export default function PerfilProfissional() {
       .from('business-assets')
       .upload(path, blob, { upsert: true, contentType: 'image/png' });
 
-    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    // Use longer-lived signed URL (24h)
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 86400);
     const url = signedData?.signedUrl || '';
     update('signature_url', url);
   }
@@ -193,7 +195,7 @@ export default function PerfilProfissional() {
   }
 
   return (
-    <div className="page-container pt-6 pb-24 space-y-5 animate-fade-in">
+    <div className="page-container pt-6 pb-24 space-y-5">
       {/* Quick Menu */}
       <div className="glass rounded-2xl overflow-hidden divide-y divide-border/50">
         {allMenuItems.map(item => (
@@ -261,7 +263,10 @@ export default function PerfilProfissional() {
             <img
               src={profile.logo_url}
               alt="Logo"
-              className="w-20 h-20 object-contain rounded-xl border border-border bg-background"
+              className="w-[120px] h-auto max-h-20 object-contain rounded-xl border border-border bg-background"
+              loading="eager"
+              decoding="sync"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
             <div className="flex flex-col gap-2">
               <label className="cursor-pointer">

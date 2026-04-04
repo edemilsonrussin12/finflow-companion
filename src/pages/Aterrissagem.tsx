@@ -30,6 +30,7 @@ import {
   Receipt,
   ChevronRight,
 } from 'lucide-react';
+import logoFinControl from '@/assets/logo-fincontrol.png';
 
 /* ─── tiny helpers ─── */
 function Section({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
@@ -131,7 +132,7 @@ export default function Aterrissagem() {
       {/* ── Sticky Nav ── */}
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-8 h-14">
-          <span className="text-lg font-bold tracking-tight text-primary">FinControlApp</span>
+          <img src={logoFinControl} alt="FinControlApp" className="h-8 w-auto object-contain" loading="eager" decoding="sync" />
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#benefits" className="hover:text-foreground transition-colors">Benefícios</a>
             <a href="#features" className="hover:text-foreground transition-colors">Funcionalidades</a>
