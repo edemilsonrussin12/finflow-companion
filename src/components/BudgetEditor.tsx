@@ -118,14 +118,30 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
       setPaymentMethods(parsePaymentMethodsFromDb((bData as any).payment_method));
     }
     if (bpData) {
+      const rawLogo = (bpData as any).logo_url ?? '';
+      const rawSig = (bpData as any).signature_url ?? '';
+
+      // Generate fresh signed URLs from stored paths
+      const resolveUrl = async (val: string) => {
+        if (!val) return '';
+        const path = val.startsWith('http')
+          ? val.match(/business-assets\/([^?]+)/)?.[1] || ''
+          : val;
+        if (!path) return '';
+        const { data: s } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+        return s?.signedUrl || '';
+      };
+
+      const [logoUrl, sigUrl] = await Promise.all([resolveUrl(rawLogo), resolveUrl(rawSig)]);
+
       setBizProfile({
         business_name: (bpData as any).business_name ?? '',
         cnpj: (bpData as any).cnpj ?? '',
         phone: (bpData as any).phone ?? '',
         email: (bpData as any).email ?? '',
         address: (bpData as any).address ?? '',
-        logo_url: (bpData as any).logo_url ?? '',
-        signature_url: (bpData as any).signature_url ?? '',
+        logo_url: logoUrl,
+        signature_url: sigUrl,
       });
     }
     setClients((cData as ClientOption[]) ?? []);

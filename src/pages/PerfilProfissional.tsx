@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +44,8 @@ export default function PerfilProfissional() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [exists, setExists] = useState(false);
+  const logoPathRef = useRef('');
+  const sigPathRef = useRef('');
 
   // User display name
   const [displayName, setDisplayName] = useState('');
@@ -55,7 +57,6 @@ export default function PerfilProfissional() {
     if (!user) return;
     setLoading(true);
 
-    // Load business profile and display name in parallel
     const [bizRes, profileRes] = await Promise.all([
       supabase.from('business_profile').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle(),
@@ -63,14 +64,44 @@ export default function PerfilProfissional() {
 
     if (bizRes.data) {
       const data = bizRes.data as any;
+      const logoPath = data.logo_url ?? '';
+      const sigPath = data.signature_url ?? '';
+
+      // Generate fresh signed URLs from stored paths
+      let logoUrl = '';
+      let sigUrl = '';
+
+      if (logoPath && !logoPath.startsWith('http')) {
+        const { data: s } = await supabase.storage.from('business-assets').createSignedUrl(logoPath, 3600);
+        logoUrl = s?.signedUrl || '';
+      } else if (logoPath) {
+        // Legacy: stored as full URL — try to extract path and re-sign
+        const match = logoPath.match(/business-assets\/([^?]+)/);
+        if (match) {
+          const { data: s } = await supabase.storage.from('business-assets').createSignedUrl(match[1], 3600);
+          logoUrl = s?.signedUrl || '';
+        }
+      }
+
+      if (sigPath && !sigPath.startsWith('http')) {
+        const { data: s } = await supabase.storage.from('business-assets').createSignedUrl(sigPath, 3600);
+        sigUrl = s?.signedUrl || '';
+      } else if (sigPath) {
+        const match = sigPath.match(/business-assets\/([^?]+)/);
+        if (match) {
+          const { data: s } = await supabase.storage.from('business-assets').createSignedUrl(match[1], 3600);
+          sigUrl = s?.signedUrl || '';
+        }
+      }
+
       setProfile({
         business_name: data.business_name ?? '',
         cnpj: data.cnpj ?? '',
         phone: data.phone ?? '',
         email: data.email ?? '',
         address: data.address ?? '',
-        logo_url: data.logo_url ?? '',
-        signature_url: data.signature_url ?? '',
+        logo_url: logoUrl,
+        signature_url: sigUrl,
       });
       setExists(true);
     }
@@ -118,10 +149,11 @@ export default function PerfilProfissional() {
       return;
     }
 
-    // Use longer-lived signed URL (24h) to avoid disappearing logo
-    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 86400);
-    const url = signedData?.signedUrl || '';
-    update('logo_url', url);
+    // Store the path for display, save path to DB later
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    update('logo_url', signedData?.signedUrl || '');
+    // Store path in a ref so save() writes the path, not the signed URL
+    logoPathRef.current = path;
     setUploadingLogo(false);
     toast({ title: 'Logo enviado!' });
   }
@@ -130,6 +162,7 @@ export default function PerfilProfissional() {
     if (!user) return;
     await supabase.storage.from('business-assets').remove([`${user.id}/logo.png`, `${user.id}/logo.jpg`, `${user.id}/logo.jpeg`, `${user.id}/logo.webp`]);
     update('logo_url', '');
+    logoPathRef.current = '';
     toast({ title: 'Logo removido' });
   }
 
@@ -143,10 +176,9 @@ export default function PerfilProfissional() {
       .from('business-assets')
       .upload(path, blob, { upsert: true, contentType: 'image/png' });
 
-    // Use longer-lived signed URL (24h)
-    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 86400);
-    const url = signedData?.signedUrl || '';
-    update('signature_url', url);
+    const { data: signedData } = await supabase.storage.from('business-assets').createSignedUrl(path, 3600);
+    update('signature_url', signedData?.signedUrl || '');
+    sigPathRef.current = path;
   }
 
   async function save() {
@@ -160,10 +192,19 @@ export default function PerfilProfissional() {
       phone: profile.phone,
       email: profile.email,
       address: profile.address,
-      logo_url: profile.logo_url,
-      signature_url: profile.signature_url,
+      logo_url: logoPathRef.current || profile.logo_url,
+      signature_url: sigPathRef.current || profile.signature_url,
       updated_at: new Date().toISOString(),
     };
+
+    // If URLs are signed (contain token=), try to extract path for DB storage
+    const extractPath = (url: string) => {
+      if (!url || !url.startsWith('http')) return url;
+      const match = url.match(/business-assets\/([^?]+)/);
+      return match ? match[1] : url;
+    };
+    payload.logo_url = extractPath(payload.logo_url);
+    payload.signature_url = extractPath(payload.signature_url);
 
     let error;
     if (exists) {
