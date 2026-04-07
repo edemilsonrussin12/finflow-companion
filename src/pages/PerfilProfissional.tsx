@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +44,8 @@ export default function PerfilProfissional() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [exists, setExists] = useState(false);
+  const logoPathRef = useRef('');
+  const sigPathRef = useRef('');
 
   // User display name
   const [displayName, setDisplayName] = useState('');
@@ -160,6 +162,7 @@ export default function PerfilProfissional() {
     if (!user) return;
     await supabase.storage.from('business-assets').remove([`${user.id}/logo.png`, `${user.id}/logo.jpg`, `${user.id}/logo.jpeg`, `${user.id}/logo.webp`]);
     update('logo_url', '');
+    logoPathRef.current = '';
     toast({ title: 'Logo removido' });
   }
 
@@ -189,10 +192,19 @@ export default function PerfilProfissional() {
       phone: profile.phone,
       email: profile.email,
       address: profile.address,
-      logo_url: profile.logo_url,
-      signature_url: profile.signature_url,
+      logo_url: logoPathRef.current || profile.logo_url,
+      signature_url: sigPathRef.current || profile.signature_url,
       updated_at: new Date().toISOString(),
     };
+
+    // If URLs are signed (contain token=), try to extract path for DB storage
+    const extractPath = (url: string) => {
+      if (!url || !url.startsWith('http')) return url;
+      const match = url.match(/business-assets\/([^?]+)/);
+      return match ? match[1] : url;
+    };
+    payload.logo_url = extractPath(payload.logo_url);
+    payload.signature_url = extractPath(payload.signature_url);
 
     let error;
     if (exists) {
