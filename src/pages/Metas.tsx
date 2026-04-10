@@ -7,11 +7,9 @@ import GoalForm from '@/components/GoalForm';
 import ContributionForm from '@/components/ContributionForm';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { FinancialGoal } from '@/types/goals';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import PremiumGate from '@/components/PremiumGate';
 import { toast } from 'sonner';
-
-const FREE_GOAL_LIMIT = 1;
 
 export default function Metas() {
   const { goals, loading, addGoal, updateGoal, deleteGoal, addContribution } = useGoals();
@@ -19,15 +17,14 @@ export default function Metas() {
   const [editingGoal, setEditingGoal] = useState<FinancialGoal | null>(null);
   const [contributingGoal, setContributingGoal] = useState<FinancialGoal | null>(null);
   const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null);
-  const { isPremium } = usePremiumStatus();
+  const { isPremium, canCreateMeta, incrementMeta, usage, limits } = useUsageLimits();
 
   const activeGoals = goals.filter(g => g.status === 'active');
   const completedGoals = goals.filter(g => g.status === 'completed');
-  const canAddGoal = isPremium || goals.length < FREE_GOAL_LIMIT;
 
   const handleNewGoal = () => {
-    if (!canAddGoal) {
-      toast.info('Limite de 1 meta no plano gratuito. Desbloqueie o Premium para metas ilimitadas.');
+    if (!canCreateMeta) {
+      toast.info(`Limite de ${limits.metas} metas por mês no plano gratuito. Atualize para Premium para criar metas ilimitadas.`);
       return;
     }
     setShowForm(true);
@@ -109,8 +106,8 @@ export default function Metas() {
         </div>
       )}
 
-      {!isPremium && goals.length >= FREE_GOAL_LIMIT && (
-        <PremiumGate isPremium={false} label="No plano gratuito você pode ter apenas 1 meta. Desbloqueie o Premium para metas ilimitadas." />
+      {!isPremium && !canCreateMeta && (
+        <PremiumGate isPremium={false} label={`No plano gratuito você pode criar até ${limits.metas} metas por mês. Desbloqueie o Premium para metas ilimitadas.`} />
       )}
 
       {completedGoals.length > 0 && (
@@ -135,7 +132,7 @@ export default function Metas() {
       )}
 
       {showForm && (
-        <GoalForm onSubmit={addGoal} onClose={() => setShowForm(false)} />
+        <GoalForm onSubmit={async (g) => { await addGoal(g); await incrementMeta(); }} onClose={() => setShowForm(false)} />
       )}
 
       {editingGoal && (
