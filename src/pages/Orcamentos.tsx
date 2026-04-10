@@ -11,11 +11,11 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import { format } from 'date-fns';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import AskAssistantButton from '@/components/AskAssistantButton';
-import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import PremiumGate from '@/components/PremiumGate';
 import { AlertTriangle } from 'lucide-react';
 
-const FREE_BUDGET_LIMIT = 3;
+
 
 export interface Budget {
   id: string;
@@ -38,7 +38,7 @@ export default function Orcamentos() {
   const location = useLocation();
   const navigate = useNavigate();
   const outletCtx = useOutletContext<{ openAssistant?: () => void }>();
-  const { isPremium } = usePremiumStatus();
+  const { isPremium, canCreateOrcamento, incrementOrcamento, usage, limits } = useUsageLimits();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,15 +69,12 @@ export default function Orcamentos() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Count budgets this month
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const monthBudgetCount = budgets.filter(b => b.created_at?.startsWith(currentMonth)).length;
-  const reachedBudgetLimit = !isPremium && monthBudgetCount >= FREE_BUDGET_LIMIT;
+  const reachedBudgetLimit = !canCreateOrcamento;
 
   async function createBudget() {
     if (!user) return;
     if (reachedBudgetLimit) {
-      toast({ variant: 'destructive', title: 'Limite atingido', description: `O plano gratuito permite até ${FREE_BUDGET_LIMIT} orçamentos por mês.` });
+      toast({ variant: 'destructive', title: 'Limite atingido', description: `O plano gratuito permite até ${limits.orcamentos} orçamentos por mês. Atualize para Premium para criar orçamentos ilimitados.` });
       return;
     }
     const { data, error } = await supabase
@@ -89,6 +86,7 @@ export default function Orcamentos() {
       toast({ variant: 'destructive', title: 'Erro ao criar orçamento' });
       return;
     }
+    await incrementOrcamento();
     setEditingId(data.id);
   }
 
@@ -152,7 +150,7 @@ export default function Orcamentos() {
       {!isPremium && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 text-xs text-muted-foreground">
           <AlertTriangle size={14} className="text-primary shrink-0" />
-          <span>{monthBudgetCount}/{FREE_BUDGET_LIMIT} orçamentos usados neste mês.{reachedBudgetLimit && ' Desbloqueie o Premium para orçamentos ilimitados.'}</span>
+          <span>{usage.orcamentos_criados_mes}/{limits.orcamentos} orçamentos usados neste mês.{reachedBudgetLimit && ' Desbloqueie o Premium para orçamentos ilimitados.'}</span>
         </div>
       )}
 

@@ -754,6 +754,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_usage_limits: {
+        Row: {
+          created_at: string
+          id: string
+          mes_referencia: string
+          metas_criadas_mes: number
+          orcamentos_criados_mes: number
+          pdfs_gerados_mes: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mes_referencia?: string
+          metas_criadas_mes?: number
+          orcamentos_criados_mes?: number
+          pdfs_gerados_mes?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mes_referencia?: string
+          metas_criadas_mes?: number
+          orcamentos_criados_mes?: number
+          pdfs_gerados_mes?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
