@@ -75,6 +75,7 @@ const STATUSES = [
 export default function BudgetEditor({ budgetId, onClose }: Props) {
   const { user } = useAuth();
   const { addTransaction } = useFinance();
+  const { canGeneratePdf, incrementPdf, isPremium, usage, limits } = useUsageLimits();
   const { toast } = useToast();
   const [budget, setBudget] = useState<BudgetData>({
     client_name: '', client_contact: '', client_id: null, service_description: '',
@@ -447,9 +448,14 @@ export default function BudgetEditor({ budgetId, onClose }: Props) {
     return doc;
   }
 
-  function downloadPDF() {
+  async function downloadPDF() {
+    if (!canGeneratePdf) {
+      toast({ variant: 'destructive', title: 'Limite atingido', description: `Plano gratuito permite apenas ${limits.pdfs} PDF por mês. Atualize para Premium para liberar PDFs ilimitados.` });
+      return;
+    }
     const doc = generatePDF();
     doc.save(`orcamento-${quoteLabel}-${budget.client_name || 'sem-nome'}.pdf`);
+    await incrementPdf();
     toast({ title: 'PDF baixado!' });
   }
 
