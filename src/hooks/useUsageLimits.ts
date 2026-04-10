@@ -47,37 +47,13 @@ export function useUsageLimits() {
 
   useEffect(() => { loadUsage(); }, [loadUsage]);
 
-  const ensureRecord = useCallback(async (): Promise<void> => {
-    if (!user) return;
-    // Upsert: create record if not exists
-    await supabase
-      .from('user_usage_limits' as any)
-      .upsert(
-        { user_id: user.id, mes_referencia: mesRef, orcamentos_criados_mes: 0, metas_criadas_mes: 0, pdfs_gerados_mes: 0 },
-        { onConflict: 'user_id,mes_referencia', ignoreDuplicates: true }
-      );
-  }, [user, mesRef]);
-
   const increment = useCallback(async (field: 'orcamentos_criados_mes' | 'metas_criadas_mes' | 'pdfs_gerados_mes') => {
     if (!user) return;
-    await ensureRecord();
-    // Read current value then increment
-    const { data } = await supabase
-      .from('user_usage_limits' as any)
-      .select(field)
-      .eq('user_id', user.id)
-      .eq('mes_referencia', mesRef)
-      .single();
-
-    const current = (data as any)?.[field] ?? 0;
-    await supabase
-      .from('user_usage_limits' as any)
-      .update({ [field]: current + 1 } as any)
-      .eq('user_id', user.id)
-      .eq('mes_referencia', mesRef);
-
-    setUsage(prev => ({ ...prev, [field]: current + 1 }));
-  }, [user, mesRef, ensureRecord]);
+    // Use SECURITY DEFINER RPC - server-side only increment
+    await supabase.rpc('increment_usage_counter' as any, { _field: field });
+    // Reload to get accurate server-side values
+    await loadUsage();
+  }, [user, loadUsage]);
 
   const canCreateOrcamento = isPremium || usage.orcamentos_criados_mes < FREE_LIMITS.orcamentos;
   const canCreateMeta = isPremium || usage.metas_criadas_mes < FREE_LIMITS.metas;
