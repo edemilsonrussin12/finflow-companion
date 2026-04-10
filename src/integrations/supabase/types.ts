@@ -804,6 +804,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_usage_counter: { Args: { _field: string }; Returns: undefined }
       referrer_code_exists: { Args: { _referrer_id: string }; Returns: boolean }
     }
     Enums: {
